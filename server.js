@@ -12,7 +12,8 @@ const responseCache = new Map();
 const CACHE_DURATION = 60 * 60 * 1000; // 1 hour in milliseconds
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // Add CSP headers middleware
 app.use((req, res, next) => {
@@ -166,40 +167,17 @@ app.post('/api/check-image-safety', async (req, res) => {
 
         const { image } = req.body;
         
-        // Venice AI currently uses text-based models, so we'll ask for image description
-        const prompt = `I have an image that I want to check for pregnancy safety. Based on common items that might be in photos, if this were an image of something commonly photographed (food, drink, activity, medication, product, etc.), provide a general safety assessment. Give risk score 1-10. Be brief:
-RISK_SCORE: [1-10]
-SAFETY: [Safe/Caution/Avoid]
-WHY: [1 sentence explanation]
-TIPS: [2-3 short practical tips]`;
+        // For image analysis, return a helpful message about using text description
+        const helpfulResponse = `RISK_SCORE: 5
+SAFETY: Need More Information
+WHY: Image analysis requires text description for accurate safety assessment
+TIPS: 
+• Please type what you see in the image into the text field
+• Include brand names, ingredients if visible
+• Describe the activity or item shown
+• For medications, include dosage information`;
 
-        const apiUrl = 'https://api.venice.ai/api/v1/chat/completions';
-        const requestBody = {
-            model: 'llama-3.3-70b',
-            messages: [
-                {
-                    role: 'system',
-                    content: 'Medical expert providing pregnancy safety guidance. When uncertain about specific items in images, provide general safety guidelines.'
-                },
-                {
-                    role: 'user',
-                    content: prompt
-                }
-            ],
-            temperature: 0.3,
-            max_tokens: 150
-        };
-
-        const response = await axios.post(apiUrl, requestBody, {
-            headers: {
-                'Authorization': `Bearer ${process.env.VENICE_API_KEY}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        const aiResponse = response.data.choices[0].message.content;
-        const riskScoreMatch = aiResponse.match(/RISK_SCORE:\s*(\d+)/);
-        const riskScore = riskScoreMatch ? parseInt(riskScoreMatch[1]) : 5;
+        const riskScore = 5;
         
         const references = [
             { title: 'Mayo Clinic - Pregnancy Week by Week', url: 'https://www.mayoclinic.org/healthy-lifestyle/pregnancy-week-by-week/basics/pregnancy-week-by-week/hlv-20049471' },
@@ -208,7 +186,7 @@ TIPS: [2-3 short practical tips]`;
         ];
         
         res.json({ 
-            result: aiResponse,
+            result: helpfulResponse,
             riskScore: riskScore,
             references: references
         });

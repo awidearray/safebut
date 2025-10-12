@@ -48,24 +48,61 @@ class PregnancySafetyChecker {
     async handleImageCapture(file) {
         if (!file) return;
 
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const imagePreview = document.getElementById('imagePreview');
-            const capturedImage = document.getElementById('capturedImage');
-            const searchInput = document.getElementById('searchInput');
-            
-            capturedImage.src = e.target.result;
-            imagePreview.style.display = 'block';
-            this.capturedImage = e.target.result;
-            
-            // Clear text input when image is selected
-            searchInput.value = '';
-            searchInput.placeholder = 'Analyzing image...';
-            
-            // Automatically analyze the image
-            this.performSearch();
-        };
-        reader.readAsDataURL(file);
+        // Compress image before processing
+        const compressedImage = await this.compressImage(file);
+        
+        const imagePreview = document.getElementById('imagePreview');
+        const capturedImage = document.getElementById('capturedImage');
+        const searchInput = document.getElementById('searchInput');
+        
+        capturedImage.src = compressedImage;
+        imagePreview.style.display = 'block';
+        this.capturedImage = compressedImage;
+        
+        // Clear text input when image is selected
+        searchInput.value = '';
+        searchInput.placeholder = 'Analyzing image...';
+        
+        // Automatically analyze the image
+        this.performSearch();
+    }
+
+    async compressImage(file) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Calculate new dimensions (max 800px width/height)
+                    let width = img.width;
+                    let height = img.height;
+                    const maxSize = 800;
+                    
+                    if (width > height && width > maxSize) {
+                        height = (height * maxSize) / width;
+                        width = maxSize;
+                    } else if (height > maxSize) {
+                        width = (width * maxSize) / height;
+                        height = maxSize;
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    // Draw and compress
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Convert to base64 with compression (0.7 quality)
+                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                    resolve(compressedDataUrl);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
     }
 
     removeImage() {
