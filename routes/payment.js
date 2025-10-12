@@ -4,7 +4,64 @@ const User = require('../models/User');
 const { verifyToken } = require('../middleware/auth');
 const router = express.Router();
 
-// Create payment intent for $0.99 lifetime subscription
+// Create Stripe Checkout Session for $0.99 lifetime subscription
+router.post('/create-checkout-session', verifyToken, async (req, res) => {
+    try {
+        if (req.user.isPremium) {
+            return res.status(400).json({ error: 'Already a premium member' });
+        }
+
+        // Create or get Stripe customer
+        let customer;
+        if (req.user.stripeCustomerId) {
+            customer = await stripe.customers.retrieve(req.user.stripeCustomerId);
+        } else {
+            customer = await stripe.customers.create({
+                email: req.user.email,
+                name: req.user.name,
+                metadata: {
+                    userId: req.user._id.toString()
+                }
+            });
+            req.user.stripeCustomerId = customer.id;
+            await req.user.save();
+        }
+
+        // Create Checkout Session
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            customer: customer.id,
+            line_items: [{
+                price_data: {
+                    currency: 'usd',
+                    product_data: {
+                        name: 'Safebut? Lifetime Premium Access',
+                        description: 'Unlimited pregnancy safety checks forever'
+                    },
+                    unit_amount: 99 // $0.99 in cents
+                },
+                quantity: 1
+            }],
+            mode: 'payment',
+            success_url: `${process.env.APP_URL}/upgrade?success=true&session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${process.env.APP_URL}/upgrade`,
+            metadata: {
+                userId: req.user._id.toString(),
+                productType: 'lifetime_premium'
+            }
+        });
+
+        res.json({
+            sessionId: session.id,
+            url: session.url
+        });
+    } catch (error) {
+        console.error('Checkout session error:', error);
+        res.status(500).json({ error: 'Failed to create checkout session' });
+    }
+});
+
+// Create payment intent for $0.99 lifetime subscription (alternate method)
 router.post('/create-payment-intent', verifyToken, async (req, res) => {
     try {
         if (req.user.isPremium) {

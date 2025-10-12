@@ -249,8 +249,10 @@
     </div>
 
     <script>
-        // Initialize Stripe
-        const stripe = Stripe('<%= process.env.STRIPE_PUBLISHABLE_KEY %>'); // This will be replaced server-side
+        // Initialize Stripe with the test publishable key
+        // In production, this should come from your environment configuration
+        const STRIPE_PUBLISHABLE_KEY = 'pk_test_51QYNdXKLU1UKqSmA1xlIJJgJ0M9rEFHBSjCUajNgKHAaUl7pAXgYy02oU8vnBMZ0DQdPvyCGGGqUdTqKzlgYZklr00JlMlIEUP';
+        const stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
 
         document.getElementById('payButton').addEventListener('click', async () => {
             const button = document.getElementById('payButton');
@@ -270,6 +272,15 @@
                         'Authorization': 'Bearer ' + localStorage.getItem('authToken')
                     }
                 });
+                
+                if (!response.ok) {
+                    // If unauthorized, redirect to login
+                    if (response.status === 401) {
+                        window.location.href = '/login';
+                        return;
+                    }
+                    throw new Error('Failed to create checkout session');
+                }
                 
                 const data = await response.json();
                 
@@ -305,9 +316,36 @@
         if (urlParams.get('success') === 'true') {
             document.getElementById('successMessage').textContent = 'Payment successful! Redirecting to app...';
             document.getElementById('successMessage').style.display = 'block';
+            
+            // Handle payment confirmation
+            const sessionId = urlParams.get('session_id');
+            if (sessionId) {
+                // Optionally verify the session with your backend
+                fetch('/payment/verify-session', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + localStorage.getItem('authToken')
+                    },
+                    body: JSON.stringify({ sessionId })
+                }).then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        localStorage.setItem('isPremium', 'true');
+                    }
+                });
+            }
+            
             setTimeout(() => {
                 window.location.href = '/app';
             }, 2000);
+        }
+
+        // Check if user is authenticated
+        const authToken = localStorage.getItem('authToken');
+        if (!authToken) {
+            // Redirect to login if not authenticated
+            window.location.href = '/login';
         }
     </script>
 </body>

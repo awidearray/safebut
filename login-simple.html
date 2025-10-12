@@ -25,7 +25,7 @@
             background: white;
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 400px;
+            max-width: 450px;
             width: 100%;
             padding: 40px;
             text-align: center;
@@ -79,7 +79,7 @@
             color: white;
             border-radius: 10px;
             padding: 20px;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
         }
 
         .price {
@@ -93,17 +93,28 @@
             opacity: 0.9;
         }
 
+        .features {
+            margin-top: 15px;
+            font-size: 0.85rem;
+            line-height: 1.8;
+        }
+
+        .login-section {
+            margin-bottom: 25px;
+        }
+
         .email-form {
-            margin: 20px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
         }
 
         .email-input {
-            width: 100%;
-            padding: 15px;
+            padding: 12px;
             border: 2px solid #e0e0e0;
-            border-radius: 10px;
+            border-radius: 8px;
             font-size: 1rem;
-            margin-bottom: 15px;
             transition: border-color 0.3s;
         }
 
@@ -116,12 +127,11 @@
             background: #667eea;
             color: white;
             border: none;
-            padding: 15px 30px;
-            border-radius: 10px;
-            font-size: 1.1rem;
+            padding: 14px 28px;
+            border-radius: 8px;
+            font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            width: 100%;
             transition: all 0.3s;
         }
 
@@ -134,13 +144,63 @@
         .login-btn:disabled {
             background: #ccc;
             cursor: not-allowed;
+            transform: none;
+        }
+
+        .divider {
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            color: #999;
+            font-size: 0.9rem;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #e0e0e0;
+        }
+
+        .divider span {
+            padding: 0 15px;
+        }
+
+        .telegram-btn {
+            background: #0088cc;
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        .telegram-btn:hover {
+            background: #0077b5;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 136, 204, 0.4);
+        }
+
+        .telegram-btn svg {
+            width: 24px;
+            height: 24px;
+            margin-right: 10px;
         }
 
         .skip-link {
             color: #666;
             text-decoration: none;
             font-size: 0.9rem;
-            display: block;
+            display: inline-block;
             margin-top: 20px;
         }
 
@@ -150,8 +210,8 @@
         }
 
         .error-message, .success-message {
-            padding: 10px;
-            border-radius: 5px;
+            padding: 12px;
+            border-radius: 8px;
             margin-bottom: 20px;
             display: none;
         }
@@ -173,6 +233,10 @@
             
             h1 {
                 font-size: 1.75rem;
+            }
+
+            .price {
+                font-size: 2rem;
             }
         }
     </style>
@@ -206,43 +270,50 @@
             <div class="price-label">One-time payment</div>
             <div class="price">$0.99</div>
             <div class="price-label">Lifetime access</div>
+            <div class="features">
+                No subscriptions • No hidden fees • Forever yours
+            </div>
         </div>
 
-        <form class="email-form" id="loginForm">
-            <input 
-                type="email" 
-                class="email-input" 
-                id="emailInput" 
-                placeholder="Enter your email address"
-                required
-            >
-            <button type="submit" class="login-btn" id="loginBtn">
-                Get Started →
-            </button>
-        </form>
+        <div class="login-section">
+            <!-- Email Login Form -->
+            <form class="email-form" id="emailLoginForm">
+                <input type="email" class="email-input" id="emailInput" placeholder="Enter your email" required>
+                <button type="submit" class="login-btn">Continue with Email</button>
+            </form>
+
+            <div class="divider">
+                <span>OR</span>
+            </div>
+
+            <!-- Telegram Login Button (Direct Link Method) -->
+            <a href="https://t.me/safebutbot?start=login" class="telegram-btn" target="_blank">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/>
+                </svg>
+                Login with Telegram
+            </a>
+        </div>
 
         <a href="/app" class="skip-link">Continue with limited free access (1 check/day)</a>
     </div>
 
     <script>
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        // Email login handler
+        document.getElementById('emailLoginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const email = document.getElementById('emailInput').value;
-            const button = document.getElementById('loginBtn');
+            const button = e.target.querySelector('button');
             const errorDiv = document.getElementById('errorMessage');
             const successDiv = document.getElementById('successMessage');
             
-            // Reset messages
+            button.disabled = true;
+            button.textContent = 'Signing in...';
             errorDiv.style.display = 'none';
             successDiv.style.display = 'none';
             
-            // Disable button
-            button.disabled = true;
-            button.textContent = 'Signing in...';
-            
             try {
-                // Simple email login - create or find user by email
                 const response = await fetch('/auth/email-login', {
                     method: 'POST',
                     headers: {
@@ -255,36 +326,73 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    // Store token
+                    // Store auth data
                     localStorage.setItem('authToken', data.token);
+                    localStorage.setItem('isPremium', data.isPremium);
                     localStorage.setItem('userEmail', email);
                     
-                    // Show success message
-                    successDiv.textContent = 'Success! Redirecting...';
+                    successDiv.textContent = 'Login successful! Redirecting...';
                     successDiv.style.display = 'block';
                     
-                    // Redirect to app
+                    // Redirect to app or upgrade page
                     setTimeout(() => {
-                        window.location.href = `/app?token=${data.token}`;
+                        if (data.isPremium) {
+                            window.location.href = `/app?token=${data.token}`;
+                        } else {
+                            window.location.href = `/upgrade`;
+                        }
                     }, 1000);
                 } else {
                     throw new Error(data.error || 'Login failed');
                 }
             } catch (error) {
-                errorDiv.textContent = error.message;
+                console.error('Login error:', error);
+                errorDiv.textContent = error.message || 'Failed to sign in. Please try again.';
                 errorDiv.style.display = 'block';
                 button.disabled = false;
-                button.textContent = 'Get Started →';
+                button.textContent = 'Continue with Email';
             }
         });
-        
-        // Check for auth errors in URL
+
+        // Check for Telegram auth callback in URL
         const urlParams = new URLSearchParams(window.location.search);
-        const error = urlParams.get('error');
-        
-        if (error === 'auth_failed') {
-            document.getElementById('errorMessage').textContent = 'Authentication failed. Please try again.';
-            document.getElementById('errorMessage').style.display = 'block';
+        if (urlParams.get('telegram_auth')) {
+            // Handle Telegram auth data if present
+            const authData = {
+                id: urlParams.get('id'),
+                first_name: urlParams.get('first_name'),
+                last_name: urlParams.get('last_name'),
+                username: urlParams.get('username'),
+                photo_url: urlParams.get('photo_url'),
+                auth_date: urlParams.get('auth_date'),
+                hash: urlParams.get('hash')
+            };
+            
+            // Send to backend for verification
+            fetch('/auth/telegram', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(authData),
+                credentials: 'include'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    localStorage.setItem('authToken', data.token);
+                    localStorage.setItem('isPremium', data.isPremium);
+                    window.location.href = data.isPremium ? '/app' : '/upgrade';
+                } else {
+                    document.getElementById('errorMessage').textContent = 'Telegram authentication failed';
+                    document.getElementById('errorMessage').style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Telegram auth error:', error);
+                document.getElementById('errorMessage').textContent = 'Authentication error occurred';
+                document.getElementById('errorMessage').style.display = 'block';
+            });
         }
     </script>
 </body>
