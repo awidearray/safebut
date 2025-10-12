@@ -1,4 +1,34 @@
 const mongoose = require('mongoose');
+const crypto = require('crypto');
+
+// Encryption helper functions
+const algorithm = 'aes-256-gcm';
+const getKey = () => crypto.scryptSync(process.env.ENCRYPTION_KEY || 'default-key-change-this', 'salt', 32);
+
+function encrypt(text) {
+    if (!text) return null;
+    const iv = crypto.randomBytes(16);
+    const cipher = crypto.createCipheriv(algorithm, getKey(), iv);
+    let encrypted = cipher.update(JSON.stringify(text), 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+    const authTag = cipher.getAuthTag();
+    return JSON.stringify({ iv: iv.toString('hex'), authTag: authTag.toString('hex'), encrypted });
+}
+
+function decrypt(encryptedData) {
+    if (!encryptedData) return null;
+    try {
+        const { iv, authTag, encrypted } = JSON.parse(encryptedData);
+        const decipher = crypto.createDecipheriv(algorithm, getKey(), Buffer.from(iv, 'hex'));
+        decipher.setAuthTag(Buffer.from(authTag, 'hex'));
+        let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+        decrypted += decipher.final('utf8');
+        return JSON.parse(decrypted);
+    } catch (error) {
+        console.error('Decryption error:', error);
+        return null;
+    }
+}
 
 const userSchema = new mongoose.Schema({
     // Social login info
@@ -10,6 +40,9 @@ const userSchema = new mongoose.Schema({
     email: { type: String, unique: true, sparse: true },
     profilePicture: String,
     provider: { type: String, enum: ['telegram', 'email'], required: true },
+    
+    // Encrypted health profile
+    encryptedProfile: String,
     
     // Subscription info
     isPremium: { type: Boolean, default: false },
@@ -75,6 +108,17 @@ userSchema.methods.addToHistory = function(item, riskScore, isImage = false) {
     }
     
     return this.save();
+};
+
+// Save encrypted profile
+userSchema.methods.saveProfile = function(profileData) {
+    this.encryptedProfile = encrypt(profileData);
+    return this.save();
+};
+
+// Get decrypted profile
+userSchema.methods.getProfile = function() {
+    return decrypt(this.encryptedProfile) || {};
 };
 
 module.exports = mongoose.model('User', userSchema);

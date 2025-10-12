@@ -140,6 +140,27 @@ app.get('/app.js', (req, res) => {
     res.sendFile(path.join(__dirname, 'app.js'));
 });
 
+// API endpoints for profile management
+app.get('/api/profile', verifyToken, async (req, res) => {
+    try {
+        const profile = req.user.getProfile();
+        res.json({ success: true, profile });
+    } catch (error) {
+        console.error('Get profile error:', error);
+        res.status(500).json({ error: 'Failed to retrieve profile' });
+    }
+});
+
+app.post('/api/profile', verifyToken, async (req, res) => {
+    try {
+        await req.user.saveProfile(req.body);
+        res.json({ success: true, message: 'Profile saved successfully' });
+    } catch (error) {
+        console.error('Save profile error:', error);
+        res.status(500).json({ error: 'Failed to save profile' });
+    }
+});
+
 // Protected API endpoint for safety checks with auth (1 free per day, then premium required)
 app.post('/api/check-safety', verifyToken, async (req, res) => {
     try {
@@ -149,6 +170,9 @@ app.post('/api/check-safety', verifyToken, async (req, res) => {
         }
 
         const { item } = req.body;
+        
+        // Get user's health profile
+        const userProfile = req.user.getProfile();
         
         // Check cache first
         const cacheKey = item.toLowerCase();
@@ -164,11 +188,43 @@ app.post('/api/check-safety', verifyToken, async (req, res) => {
             return res.json(cached.data);
         }
 
-        const prompt = `Is "${item}" safe during pregnancy? Give risk score 1-10 (1=safest, 10=most dangerous). Be brief:
+        // Build personalized context from user profile
+        let contextInfo = '';
+        if (userProfile.conditions) {
+            const activeConditions = Object.entries(userProfile.conditions)
+                .filter(([key, value]) => value === true)
+                .map(([key, value]) => {
+                    const conditionMap = {
+                        'gestational-diabetes': 'gestational diabetes',
+                        'preeclampsia': 'preeclampsia/high blood pressure',
+                        'anemia': 'anemia',
+                        'thyroid': 'thyroid disorders',
+                        'placenta-previa': 'placenta previa',
+                        'hyperemesis': 'hyperemesis gravidarum',
+                        'rh-negative': 'Rh negative blood type',
+                        'multiples': 'multiple pregnancy (twins/triplets)'
+                    };
+                    return conditionMap[key] || key;
+                });
+            if (activeConditions.length > 0) {
+                contextInfo += `\nPatient has: ${activeConditions.join(', ')}.`;
+            }
+        }
+        
+        if (userProfile.trimester) {
+            contextInfo += `\nCurrently in ${userProfile.trimester} trimester.`;
+        }
+        
+        if (userProfile.age && parseInt(userProfile.age) >= 35) {
+            contextInfo += `\nAdvanced maternal age (${userProfile.age}).`;
+        }
+
+        const prompt = `Is "${item}" safe during pregnancy? ${contextInfo}
+Give risk score 1-10 (1=safest, 10=most dangerous). Consider any mentioned conditions. Be brief:
 RISK_SCORE: [1-10]
 SAFETY: [Safe/Caution/Avoid]
 WHY: [1 sentence explanation]
-TIPS: [2-3 short practical tips]`;
+TIPS: [2-3 short practical tips specific to the patient's conditions if applicable]`;
 
         const apiUrl = 'https://api.venice.ai/api/v1/chat/completions';
         const requestBody = {
@@ -176,7 +232,7 @@ TIPS: [2-3 short practical tips]`;
             messages: [
                 {
                     role: 'system',
-                    content: 'Medical expert. Answer pregnancy safety questions. Brief, factual only.'
+                    content: 'Medical expert specializing in pregnancy. Answer pregnancy safety questions considering patient-specific conditions. Brief, factual, personalized advice when conditions are present.'
                 },
                 {
                     role: 'user',

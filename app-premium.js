@@ -4,8 +4,11 @@ class PregnancySafetyChecker {
         this.capturedImage = null;
         this.authToken = null;
         this.user = null;
+        this.profileData = {};
         this.initializeAuth();
         this.initializeEventListeners();
+        this.initializeTabNavigation();
+        this.initializeProfileHandlers();
         this.checkAuthStatus();
     }
 
@@ -681,6 +684,194 @@ class PregnancySafetyChecker {
 
     hideResults() {
         document.getElementById('results').style.display = 'none';
+    }
+
+    initializeTabNavigation() {
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        tabButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const targetTab = btn.dataset.tab;
+                
+                // Update button states
+                tabButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // Update content visibility
+                tabContents.forEach(content => {
+                    content.classList.remove('active');
+                    content.style.display = 'none';
+                });
+                
+                const targetContent = document.getElementById(targetTab + 'Tab');
+                if (targetContent) {
+                    targetContent.classList.add('active');
+                    targetContent.style.display = 'block';
+                }
+                
+                // Load history when history tab is clicked
+                if (targetTab === 'history') {
+                    this.displayHistory();
+                }
+            });
+        });
+    }
+
+    initializeProfileHandlers() {
+        const saveBtn = document.getElementById('saveProfile');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => this.saveProfile());
+        }
+        
+        // Auto-calculate weeks pregnant from due date
+        const dueDateInput = document.getElementById('due-date');
+        if (dueDateInput) {
+            dueDateInput.addEventListener('change', () => {
+                const dueDate = new Date(dueDateInput.value);
+                const today = new Date();
+                const diffTime = dueDate - today;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                const weeksPregnant = Math.max(0, 40 - Math.floor(diffDays / 7));
+                
+                const weeksInput = document.getElementById('weeks-pregnant');
+                if (weeksInput) {
+                    weeksInput.value = weeksPregnant;
+                }
+                
+                // Auto-select trimester
+                let trimester = 'first';
+                if (weeksPregnant >= 13 && weeksPregnant < 28) trimester = 'second';
+                if (weeksPregnant >= 28) trimester = 'third';
+                
+                document.querySelectorAll('input[name="trimester"]').forEach(radio => {
+                    radio.checked = radio.value === trimester;
+                });
+            });
+        }
+    }
+
+    async loadProfile() {
+        if (!this.authToken) return;
+        
+        try {
+            const response = await fetch('/api/profile', {
+                headers: {
+                    'Authorization': `Bearer ${this.authToken}`
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                this.profileData = data.profile || {};
+                this.populateProfileForm();
+            }
+        } catch (error) {
+            console.error('Failed to load profile:', error);
+        }
+    }
+
+    populateProfileForm() {
+        // Populate basic info
+        if (this.profileData.name) document.getElementById('profile-name').value = this.profileData.name;
+        if (this.profileData.age) document.getElementById('profile-age').value = this.profileData.age;
+        if (this.profileData.dueDate) document.getElementById('due-date').value = this.profileData.dueDate;
+        if (this.profileData.weeksPregnant) document.getElementById('weeks-pregnant').value = this.profileData.weeksPregnant;
+        if (this.profileData.pregnancyNumber) document.getElementById('pregnancy-number').value = this.profileData.pregnancyNumber;
+        if (this.profileData.healthcareProvider) document.getElementById('healthcare-provider').value = this.profileData.healthcareProvider;
+        
+        // Populate conditions
+        if (this.profileData.conditions) {
+            Object.keys(this.profileData.conditions).forEach(key => {
+                const checkbox = document.getElementById(key);
+                if (checkbox) checkbox.checked = this.profileData.conditions[key];
+            });
+        }
+        
+        // Populate risk factors
+        if (this.profileData.riskFactors) {
+            Object.keys(this.profileData.riskFactors).forEach(key => {
+                const checkbox = document.getElementById(key);
+                if (checkbox) checkbox.checked = this.profileData.riskFactors[key];
+            });
+        }
+        
+        // Populate diet
+        if (this.profileData.diet) {
+            Object.keys(this.profileData.diet).forEach(key => {
+                const checkbox = document.getElementById(key);
+                if (checkbox) checkbox.checked = this.profileData.diet[key];
+            });
+        }
+        
+        // Populate trimester
+        if (this.profileData.trimester) {
+            document.querySelectorAll('input[name="trimester"]').forEach(radio => {
+                radio.checked = radio.value === this.profileData.trimester;
+            });
+        }
+    }
+
+    async saveProfile() {
+        if (!this.authToken) {
+            this.showError('Please log in to save your profile');
+            return;
+        }
+        
+        // Collect form data
+        const profileData = {
+            // Basic info
+            name: document.getElementById('profile-name').value,
+            age: document.getElementById('profile-age').value,
+            dueDate: document.getElementById('due-date').value,
+            weeksPregnant: document.getElementById('weeks-pregnant').value,
+            pregnancyNumber: document.getElementById('pregnancy-number').value,
+            healthcareProvider: document.getElementById('healthcare-provider').value,
+            
+            // Conditions
+            conditions: {},
+            riskFactors: {},
+            diet: {},
+            
+            // Trimester
+            trimester: document.querySelector('input[name="trimester"]:checked')?.value
+        };
+        
+        // Collect conditions
+        document.querySelectorAll('input[name="conditions"]').forEach(checkbox => {
+            profileData.conditions[checkbox.id] = checkbox.checked;
+        });
+        
+        // Collect risk factors
+        document.querySelectorAll('input[name="risk-factors"]').forEach(checkbox => {
+            profileData.riskFactors[checkbox.id] = checkbox.checked;
+        });
+        
+        // Collect diet
+        document.querySelectorAll('input[name="diet"]').forEach(checkbox => {
+            profileData.diet[checkbox.id] = checkbox.checked;
+        });
+        
+        try {
+            const response = await fetch('/api/profile', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.authToken}`
+                },
+                body: JSON.stringify(profileData)
+            });
+            
+            if (response.ok) {
+                this.profileData = profileData;
+                this.showSuccess('✅ Profile saved successfully!');
+            } else {
+                this.showError('Failed to save profile');
+            }
+        } catch (error) {
+            console.error('Save profile error:', error);
+            this.showError('Failed to save profile');
+        }
     }
 }
 
