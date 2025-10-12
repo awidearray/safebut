@@ -101,6 +101,23 @@
         </footer>
     </div>
 
-    <script src="app.js"></script>
+    <script>
+        // Check if user is authenticated before loading app
+        (function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token') || localStorage.getItem('authToken');
+            
+            if (!token) {
+                // No token found, redirect to login
+                window.location.href = '/login';
+                return;
+            }
+            
+            // Token exists, load the premium app
+            const script = document.createElement('script');
+            script.src = 'app-premium.js';
+            document.body.appendChild(script);
+        })();
+    </script>
 </body>
 </html>
