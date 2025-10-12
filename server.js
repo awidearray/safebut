@@ -167,17 +167,51 @@ app.post('/api/check-image-safety', async (req, res) => {
 
         const { image } = req.body;
         
-        // For image analysis, return a helpful message about using text description
-        const helpfulResponse = `RISK_SCORE: 5
-SAFETY: Need More Information
-WHY: Image analysis requires text description for accurate safety assessment
-TIPS: 
-• Please type what you see in the image into the text field
-• Include brand names, ingredients if visible
-• Describe the activity or item shown
-• For medications, include dosage information`;
+        // Use Venice AI's vision model to analyze the image
+        const apiUrl = 'https://api.venice.ai/api/v1/chat/completions';
+        const requestBody = {
+            model: 'mistral-31-24b',  // Vision-capable model
+            messages: [
+                {
+                    role: 'system',
+                    content: 'You are a medical expert analyzing images for pregnancy safety. Provide accurate, evidence-based assessments.'
+                },
+                {
+                    role: 'user',
+                    content: [
+                        {
+                            type: 'text',
+                            text: `Analyze this image and determine if what's shown is safe during pregnancy. Provide:
+RISK_SCORE: [1-10, where 1 is safest and 10 is most dangerous]
+SAFETY: [Safe/Caution/Avoid]
+WHY: [1 sentence explanation of what you see and why it's safe or not]
+TIPS: [2-3 short practical tips based on what's in the image]`
+                        },
+                        {
+                            type: 'image_url',
+                            image_url: {
+                                url: image  // The base64 image data from client
+                            }
+                        }
+                    ]
+                }
+            ],
+            temperature: 0.3,
+            max_tokens: 200
+        };
 
-        const riskScore = 5;
+        console.log('Analyzing image with vision model...');
+        
+        const response = await axios.post(apiUrl, requestBody, {
+            headers: {
+                'Authorization': `Bearer ${process.env.VENICE_API_KEY}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const aiResponse = response.data.choices[0].message.content;
+        const riskScoreMatch = aiResponse.match(/RISK_SCORE:\s*(\d+)/);
+        const riskScore = riskScoreMatch ? parseInt(riskScoreMatch[1]) : 5;
         
         const references = [
             { title: 'Mayo Clinic - Pregnancy Week by Week', url: 'https://www.mayoclinic.org/healthy-lifestyle/pregnancy-week-by-week/basics/pregnancy-week-by-week/hlv-20049471' },
@@ -186,7 +220,7 @@ TIPS:
         ];
         
         res.json({ 
-            result: helpfulResponse,
+            result: aiResponse,
             riskScore: riskScore,
             references: references
         });
