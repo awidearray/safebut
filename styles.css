@@ -247,6 +247,173 @@ main {
     font-size: 1.2rem;
 }
 
+/* Tab Navigation Styles */
+.tab-navigation {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    justify-content: center;
+}
+
+.tab-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 25px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.tab-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.tab-btn.active {
+    background: white;
+    color: #667eea;
+    border-color: white;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Profile Section Styles */
+.profile-section {
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.profile-section h2 {
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.profile-intro {
+    color: #666;
+    margin-bottom: 30px;
+    line-height: 1.6;
+}
+
+.basic-info, .health-conditions {
+    margin-bottom: 30px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    color: #555;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group select {
+    padding: 10px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.condition-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.condition-toggle,
+.radio-option {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.condition-toggle:hover,
+.radio-option:hover {
+    background: #e9ecef;
+}
+
+.condition-toggle input[type="checkbox"],
+.radio-option input[type="radio"] {
+    margin-right: 10px;
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.toggle-label,
+.radio-label {
+    color: #333;
+    font-size: 0.95rem;
+    cursor: pointer;
+}
+
+.trimester-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.save-profile-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 15px 40px;
+    border-radius: 25px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.3s, box-shadow 0.3s;
+    display: block;
+    margin: 30px auto;
+}
+
+.save-profile-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+}
+
+.profile-note {
+    background: #e8f5e9;
+    padding: 15px;
+    border-radius: 10px;
+    margin-top: 20px;
+}
+
+.profile-note p {
+    color: #2e7d32;
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
 .api-key-section {
     margin-top: 40px;
     padding-top: 20px;

@@ -87,8 +87,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/login', (req, res) => {
-    // Use simple email login instead of complex Telegram widget
-    res.sendFile(path.join(__dirname, 'login-simple.html'));
+    res.sendFile(path.join(__dirname, 'login.html'));
 });
 
 app.get('/app', async (req, res) => {

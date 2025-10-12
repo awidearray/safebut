@@ -11,10 +11,19 @@
         <header>
             <h1>🤰Safebut?</h1>
             <p class="subtitle">Check the safety of anything during pregnancy</p>
+            
+            <!-- Tab Navigation -->
+            <div class="tab-navigation">
+                <button class="tab-btn active" data-tab="search">🔍 Search</button>
+                <button class="tab-btn" data-tab="profile">👤 Profile</button>
+                <button class="tab-btn" data-tab="history">📜 History</button>
+            </div>
         </header>
 
         <main>
-            <div class="search-section">
+            <!-- Search Tab Content -->
+            <div id="searchTab" class="tab-content active">
+                <div class="search-section">
                 <div class="input-group">
                     <input 
                         type="text" 
@@ -81,17 +90,186 @@
                 </div>
             </div>
 
-            <div id="error" class="error-message" style="display: none;">
-                <span class="error-icon">⚠️</span>
-                <span id="errorText"></span>
+                <div id="error" class="error-message" style="display: none;">
+                    <span class="error-icon">⚠️</span>
+                    <span id="errorText"></span>
+                </div>
             </div>
             
-            <div id="historySection" class="history-section" style="display: none;">
-                <div class="history-header">
-                    <h3>Search History</h3>
-                    <button id="clearHistory" class="clear-history">Clear All</button>
+            <!-- Profile Tab Content -->
+            <div id="profileTab" class="tab-content" style="display: none;">
+                <div class="profile-section">
+                    <h2>Your Health Profile</h2>
+                    <p class="profile-intro">Fill in your information for personalized safety recommendations:</p>
+                    
+                    <!-- Basic Profile Information -->
+                    <div class="basic-info">
+                        <h3>👤 Basic Information</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="profile-name">Name</label>
+                                <input type="text" id="profile-name" placeholder="Your name">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="profile-age">Age</label>
+                                <input type="number" id="profile-age" placeholder="Your age" min="16" max="60">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="due-date">Due Date</label>
+                                <input type="date" id="due-date">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="weeks-pregnant">Weeks Pregnant</label>
+                                <input type="number" id="weeks-pregnant" placeholder="Current week" min="1" max="42">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="pregnancy-number">Pregnancy Number</label>
+                                <select id="pregnancy-number">
+                                    <option value="">Select...</option>
+                                    <option value="1">First pregnancy</option>
+                                    <option value="2">Second pregnancy</option>
+                                    <option value="3">Third pregnancy</option>
+                                    <option value="4+">Fourth or more</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="healthcare-provider">Healthcare Provider</label>
+                                <input type="text" id="healthcare-provider" placeholder="Doctor/Midwife name">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="health-conditions">
+                        <h3>🩺 Medical Conditions</h3>
+                        <div class="condition-grid">
+                            <label class="condition-toggle">
+                                <input type="checkbox" id="gestational-diabetes" name="conditions">
+                                <span class="toggle-label">Gestational Diabetes</span>
+                            </label>
+                            
+                            <label class="condition-toggle">
+                                <input type="checkbox" id="preeclampsia" name="conditions">
+                                <span class="toggle-label">Preeclampsia / High Blood Pressure</span>
+                            </label>
+                            
+                            <label class="condition-toggle">
+                                <input type="checkbox" id="anemia" name="conditions">
+                                <span class="toggle-label">Anemia</span>
+                            </label>
+                            
+                            <label class="condition-toggle">
+                                <input type="checkbox" id="thyroid" name="conditions">
+                                <span class="toggle-label">Thyroid Disorders</span>
+                            </label>
+                            
+                            <label class="condition-toggle">
+                                <input type="checkbox" id="placenta-previa" name="conditions">
+                                <span class="toggle-label">Placenta Previa</span>
+                            </label>
+                            
+                            <label class="condition-toggle">
+                                <input type="checkbox" id="hyperemesis" name="conditions">
+                                <span class="toggle-label">Hyperemesis Gravidarum</span>
+                            </label>
+                            
+                            <label class="condition-toggle">
+                                <input type="checkbox" id="rh-negative" name="conditions">
+                                <span class="toggle-label">Rh Negative Blood Type</span>
+                            </label>
+                            
+                            <label class="condition-toggle">
+                                <input type="checkbox" id="multiples" name="conditions">
+                                <span class="toggle-label">Multiple Pregnancy (Twins/Triplets)</span>
+                            </label>
+                        </div>
+                        
+                        <h3>⚠️ Risk Factors</h3>
+                        <div class="condition-grid">
+                            <label class="condition-toggle">
+                                <input type="checkbox" id="high-risk" name="risk-factors">
+                                <span class="toggle-label">High-Risk Pregnancy</span>
+                            </label>
+                            
+                            <label class="condition-toggle">
+                                <input type="checkbox" id="over-35" name="risk-factors">
+                                <span class="toggle-label">Age 35 or Older</span>
+                            </label>
+                            
+                            <label class="condition-toggle">
+                                <input type="checkbox" id="previous-miscarriage" name="risk-factors">
+                                <span class="toggle-label">Previous Miscarriage</span>
+                            </label>
+                            
+                            <label class="condition-toggle">
+                                <input type="checkbox" id="ivf" name="risk-factors">
+                                <span class="toggle-label">IVF Pregnancy</span>
+                            </label>
+                        </div>
+                        
+                        <h3>🍽️ Dietary Restrictions</h3>
+                        <div class="condition-grid">
+                            <label class="condition-toggle">
+                                <input type="checkbox" id="vegetarian" name="diet">
+                                <span class="toggle-label">Vegetarian</span>
+                            </label>
+                            
+                            <label class="condition-toggle">
+                                <input type="checkbox" id="vegan" name="diet">
+                                <span class="toggle-label">Vegan</span>
+                            </label>
+                            
+                            <label class="condition-toggle">
+                                <input type="checkbox" id="gluten-free" name="diet">
+                                <span class="toggle-label">Gluten-Free</span>
+                            </label>
+                            
+                            <label class="condition-toggle">
+                                <input type="checkbox" id="lactose-intolerant" name="diet">
+                                <span class="toggle-label">Lactose Intolerant</span>
+                            </label>
+                        </div>
+                        
+                        <h3>📅 Pregnancy Stage</h3>
+                        <div class="trimester-selector">
+                            <label class="radio-option">
+                                <input type="radio" name="trimester" value="first" id="first-trimester">
+                                <span class="radio-label">First Trimester (Weeks 1-12)</span>
+                            </label>
+                            
+                            <label class="radio-option">
+                                <input type="radio" name="trimester" value="second" id="second-trimester">
+                                <span class="radio-label">Second Trimester (Weeks 13-27)</span>
+                            </label>
+                            
+                            <label class="radio-option">
+                                <input type="radio" name="trimester" value="third" id="third-trimester">
+                                <span class="radio-label">Third Trimester (Weeks 28-40)</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <button id="saveProfile" class="save-profile-btn">💾 Save Profile</button>
+                    
+                    <div class="profile-note">
+                        <p>🔒 Your health information is stored locally and only used to personalize your safety recommendations.</p>
+                    </div>
                 </div>
-                <div id="historyItems" class="history-items"></div>
+            </div>
+            
+            <!-- History Tab Content -->
+            <div id="historyTab" class="tab-content" style="display: none;">
+                <div class="history-section">
+                    <div class="history-header">
+                        <h3>Search History</h3>
+                        <button id="clearHistory" class="clear-history">Clear All</button>
+                    </div>
+                    <div id="historyItems" class="history-items"></div>
+                </div>
             </div>
 
         </main>
