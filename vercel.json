@@ -1,7 +1,7 @@
 {
   "builds": [
     {
-      "src": "server-premium.js",
+      "src": "server-production.js",
       "use": "@vercel/node"
     },
     {
@@ -16,7 +16,7 @@
       "src": "*.js",
       "use": "@vercel/static",
       "config": {
-        "excludeFiles": "server-premium.js"
+        "excludeFiles": "server-production.js"
       }
     }
   ],
@@ -35,43 +35,43 @@
     },
     {
       "src": "/login",
-      "dest": "/server-premium.js"
+      "dest": "/server-production.js"
     },
     {
       "src": "/upgrade",
-      "dest": "/server-premium.js"
+      "dest": "/server-production.js"
     },
     {
       "src": "/app",
-      "dest": "/server-premium.js"
+      "dest": "/server-production.js"
     },
     {
       "src": "/auth/(.*)",
-      "dest": "/server-premium.js"
+      "dest": "/server-production.js"
     },
     {
       "src": "/payment/(.*)",
-      "dest": "/server-premium.js"
+      "dest": "/server-production.js"
     },
     {
       "src": "/policy",
-      "dest": "/server-premium.js"
+      "dest": "/server-production.js"
     },
     {
       "src": "/terms",
-      "dest": "/server-premium.js"
+      "dest": "/server-production.js"
     },
     {
       "src": "/delete-my-data",
-      "dest": "/server-premium.js"
+      "dest": "/server-production.js"
     },
     {
       "src": "/api/(.*)",
-      "dest": "/server-premium.js"
+      "dest": "/server-production.js"
     },
     {
       "src": "/",
-      "dest": "/server-premium.js"
+      "dest": "/server-production.js"
     }
   ]
 }
