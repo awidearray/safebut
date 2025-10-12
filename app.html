@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Safebut? - Pregnancy Safety Checker</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤰Safebut?</h1>
+            <p class="subtitle">Check if anything safe during pregnancy</p>
+        </header>
+
+        <main>
+            <div class="search-section">
+                <div class="input-group">
+                    <input 
+                        type="text" 
+                        id="searchInput" 
+                        placeholder="Enter anything to check if it's safe (e.g., 'coffee', 'flying', 'yoga', 'hot tubs')"
+                        autocomplete="off"
+                    >
+                    <button id="cameraBtn" type="button" class="camera-btn" title="Take a photo">
+                        📷
+                    </button>
+                    <button id="searchBtn" type="button">
+                        <span class="btn-text">Check Safety</span>
+                        <span class="loader" style="display: none;"></span>
+                    </button>
+                </div>
+                
+                <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;">
+                
+                <div id="imagePreview" class="image-preview" style="display: none;">
+                    <img id="capturedImage" alt="Captured image">
+                    <button id="removeImage" class="remove-image">✕</button>
+                </div>
+                <div class="example-chips">
+                    <span class="chip" data-example="coffee">Coffee</span>
+                    <span class="chip" data-example="sushi">Sushi</span>
+                    <span class="chip" data-example="flying">Flying</span>
+                    <span class="chip" data-example="yoga">Yoga</span>
+                    <span class="chip" data-example="hot tubs">Hot Tubs</span>
+                    <span class="chip" data-example="hair dye">Hair Dye</span>
+                </div>
+            </div>
+
+            <div id="results" class="results-section" style="display: none;">
+                <div class="result-card">
+                    <div class="result-header">
+                        <h2 id="itemName"></h2>
+                        <span id="safetyBadge" class="safety-badge"></span>
+                    </div>
+                    
+                    <div id="safetyVerdict" class="safety-verdict"></div>
+                    
+                    <div class="risk-scale">
+                        <h3>Risk Level Assessment</h3>
+                        <div class="risk-meter">
+                            <div id="riskIndicator" class="risk-indicator">5</div>
+                        </div>
+                        <div class="risk-labels">
+                            <span>1 (Safest)</span>
+                            <span>5 (Moderate)</span>
+                            <span>10 (Most Risky)</span>
+                        </div>
+                    </div>
+                    
+                    <div id="resultContent" class="result-content"></div>
+                    
+                    <div id="referencesSection" class="references-section">
+                        <h3>📚 Learn More</h3>
+                        <div id="referenceLinks"></div>
+                    </div>
+                    
+                    <div class="disclaimer">
+                        <strong>⚠️ Important:</strong> This information is AI-generated and should not replace professional medical advice. Always consult your healthcare provider before making any decisions during pregnancy.
+                    </div>
+                </div>
+            </div>
+
+            <div id="error" class="error-message" style="display: none;">
+                <span class="error-icon">⚠️</span>
+                <span id="errorText"></span>
+            </div>
+            
+            <div id="historySection" class="history-section" style="display: none;">
+                <div class="history-header">
+                    <h3>Search History</h3>
+                    <button id="clearHistory" class="clear-history">Clear All</button>
+                </div>
+                <div id="historyItems" class="history-items"></div>
+            </div>
+
+        </main>
+
+        <footer>
+            <p>This tool provides general information only. Always consult your healthcare provider for personalized medical advice.</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
