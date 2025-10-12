@@ -13,6 +13,21 @@ const CACHE_DURATION = 60 * 60 * 1000; // 1 hour in milliseconds
 
 app.use(cors());
 app.use(express.json());
+
+// Add CSP headers middleware
+app.use((req, res, next) => {
+    res.setHeader(
+        'Content-Security-Policy',
+        "default-src 'self'; " +
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
+        "style-src 'self' 'unsafe-inline'; " +
+        "img-src 'self' data: blob: https:; " +
+        "font-src 'self' data:; " +
+        "connect-src 'self' http://localhost:* https://api.venice.ai;"
+    );
+    next();
+});
+
 app.use(express.static('.'));
 
 app.get('/', (req, res) => {
