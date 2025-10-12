@@ -28,7 +28,16 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use(express.static('.'));
+// Serve static files with correct MIME types
+app.use(express.static(path.join(__dirname), {
+    setHeaders: (res, filePath) => {
+        if (filePath.endsWith('.css')) {
+            res.setHeader('Content-Type', 'text/css');
+        } else if (filePath.endsWith('.js')) {
+            res.setHeader('Content-Type', 'application/javascript');
+        }
+    }
+}));
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
@@ -36,6 +45,17 @@ app.get('/', (req, res) => {
 
 app.get('/app', (req, res) => {
     res.sendFile(path.join(__dirname, 'app.html'));
+});
+
+// Serve static files explicitly for Vercel
+app.get('/styles.css', (req, res) => {
+    res.setHeader('Content-Type', 'text/css');
+    res.sendFile(path.join(__dirname, 'styles.css'));
+});
+
+app.get('/app.js', (req, res) => {
+    res.setHeader('Content-Type', 'application/javascript');
+    res.sendFile(path.join(__dirname, 'app.js'));
 });
 
 app.post('/api/check-safety', async (req, res) => {
