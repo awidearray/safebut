@@ -48,6 +48,18 @@ app.get('/app', (req, res) => {
     res.sendFile(path.join(__dirname, 'app.html'));
 });
 
+app.get('/policy', (req, res) => {
+    res.sendFile(path.join(__dirname, 'privacy-policy.html'));
+});
+
+app.get('/terms', (req, res) => {
+    res.sendFile(path.join(__dirname, 'terms-of-service.html'));
+});
+
+app.get('/delete-my-data', (req, res) => {
+    res.sendFile(path.join(__dirname, 'delete-my-data.html'));
+});
+
 // Serve static files explicitly for Vercel
 app.get('/styles.css', (req, res) => {
     res.setHeader('Content-Type', 'text/css');
