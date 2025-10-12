@@ -54,12 +54,12 @@ app.use((req, res, next) => {
     res.setHeader(
         'Content-Security-Policy',
         "default-src 'self'; " +
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com; " +
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://telegram.org; " +
         "style-src 'self' 'unsafe-inline'; " +
         "img-src 'self' data: blob: https:; " +
         "font-src 'self' data:; " +
-        "frame-src https://js.stripe.com; " +
-        "connect-src 'self' http://localhost:* https://api.venice.ai https://api.stripe.com;"
+        "frame-src https://js.stripe.com https://oauth.telegram.org; " +
+        "connect-src 'self' http://localhost:* https://api.venice.ai https://api.stripe.com https://telegram.org;"
     );
     next();
 });
