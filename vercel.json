@@ -34,6 +34,18 @@
       "dest": "/server.js"
     },
     {
+      "src": "/policy",
+      "dest": "/server.js"
+    },
+    {
+      "src": "/terms",
+      "dest": "/server.js"
+    },
+    {
+      "src": "/delete-my-data",
+      "dest": "/server.js"
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/server.js"
     },
