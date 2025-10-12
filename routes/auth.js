@@ -130,7 +130,7 @@ router.get('/me', async (req, res) => {
                 profilePicture: user.profilePicture,
                 isPremium: user.isPremium,
                 provider: user.provider,
-                dailySearchesRemaining: user.isPremium ? 'unlimited' : (3 - user.dailySearches.count),
+                dailySearchesRemaining: user.isPremium ? 'unlimited' : (1 - user.dailySearches.count),
                 canSearch: user.isPremium || hasFreebies
             }
         });

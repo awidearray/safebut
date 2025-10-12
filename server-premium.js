@@ -90,12 +90,43 @@ app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname, 'login.html'));
 });
 
-app.get('/app', (req, res) => {
-    // Check if user is logged in
-    if (!req.session.userId && !req.query.token) {
+app.get('/app', async (req, res) => {
+    try {
+        // Check for token in query or session
+        const token = req.query.token || req.session.token;
+        
+        if (!token) {
+            return res.redirect('/login');
+        }
+        
+        // Verify token and get user
+        const jwt = require('jsonwebtoken');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findById(decoded.userId);
+        
+        if (!user) {
+            return res.redirect('/login');
+        }
+        
+        // Store in session for future requests
+        req.session.token = token;
+        req.session.userId = user._id;
+        
+        // All users can access the app (1 free check per day for non-premium)
+        res.sendFile(path.join(__dirname, 'app.html'));
+    } catch (error) {
+        console.error('Auth error:', error);
         return res.redirect('/login');
     }
-    res.sendFile(path.join(__dirname, 'app.html'));
+});
+
+// Upgrade page for non-premium users
+app.get('/upgrade', async (req, res) => {
+    // Check if user is logged in
+    if (!req.session.userId) {
+        return res.redirect('/login');
+    }
+    res.sendFile(path.join(__dirname, 'upgrade.html'));
 });
 
 // Serve static files explicitly for Vercel
@@ -109,8 +140,8 @@ app.get('/app.js', (req, res) => {
     res.sendFile(path.join(__dirname, 'app.js'));
 });
 
-// Protected API endpoint for safety checks with auth and premium check
-app.post('/api/check-safety', verifyToken, requirePremium, async (req, res) => {
+// Protected API endpoint for safety checks with auth (1 free per day, then premium required)
+app.post('/api/check-safety', verifyToken, async (req, res) => {
     try {
         if (!process.env.VENICE_API_KEY) {
             console.error('VENICE_API_KEY is not set in environment variables');
@@ -185,6 +216,16 @@ TIPS: [2-3 short practical tips]`;
             timestamp: Date.now()
         });
         
+        // Check daily limit for free users
+        const canSearch = await req.user.checkDailyLimit();
+        if (!canSearch && !req.user.isPremium) {
+            return res.status(403).json({ 
+                error: 'Daily limit reached', 
+                message: 'You\'ve used your free daily check. Upgrade to premium for unlimited checks!',
+                requiresUpgrade: true 
+            });
+        }
+        
         // Increment search count and save to user's history
         await req.user.incrementSearchCount();
         await req.user.addToHistory(item, riskScore);
@@ -199,8 +240,8 @@ TIPS: [2-3 short practical tips]`;
     }
 });
 
-// Protected image analysis endpoint
-app.post('/api/check-image-safety', verifyToken, requirePremium, async (req, res) => {
+// Protected image analysis endpoint (1 free per day, then premium required)
+app.post('/api/check-image-safety', verifyToken, async (req, res) => {
     try {
         if (!process.env.VENICE_API_KEY) {
             return res.status(500).json({ error: 'Venice API key not configured' });

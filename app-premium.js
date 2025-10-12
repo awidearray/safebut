@@ -115,7 +115,7 @@ class PregnancySafetyChecker {
         modal.innerHTML = `
             <div class="upgrade-modal-content">
                 <h2>🎯 Daily Limit Reached</h2>
-                <p>You've used all 3 free searches for today</p>
+                <p>You've used your free daily check</p>
                 <div class="upgrade-benefits">
                     <h3>Upgrade to Premium for just $0.99</h3>
                     <ul>
@@ -467,7 +467,9 @@ class PregnancySafetyChecker {
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            if (errorData.requiresPayment) {
+            if (errorData.requiresUpgrade) {
+                // Show upgrade prompt for daily limit
+                this.showUpgradePrompt();
                 throw new Error('Daily limit reached');
             }
             throw new Error(errorData.error || `Server Error: ${response.status}`);
@@ -488,7 +490,9 @@ class PregnancySafetyChecker {
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            if (errorData.requiresPayment) {
+            if (errorData.requiresUpgrade) {
+                // Show upgrade prompt for daily limit
+                this.showUpgradePrompt();
                 throw new Error('Daily limit reached');
             }
             throw new Error(errorData.error || `Server Error: ${response.status}`);

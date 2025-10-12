@@ -49,8 +49,8 @@ userSchema.methods.checkDailyLimit = function() {
     // Premium users have unlimited searches
     if (this.isPremium) return true;
     
-    // Free users get 3 searches per day
-    return this.dailySearches.count < 3;
+    // Free users get 1 search per day
+    return this.dailySearches.count < 1;
 };
 
 // Increment search count
