@@ -9,6 +9,57 @@ const generateToken = (userId) => {
     return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '30d' });
 };
 
+// Simple email login (no password, just email)
+router.post('/email-login', async (req, res) => {
+    try {
+        const { email } = req.body;
+        
+        if (!email || !email.includes('@')) {
+            return res.status(400).json({ success: false, error: 'Valid email required' });
+        }
+        
+        // Find or create user by email
+        let user = await User.findOne({ email });
+        
+        if (!user) {
+            // Create new user with email
+            user = new User({
+                email,
+                name: email.split('@')[0], // Use email prefix as name
+                provider: 'email'
+            });
+            await user.save();
+        }
+        
+        // Generate JWT token
+        const token = generateToken(user._id);
+        
+        // Update session
+        req.session.token = token;
+        req.session.userId = user._id;
+        
+        // Update last login
+        user.lastLogin = new Date();
+        await user.save();
+        
+        return res.json({
+            success: true,
+            token: token,
+            isPremium: user.isPremium,
+            user: {
+                id: user._id,
+                email: user.email,
+                name: user.name,
+                isPremium: user.isPremium
+            }
+        });
+        
+    } catch (error) {
+        console.error('Email login error:', error);
+        res.status(500).json({ success: false, error: 'Login failed' });
+    }
+});
+
 // Verify Telegram auth data
 function verifyTelegramAuth(authData) {
     const secret = crypto.createHash('sha256')

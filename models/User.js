@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema({
     username: String,
     email: { type: String, unique: true, sparse: true },
     profilePicture: String,
-    provider: { type: String, enum: ['telegram'], required: true },
+    provider: { type: String, enum: ['telegram', 'email'], required: true },
     
     // Subscription info
     isPremium: { type: Boolean, default: false },
