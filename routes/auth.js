@@ -58,6 +58,72 @@ router.post('/logout', (req, res) => {
     });
 });
 
+// Handle Facebook SDK login
+router.post('/social-login', async (req, res) => {
+    try {
+        const { accessToken, provider } = req.body;
+        
+        if (!accessToken || !provider) {
+            return res.status(400).json({ success: false, error: 'Missing access token or provider' });
+        }
+
+        let userData;
+        
+        if (provider === 'facebook') {
+            // Verify Facebook access token and get user info
+            const fbResponse = await fetch(
+                `https://graph.facebook.com/me?fields=id,name,email,picture&access_token=${accessToken}`
+            );
+            
+            if (!fbResponse.ok) {
+                return res.status(401).json({ success: false, error: 'Invalid Facebook token' });
+            }
+            
+            userData = await fbResponse.json();
+            
+            // Find or create user
+            let user = await User.findOne({ facebookId: userData.id });
+            
+            if (!user) {
+                user = new User({
+                    facebookId: userData.id,
+                    name: userData.name,
+                    email: userData.email,
+                    profilePicture: userData.picture?.data?.url,
+                    provider: 'facebook'
+                });
+                await user.save();
+            }
+            
+            // Generate JWT token
+            const token = generateToken(user._id);
+            
+            // Update last login
+            user.lastLogin = new Date();
+            await user.save();
+            
+            return res.json({
+                success: true,
+                token: token,
+                isPremium: user.isPremium,
+                user: {
+                    id: user._id,
+                    name: user.name,
+                    email: user.email,
+                    profilePicture: user.profilePicture,
+                    isPremium: user.isPremium
+                }
+            });
+        }
+        
+        return res.status(400).json({ success: false, error: 'Unsupported provider' });
+        
+    } catch (error) {
+        console.error('Social login error:', error);
+        res.status(500).json({ success: false, error: 'Authentication failed' });
+    }
+});
+
 // Get current user
 router.get('/me', async (req, res) => {
     try {

@@ -210,12 +210,25 @@
         </div>
 
         <div class="login-buttons">
-            <a href="/auth/facebook" class="social-login-btn facebook-btn">
+            <!-- Custom styled Facebook button that uses SDK -->
+            <button onclick="loginWithFacebook()" class="social-login-btn facebook-btn">
                 <svg class="social-icon" viewBox="0 0 24 24" fill="white">
                     <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
                 </svg>
                 Continue with Facebook
-            </a>
+            </button>
+
+            <!-- Alternative: Native Facebook Login Button (uncomment to use) -->
+            <!-- <div class="fb-login-button" 
+                 data-width="100%" 
+                 data-size="large" 
+                 data-button-type="continue_with" 
+                 data-layout="default" 
+                 data-auto-logout-link="false" 
+                 data-use-continue-as="false"
+                 scope="public_profile,email"
+                 onlogin="checkLoginState();">
+            </div> -->
 
             <a href="/auth/instagram" class="social-login-btn instagram-btn">
                 <svg class="social-icon" viewBox="0 0 24 24" fill="white">
@@ -229,15 +242,119 @@
     </div>
 
     <script>
+        // Facebook SDK Configuration
+        window.fbAsyncInit = function() {
+            FB.init({
+                appId      : '1193658766155095', // Your Facebook App ID
+                cookie     : true,
+                xfbml      : true,
+                version    : 'v18.0'
+            });
+            
+            // Check login status when SDK loads
+            FB.getLoginStatus(function(response) {
+                statusChangeCallback(response);
+            });
+        };
+
+        // Handle the login status response
+        function statusChangeCallback(response) {
+            console.log('statusChangeCallback', response);
+            
+            if (response.status === 'connected') {
+                // User is logged into Facebook and your app
+                console.log('User is connected');
+                // Send the access token to your server
+                sendTokenToServer(response.authResponse.accessToken, 'facebook');
+            } else if (response.status === 'not_authorized') {
+                // User is logged into Facebook but not your app
+                console.log('User is logged into Facebook but not the app');
+            } else {
+                // User is not logged into Facebook
+                console.log('User is not logged into Facebook');
+            }
+        }
+
+        // Facebook login function
+        function loginWithFacebook() {
+            FB.login(function(response) {
+                if (response.authResponse) {
+                    console.log('Welcome! Fetching your information....');
+                    // Send token to server
+                    sendTokenToServer(response.authResponse.accessToken, 'facebook');
+                } else {
+                    console.log('User cancelled login or did not fully authorize.');
+                    showError('Facebook login cancelled or failed');
+                }
+            }, {scope: 'email,public_profile'});
+        }
+
+        // Function for Facebook Login Button callback
+        function checkLoginState() {
+            FB.getLoginStatus(function(response) {
+                statusChangeCallback(response);
+            });
+        }
+
+        // Send token to server for verification and user creation
+        async function sendTokenToServer(accessToken, provider) {
+            try {
+                const response = await fetch('/auth/social-login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        accessToken: accessToken,
+                        provider: provider
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Store JWT token
+                    localStorage.setItem('authToken', data.token);
+                    // Redirect to app
+                    window.location.href = `/app?token=${data.token}&premium=${data.isPremium}`;
+                } else {
+                    showError(data.error || 'Authentication failed');
+                }
+            } catch (error) {
+                console.error('Error sending token to server:', error);
+                showError('Authentication failed. Please try again.');
+            }
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
         // Check for auth errors in URL
         const urlParams = new URLSearchParams(window.location.search);
         const error = urlParams.get('error');
         
         if (error === 'auth_failed') {
-            const errorDiv = document.getElementById('errorMessage');
-            errorDiv.textContent = 'Authentication failed. Please try again.';
-            errorDiv.style.display = 'block';
+            showError('Authentication failed. Please try again.');
         }
+
+        // Update Facebook login button to use SDK
+        document.addEventListener('DOMContentLoaded', function() {
+            const fbButton = document.querySelector('.facebook-btn');
+            if (fbButton) {
+                fbButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    loginWithFacebook();
+                });
+            }
+        });
+    </script>
+
+    <!-- Load Facebook SDK -->
+    <script async defer crossorigin="anonymous" 
+            src="https://connect.facebook.net/en_US/sdk.js">
     </script>
 </body>
 </html>
