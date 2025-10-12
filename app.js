@@ -33,6 +33,12 @@ class PregnancySafetyChecker {
 
         // Camera functionality
         cameraBtn.addEventListener('click', () => {
+            // Check if user is premium (camera is premium-only feature)
+            const isPremium = localStorage.getItem('isPremium') === 'true';
+            if (!isPremium) {
+                this.showUpgradePrompt();
+                return;
+            }
             cameraInput.click();
         });
 
@@ -47,6 +53,13 @@ class PregnancySafetyChecker {
 
     async handleImageCapture(file) {
         if (!file) return;
+
+        // Check if user is premium (camera is premium-only feature)
+        const isPremium = localStorage.getItem('isPremium') === 'true';
+        if (!isPremium) {
+            this.showUpgradePrompt();
+            return;
+        }
 
         // Compress image before processing
         const compressedImage = await this.compressImage(file);
@@ -374,6 +387,66 @@ class PregnancySafetyChecker {
         this.searchHistory = [];
         localStorage.removeItem('pregnancySafetyHistory');
         this.displayHistory();
+    }
+
+    showUpgradePrompt() {
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        `;
+        
+        modal.innerHTML = `
+            <div style="
+                background: white;
+                border-radius: 20px;
+                padding: 40px;
+                max-width: 500px;
+                text-align: center;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            ">
+                <h2 style="color: #667eea; margin-bottom: 20px;">📸 Camera Access is Premium Only</h2>
+                <p style="color: #666; margin-bottom: 25px;">
+                    Upgrade to Premium for just $0.99 lifetime to unlock:
+                </p>
+                <ul style="text-align: left; margin: 0 auto 25px; max-width: 300px; color: #333;">
+                    <li style="margin-bottom: 10px;">✅ Camera & Image Analysis</li>
+                    <li style="margin-bottom: 10px;">✅ Unlimited searches (vs 1/day)</li>
+                    <li style="margin-bottom: 10px;">✅ Detailed medical reports</li>
+                    <li style="margin-bottom: 10px;">✅ Export history as PDF</li>
+                </ul>
+                <div style="display: flex; gap: 15px; justify-content: center;">
+                    <a href="/login" style="
+                        display: inline-block;
+                        padding: 12px 30px;
+                        background: #667eea;
+                        color: white;
+                        text-decoration: none;
+                        border-radius: 25px;
+                        font-weight: 600;
+                    ">Upgrade Now</a>
+                    <button onclick="this.parentElement.parentElement.parentElement.remove()" style="
+                        padding: 12px 30px;
+                        background: #e2e8f0;
+                        color: #333;
+                        border: none;
+                        border-radius: 25px;
+                        font-weight: 600;
+                        cursor: pointer;
+                    ">Maybe Later</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
     }
 
     showLoading(show) {
