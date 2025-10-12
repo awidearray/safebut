@@ -5,7 +5,6 @@ const path = require('path');
 const axios = require('axios');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
-const passport = require('./config/passport');
 const connectDB = require('./config/database');
 
 // Import middleware
@@ -42,9 +41,6 @@ app.use(session({
     }
 }));
 
-// Initialize Passport
-app.use(passport.initialize());
-app.use(passport.session());
 
 app.use(cors({
     origin: process.env.APP_URL || 'http://localhost:3000',

@@ -1,5 +1,5 @@
 const express = require('express');
-const passport = require('passport');
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const router = express.Router();
@@ -9,43 +9,85 @@ const generateToken = (userId) => {
     return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '30d' });
 };
 
-// Facebook login
-router.get('/facebook', passport.authenticate('facebook', { 
-    scope: ['email', 'public_profile'] 
-}));
+// Verify Telegram auth data
+function verifyTelegramAuth(authData) {
+    const secret = crypto.createHash('sha256')
+        .update(process.env.TELEGRAM_BOT_TOKEN)
+        .digest();
+    
+    const checkString = Object.keys(authData)
+        .filter(key => key !== 'hash')
+        .sort()
+        .map(key => `${key}=${authData[key]}`)
+        .join('\n');
+    
+    const hash = crypto.createHmac('sha256', secret)
+        .update(checkString)
+        .digest('hex');
+    
+    return hash === authData.hash;
+}
 
-router.get('/facebook/callback',
-    passport.authenticate('facebook', { failureRedirect: '/app?error=auth_failed' }),
-    async (req, res) => {
-        const token = generateToken(req.user._id);
+// Telegram login
+router.post('/telegram', async (req, res) => {
+    try {
+        const authData = req.body;
+        
+        // Verify the authentication data from Telegram
+        if (!verifyTelegramAuth(authData)) {
+            return res.status(401).json({ success: false, error: 'Invalid authentication data' });
+        }
+        
+        // Check if auth_date is not too old (5 minutes)
+        const authDate = parseInt(authData.auth_date);
+        const currentTime = Math.floor(Date.now() / 1000);
+        if (currentTime - authDate > 300) {
+            return res.status(401).json({ success: false, error: 'Authentication data expired' });
+        }
+        
+        // Find or create user
+        let user = await User.findOne({ telegramId: authData.id });
+        
+        if (!user) {
+            user = new User({
+                telegramId: authData.id,
+                name: `${authData.first_name} ${authData.last_name || ''}`.trim(),
+                username: authData.username,
+                profilePicture: authData.photo_url,
+                provider: 'telegram'
+            });
+            await user.save();
+        }
+        
+        // Generate JWT token
+        const token = generateToken(user._id);
+        
+        // Update session
         req.session.token = token;
-        req.session.userId = req.user._id;
+        req.session.userId = user._id;
         
         // Update last login
-        req.user.lastLogin = new Date();
-        await req.user.save();
+        user.lastLogin = new Date();
+        await user.save();
         
-        res.redirect(`/app?token=${token}&premium=${req.user.isPremium}`);
+        return res.json({
+            success: true,
+            token: token,
+            isPremium: user.isPremium,
+            user: {
+                id: user._id,
+                name: user.name,
+                username: user.username,
+                profilePicture: user.profilePicture,
+                isPremium: user.isPremium
+            }
+        });
+        
+    } catch (error) {
+        console.error('Telegram login error:', error);
+        res.status(500).json({ success: false, error: 'Authentication failed' });
     }
-);
-
-// Instagram login
-router.get('/instagram', passport.authenticate('instagram'));
-
-router.get('/instagram/callback',
-    passport.authenticate('instagram', { failureRedirect: '/app?error=auth_failed' }),
-    async (req, res) => {
-        const token = generateToken(req.user._id);
-        req.session.token = token;
-        req.session.userId = req.user._id;
-        
-        // Update last login
-        req.user.lastLogin = new Date();
-        await req.user.save();
-        
-        res.redirect(`/app?token=${token}&premium=${req.user.isPremium}`);
-    }
-);
+});
 
 // Logout
 router.post('/logout', (req, res) => {
@@ -58,71 +100,6 @@ router.post('/logout', (req, res) => {
     });
 });
 
-// Handle Facebook SDK login
-router.post('/social-login', async (req, res) => {
-    try {
-        const { accessToken, provider } = req.body;
-        
-        if (!accessToken || !provider) {
-            return res.status(400).json({ success: false, error: 'Missing access token or provider' });
-        }
-
-        let userData;
-        
-        if (provider === 'facebook') {
-            // Verify Facebook access token and get user info
-            const fbResponse = await fetch(
-                `https://graph.facebook.com/me?fields=id,name,email,picture&access_token=${accessToken}`
-            );
-            
-            if (!fbResponse.ok) {
-                return res.status(401).json({ success: false, error: 'Invalid Facebook token' });
-            }
-            
-            userData = await fbResponse.json();
-            
-            // Find or create user
-            let user = await User.findOne({ facebookId: userData.id });
-            
-            if (!user) {
-                user = new User({
-                    facebookId: userData.id,
-                    name: userData.name,
-                    email: userData.email,
-                    profilePicture: userData.picture?.data?.url,
-                    provider: 'facebook'
-                });
-                await user.save();
-            }
-            
-            // Generate JWT token
-            const token = generateToken(user._id);
-            
-            // Update last login
-            user.lastLogin = new Date();
-            await user.save();
-            
-            return res.json({
-                success: true,
-                token: token,
-                isPremium: user.isPremium,
-                user: {
-                    id: user._id,
-                    name: user.name,
-                    email: user.email,
-                    profilePicture: user.profilePicture,
-                    isPremium: user.isPremium
-                }
-            });
-        }
-        
-        return res.status(400).json({ success: false, error: 'Unsupported provider' });
-        
-    } catch (error) {
-        console.error('Social login error:', error);
-        res.status(500).json({ success: false, error: 'Authentication failed' });
-    }
-});
 
 // Get current user
 router.get('/me', async (req, res) => {

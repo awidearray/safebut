@@ -2,14 +2,14 @@ const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
     // Social login info
-    facebookId: { type: String, unique: true, sparse: true },
-    instagramId: { type: String, unique: true, sparse: true },
+    telegramId: { type: String, unique: true, sparse: true },
     
     // User profile
     name: { type: String, required: true },
+    username: String,
     email: { type: String, unique: true, sparse: true },
     profilePicture: String,
-    provider: { type: String, enum: ['facebook', 'instagram'], required: true },
+    provider: { type: String, enum: ['telegram'], required: true },
     
     // Subscription info
     isPremium: { type: Boolean, default: false },

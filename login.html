@@ -95,23 +95,14 @@
             color: white;
         }
 
-        .facebook-btn {
-            background: #1877f2;
+        .telegram-btn {
+            background: #0088cc;
         }
 
-        .facebook-btn:hover {
-            background: #0c63d4;
+        .telegram-btn:hover {
+            background: #0077b5;
             transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(24, 119, 242, 0.4);
-        }
-
-        .instagram-btn {
-            background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045);
-        }
-
-        .instagram-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(131, 58, 180, 0.4);
+            box-shadow: 0 5px 20px rgba(0, 136, 204, 0.4);
         }
 
         .social-icon {
@@ -210,120 +201,44 @@
         </div>
 
         <div class="login-buttons">
-            <!-- Custom styled Facebook button that uses SDK -->
-            <button onclick="loginWithFacebook()" class="social-login-btn facebook-btn">
-                <svg class="social-icon" viewBox="0 0 24 24" fill="white">
-                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                </svg>
-                Continue with Facebook
-            </button>
-
-            <!-- Alternative: Native Facebook Login Button (uncomment to use) -->
-            <!-- <div class="fb-login-button" 
-                 data-width="100%" 
-                 data-size="large" 
-                 data-button-type="continue_with" 
-                 data-layout="default" 
-                 data-auto-logout-link="false" 
-                 data-use-continue-as="false"
-                 scope="public_profile,email"
-                 onlogin="checkLoginState();">
-            </div> -->
-
-            <a href="/auth/instagram" class="social-login-btn instagram-btn">
-                <svg class="social-icon" viewBox="0 0 24 24" fill="white">
-                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zM5.838 12a6.162 6.162 0 1 1 12.324 0 6.162 6.162 0 0 1-12.324 0zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm4.965-10.405a1.44 1.44 0 1 1 2.881.001 1.44 1.44 0 0 1-2.881-.001z"/>
-                </svg>
-                Continue with Instagram
-            </a>
+            <!-- Telegram Login Widget will be inserted here -->
+            <div id="telegram-login-container"></div>
         </div>
 
         <a href="/app" class="skip-link">Continue with limited free access (3 checks/day)</a>
     </div>
 
     <script>
-        // Facebook SDK Configuration
-        window.fbAsyncInit = function() {
-            FB.init({
-                appId      : '1193658766155095', // Your Facebook App ID
-                cookie     : true,
-                xfbml      : true,
-                version    : 'v18.0'
-            });
+        // Telegram Login Callback
+        function onTelegramAuth(user) {
+            console.log('Telegram user authenticated:', user);
             
-            // Check login status when SDK loads
-            FB.getLoginStatus(function(response) {
-                statusChangeCallback(response);
-            });
-        };
-
-        // Handle the login status response
-        function statusChangeCallback(response) {
-            console.log('statusChangeCallback', response);
-            
-            if (response.status === 'connected') {
-                // User is logged into Facebook and your app
-                console.log('User is connected');
-                // Send the access token to your server
-                sendTokenToServer(response.authResponse.accessToken, 'facebook');
-            } else if (response.status === 'not_authorized') {
-                // User is logged into Facebook but not your app
-                console.log('User is logged into Facebook but not the app');
-            } else {
-                // User is not logged into Facebook
-                console.log('User is not logged into Facebook');
-            }
-        }
-
-        // Facebook login function
-        function loginWithFacebook() {
-            FB.login(function(response) {
-                if (response.authResponse) {
-                    console.log('Welcome! Fetching your information....');
-                    // Send token to server
-                    sendTokenToServer(response.authResponse.accessToken, 'facebook');
-                } else {
-                    console.log('User cancelled login or did not fully authorize.');
-                    showError('Facebook login cancelled or failed');
-                }
-            }, {scope: 'email,public_profile'});
-        }
-
-        // Function for Facebook Login Button callback
-        function checkLoginState() {
-            FB.getLoginStatus(function(response) {
-                statusChangeCallback(response);
-            });
-        }
-
-        // Send token to server for verification and user creation
-        async function sendTokenToServer(accessToken, provider) {
-            try {
-                const response = await fetch('/auth/social-login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        accessToken: accessToken,
-                        provider: provider
-                    })
-                });
-
-                const data = await response.json();
-                
+            // Send Telegram auth data to backend
+            fetch('/auth/telegram', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(user),
+                credentials: 'include'
+            })
+            .then(response => response.json())
+            .then(data => {
                 if (data.success) {
-                    // Store JWT token
+                    // Store token
                     localStorage.setItem('authToken', data.token);
+                    localStorage.setItem('isPremium', data.isPremium);
+                    
                     // Redirect to app
                     window.location.href = `/app?token=${data.token}&premium=${data.isPremium}`;
                 } else {
-                    showError(data.error || 'Authentication failed');
+                    showError(data.error || 'Telegram login failed');
                 }
-            } catch (error) {
-                console.error('Error sending token to server:', error);
-                showError('Authentication failed. Please try again.');
-            }
+            })
+            .catch(error => {
+                console.error('Telegram login error:', error);
+                showError('Failed to connect with Telegram');
+            });
         }
 
         function showError(message) {
@@ -340,21 +255,22 @@
             showError('Authentication failed. Please try again.');
         }
 
-        // Update Facebook login button to use SDK
-        document.addEventListener('DOMContentLoaded', function() {
-            const fbButton = document.querySelector('.facebook-btn');
-            if (fbButton) {
-                fbButton.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    loginWithFacebook();
-                });
+        // Create Telegram Login Widget when page loads
+        window.addEventListener('load', function() {
+            const script = document.createElement('script');
+            script.src = 'https://telegram.org/js/telegram-widget.js?22';
+            script.setAttribute('data-telegram-login', 'SafeButBot'); // You'll need to create this bot
+            script.setAttribute('data-size', 'large');
+            script.setAttribute('data-onauth', 'onTelegramAuth(user)');
+            script.setAttribute('data-request-access', 'write');
+            script.setAttribute('data-radius', '20');
+            script.async = true;
+            
+            const container = document.getElementById('telegram-login-container');
+            if (container) {
+                container.appendChild(script);
             }
         });
-    </script>
-
-    <!-- Load Facebook SDK -->
-    <script async defer crossorigin="anonymous" 
-            src="https://connect.facebook.net/en_US/sdk.js">
     </script>
 </body>
 </html>
