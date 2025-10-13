@@ -12,12 +12,47 @@ router.get('/config', (req, res) => {
     });
 });
 
-// Create Stripe Checkout Session for $0.99 lifetime subscription
+// Create Stripe Checkout Session for tiered pricing
 router.post('/create-checkout-session', verifyToken, async (req, res) => {
     try {
         if (req.user.isPremium) {
             return res.status(400).json({ error: 'Already a premium member' });
         }
+
+        const { priceType } = req.body;
+
+        // Define pricing options
+        const pricingOptions = {
+            monthly: {
+                name: 'Safebut Premium - Monthly',
+                description: 'Monthly subscription to pregnancy safety checks',
+                unit_amount: 99, // $0.99 in cents
+                mode: 'subscription',
+                recurring: {
+                    interval: 'month'
+                },
+                productType: 'monthly_subscription'
+            },
+            annual: {
+                name: 'Safebut Premium - Annual',
+                description: 'Annual subscription to pregnancy safety checks (Save 17%)',
+                unit_amount: 999, // $9.99 in cents
+                mode: 'subscription',
+                recurring: {
+                    interval: 'year'
+                },
+                productType: 'annual_subscription'
+            },
+            lifetime: {
+                name: 'Safebut Premium - Lifetime',
+                description: 'Lifetime access to all premium features',
+                unit_amount: 1999, // $19.99 in cents
+                mode: 'payment',
+                productType: 'lifetime_premium'
+            }
+        };
+
+        const selectedPrice = pricingOptions[priceType] || pricingOptions.lifetime;
 
         // Create or get Stripe customer
         let customer;
@@ -35,28 +70,43 @@ router.post('/create-checkout-session', verifyToken, async (req, res) => {
             await req.user.save();
         }
 
+        // Build line items based on selected price
+        const lineItems = [{
+            price_data: {
+                currency: 'usd',
+                product_data: {
+                    name: selectedPrice.name,
+                    description: selectedPrice.description
+                },
+                unit_amount: selectedPrice.unit_amount,
+                ...(selectedPrice.recurring && {
+                    recurring: selectedPrice.recurring
+                })
+            },
+            quantity: 1
+        }];
+
         // Create Checkout Session
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             customer: customer.id,
-            line_items: [{
-                price_data: {
-                    currency: 'usd',
-                    product_data: {
-                        name: 'Safebut? Lifetime Premium Access',
-                        description: 'Unlimited pregnancy safety checks forever'
-                    },
-                    unit_amount: 99 // $0.99 in cents
-                },
-                quantity: 1
-            }],
-            mode: 'payment',
+            line_items: lineItems,
+            mode: selectedPrice.mode,
             success_url: `${process.env.APP_URL}/app.html?success=true&session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${process.env.APP_URL}/app.html`,
             metadata: {
                 userId: req.user._id.toString(),
-                productType: 'lifetime_premium'
-            }
+                productType: selectedPrice.productType,
+                priceType: priceType
+            },
+            ...(selectedPrice.mode === 'subscription' && {
+                subscription_data: {
+                    metadata: {
+                        userId: req.user._id.toString(),
+                        productType: selectedPrice.productType
+                    }
+                }
+            })
         });
 
         res.json({
@@ -216,6 +266,49 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
                     await user.save();
                     console.log(`🎉 Premium activated for user: ${user.email} (ID: ${user._id})`);
                 }
+            }
+        }
+
+        // Handle subscription created/updated
+        if (event.type === 'customer.subscription.created' || event.type === 'customer.subscription.updated') {
+            const subscription = event.data.object;
+            const userId = subscription.metadata?.userId;
+            const customerId = subscription.customer;
+            
+            console.log('Subscription event:', event.type, 'for user:', userId);
+            
+            let user = null;
+            
+            // Find user by ID or Stripe customer ID
+            if (userId) {
+                user = await User.findById(userId);
+            }
+            
+            if (!user && customerId) {
+                user = await User.findOne({ stripeCustomerId: customerId });
+            }
+            
+            if (user && subscription.status === 'active') {
+                user.isPremium = true;
+                user.stripeSubscriptionId = subscription.id;
+                user.subscriptionDate = new Date();
+                user.subscriptionType = subscription.items.data[0]?.price?.recurring?.interval || 'unknown';
+                await user.save();
+                console.log(`🎉 Subscription activated for user: ${user.email} (Type: ${user.subscriptionType})`);
+            }
+        }
+
+        // Handle subscription cancelled
+        if (event.type === 'customer.subscription.deleted') {
+            const subscription = event.data.object;
+            const customerId = subscription.customer;
+            
+            const user = await User.findOne({ stripeCustomerId: customerId });
+            if (user) {
+                user.isPremium = false;
+                user.subscriptionEndDate = new Date();
+                await user.save();
+                console.log(`⚠️ Subscription cancelled for user: ${user.email}`);
             }
         }
 

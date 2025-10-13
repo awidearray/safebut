@@ -303,20 +303,48 @@
                     </div>
 
                     <div class="upgrade-pricing">
-                        <div class="price-card">
-                            <div class="price-label">One-time payment</div>
-                            <div class="price">$0.99</div>
-                            <div class="price-subtitle">Lifetime access</div>
+                        <!-- Monthly Plan -->
+                        <div class="price-card" data-price-type="monthly">
+                            <div class="price-label">Monthly</div>
+                            <div class="price">$0.99<span style="font-size: 0.5em">/mo</span></div>
+                            <div class="price-subtitle">Billed monthly</div>
                             <div class="price-features">
-                                No subscriptions • No hidden fees • Forever yours
+                                Cancel anytime • Auto-renews
                             </div>
+                            <button class="upgrade-pay-btn" data-price="monthly" data-amount="$0.99/mo">
+                                Choose Monthly
+                            </button>
+                        </div>
+                        
+                        <!-- Annual Plan -->
+                        <div class="price-card featured" data-price-type="annual">
+                            <div class="price-badge">BEST VALUE</div>
+                            <div class="price-label">Annual</div>
+                            <div class="price">$9.99<span style="font-size: 0.5em">/yr</span></div>
+                            <div class="price-subtitle">Save 17%</div>
+                            <div class="price-features">
+                                Just $0.83/month • Billed yearly
+                            </div>
+                            <button class="upgrade-pay-btn" data-price="annual" data-amount="$9.99/yr">
+                                Choose Annual
+                            </button>
+                        </div>
+                        
+                        <!-- Lifetime Plan -->
+                        <div class="price-card" data-price-type="lifetime">
+                            <div class="price-label">Lifetime</div>
+                            <div class="price">$19.99</div>
+                            <div class="price-subtitle">One-time payment</div>
+                            <div class="price-features">
+                                No subscriptions • Forever yours
+                            </div>
+                            <button class="upgrade-pay-btn" data-price="lifetime" data-amount="$19.99">
+                                Get Lifetime Access
+                            </button>
                         </div>
                     </div>
 
                     <div class="upgrade-actions">
-                        <button id="upgradePayButton" class="upgrade-pay-btn">
-                            🚀 Upgrade Now for $0.99
-                        </button>
                         
                         <div class="upgrade-loading" id="upgradeLoading" style="display: none;">
                             Processing payment...
@@ -397,24 +425,26 @@
                 .catch(error => console.error('Failed to load Stripe config:', error));
             
             // Upgrade payment handler
-            function handleUpgradePayment() {
-                const button = document.getElementById('upgradePayButton');
+            function handleUpgradePayment(priceType) {
+                const buttons = document.querySelectorAll('.upgrade-pay-btn');
                 const loading = document.getElementById('upgradeLoading');
                 const errorDiv = document.getElementById('upgradeErrorMessage');
                 const successDiv = document.getElementById('upgradeSuccessMessage');
                 
-                button.disabled = true;
+                // Disable all buttons
+                buttons.forEach(btn => btn.disabled = true);
                 loading.style.display = 'block';
                 errorDiv.style.display = 'none';
                 successDiv.style.display = 'none';
                 
-                // Create checkout session
+                // Create checkout session with price type
                 fetch('/payment/create-checkout-session', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': 'Bearer ' + localStorage.getItem('authToken')
-                    }
+                    },
+                    body: JSON.stringify({ priceType: priceType })
                 })
                 .then(response => response.json())
                 .then(data => {
@@ -436,7 +466,9 @@
                     console.error('Payment error:', error);
                     errorDiv.textContent = error.message || 'Payment failed. Please try again.';
                     errorDiv.style.display = 'block';
-                    button.disabled = false;
+                    // Re-enable all buttons
+                    const buttons = document.querySelectorAll('.upgrade-pay-btn');
+                    buttons.forEach(btn => btn.disabled = false);
                     loading.style.display = 'none';
                 });
             }
@@ -592,12 +624,18 @@
                 }
             }
 
-            // Add event listener for upgrade button when DOM is ready
+            // Add event listener for upgrade buttons when DOM is ready
             document.addEventListener('DOMContentLoaded', () => {
-                const upgradeButton = document.getElementById('upgradePayButton');
-                if (upgradeButton) {
-                    upgradeButton.addEventListener('click', handleUpgradePayment);
-                }
+                // Handle all upgrade buttons
+                const upgradeButtons = document.querySelectorAll('.upgrade-pay-btn');
+                upgradeButtons.forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const priceType = e.target.dataset.price;
+                        if (priceType) {
+                            handleUpgradePayment(priceType);
+                        }
+                    });
+                });
                 
                 // Add authentication check for upgrade tab
                 const upgradeTabBtn = document.querySelector('[data-tab="upgrade"]');
