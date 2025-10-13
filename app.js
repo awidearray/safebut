@@ -399,6 +399,62 @@ class PregnancySafetyChecker {
         return data;
     }
 
+    async getDetailedSafetyInfo(item) {
+        const authToken = localStorage.getItem('authToken');
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        // Add auth token if available
+        if (authToken) {
+            headers['Authorization'] = `Bearer ${authToken}`;
+        }
+        
+        const response = await fetch('/api/detailed-safety', {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({
+                item: item
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || `Server Error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        return data;
+    }
+
+    async getDetailedImageSafetyInfo(imageData) {
+        const authToken = localStorage.getItem('authToken');
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        // Add auth token if available
+        if (authToken) {
+            headers['Authorization'] = `Bearer ${authToken}`;
+        }
+        
+        const response = await fetch('/api/detailed-image-safety', {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({
+                image: imageData
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || `Server Error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        return data;
+    }
+
     displayResults(item, data) {
         const resultsSection = document.getElementById('results');
         const itemName = document.getElementById('itemName');
@@ -753,6 +809,12 @@ class PregnancySafetyChecker {
 
     hideResults() {
         document.getElementById('results').style.display = 'none';
+        
+        // Also hide details section
+        const detailsSection = document.getElementById('detailsSection');
+        if (detailsSection) {
+            detailsSection.style.display = 'none';
+        }
     }
 
     // Log Tab Methods

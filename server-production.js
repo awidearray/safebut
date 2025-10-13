@@ -254,8 +254,58 @@ app.post('/api/check-safety', async (req, res) => {
             contextInfo += `\nAdvanced maternal age (${userProfile.age}).`;
         }
 
-        const prompt = `Is "${item}" safe during pregnancy? ${contextInfo}
-Give risk score 1-10 (1=safest, 10=most dangerous). Consider any mentioned conditions. Be brief:
+        // Add user preferences to context
+        let preferenceContext = '';
+        if (userProfile.preferences) {
+            const prefs = userProfile.preferences;
+            
+            // Measurement preferences
+            if (prefs.measurementSystem === 'metric') {
+                preferenceContext += '\nUse metric units (kg, °C, ml, cm).';
+            } else {
+                preferenceContext += '\nUse imperial units (lbs, °F, cups, inches).';
+            }
+            
+            // Caffeine preferences
+            if (prefs.caffeineMeasurement === 'milligrams') {
+                preferenceContext += '\nFor caffeine, use milligrams (e.g., "200mg limit" instead of "1-2 cups").';
+            } else {
+                preferenceContext += '\nFor caffeine, use cups/servings (e.g., "1-2 cups" instead of mg amounts).';
+            }
+            
+            // Temperature preferences
+            if (prefs.temperatureUnit === 'celsius') {
+                preferenceContext += '\nUse Celsius for temperatures.';
+            } else {
+                preferenceContext += '\nUse Fahrenheit for temperatures.';
+            }
+            
+            // Detail level
+            if (prefs.detailLevel === 'detailed') {
+                preferenceContext += '\nProvide comprehensive explanations with detailed medical information.';
+            } else {
+                preferenceContext += '\nKeep explanations brief and to the point.';
+            }
+            
+            // Language style
+            if (prefs.languageStyle === 'scientific') {
+                preferenceContext += '\nUse medical terminology and scientific language.';
+            } else {
+                preferenceContext += '\nUse simple, easy-to-understand language.';
+            }
+            
+            // Risk communication
+            if (prefs.riskStyle === 'reassuring') {
+                preferenceContext += '\nEmphasize what is safe and reassuring where appropriate.';
+            } else if (prefs.riskStyle === 'cautious') {
+                preferenceContext += '\nEmphasize potential risks and err on the side of caution.';
+            } else {
+                preferenceContext += '\nPresent risks and benefits in a balanced way.';
+            }
+        }
+
+        const prompt = `Is "${item}" safe during pregnancy? ${contextInfo}${preferenceContext}
+Give risk score 1-10 (1=safest, 10=most dangerous). Consider any mentioned conditions. Follow user preferences for units and communication style:
 RISK_SCORE: [1-10]
 SAFETY: [Safe/Caution/Avoid]
 WHY: [1 sentence explanation]
