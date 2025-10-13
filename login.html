@@ -438,7 +438,10 @@
             setTimeout(function() {
                 const container = document.getElementById('telegram-login-container');
                 if (container && container.children.length === 0) {
-                    document.getElementById('telegram-fallback').style.display = 'block';
+                    const fallback = document.getElementById('telegram-fallback');
+                    if (fallback) {
+                        fallback.style.display = 'block';
+                    }
                 }
             }, 3000);
         })();

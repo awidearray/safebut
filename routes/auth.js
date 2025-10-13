@@ -51,7 +51,7 @@ router.post('/request-magic-link', async (req, res) => {
         if (process.env.SMTP_USER && process.env.SMTP_PASS) {
             try {
                 const mailOptions = {
-                    from: process.env.SMTP_USER,
+                    from: process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@safebut.com',
                     to: email,
                     subject: '🤰 Your Safebut Login Link',
                     html: `
@@ -92,10 +92,17 @@ router.post('/request-magic-link', async (req, res) => {
                     `
                 };
                 
-                await transporter.sendMail(mailOptions);
+                const info = await transporter.sendMail(mailOptions);
                 console.log('Magic link sent to:', email);
+                console.log('Email send info:', info);
             } catch (emailError) {
                 console.error('Failed to send email:', emailError);
+                console.error('SMTP Config:', {
+                    host: process.env.SMTP_HOST,
+                    port: process.env.SMTP_PORT,
+                    user: process.env.SMTP_USER ? 'Set' : 'Not set',
+                    pass: process.env.SMTP_PASS ? 'Set' : 'Not set'
+                });
                 // Don't fail the request if email fails - for development
             }
         } else {
