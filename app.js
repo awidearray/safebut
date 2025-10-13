@@ -1242,6 +1242,205 @@ class PregnancySafetyChecker {
             }
         }
     }
+    
+    // Affiliate features
+    initializeAffiliate() {
+        // Check if user is premium to show affiliate features
+        this.checkPremiumStatus();
+        
+        // Initialize event listeners for affiliate features
+        const copyLinkBtn = document.getElementById('copyLinkBtn');
+        const refreshLeaderboard = document.getElementById('refreshLeaderboard');
+        
+        if (copyLinkBtn) {
+            copyLinkBtn.addEventListener('click', () => this.copyAffiliateLink());
+        }
+        
+        if (refreshLeaderboard) {
+            refreshLeaderboard.addEventListener('click', () => this.loadLeaderboard());
+        }
+        
+        // Load affiliate data if premium
+        if (this.isPremium) {
+            this.loadAffiliateStats();
+            this.loadLeaderboard();
+        }
+    }
+    
+    async checkPremiumStatus() {
+        try {
+            const authToken = localStorage.getItem('authToken');
+            if (!authToken) return;
+
+            const response = await fetch('/auth/me', {
+                headers: { 'Authorization': `Bearer ${authToken}` }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                this.isPremium = data.user?.isPremium || false;
+                
+                // Show/hide affiliate features based on premium status
+                const affiliateSection = document.getElementById('affiliateSection');
+                const leaderboardTab = document.getElementById('leaderboardTabBtn');
+                
+                if (this.isPremium) {
+                    if (affiliateSection) affiliateSection.style.display = 'block';
+                    if (leaderboardTab) leaderboardTab.style.display = 'inline-block';
+                } else {
+                    if (affiliateSection) affiliateSection.style.display = 'none';
+                    if (leaderboardTab) leaderboardTab.style.display = 'none';
+                }
+            }
+        } catch (error) {
+            console.error('Error checking premium status:', error);
+        }
+    }
+    
+    async loadAffiliateStats() {
+        try {
+            const authToken = localStorage.getItem('authToken');
+            if (!authToken) return;
+
+            const response = await fetch('/api/affiliate/stats', {
+                headers: { 'Authorization': `Bearer ${authToken}` }
+            });
+            
+            if (response.ok) {
+                const stats = await response.json();
+                this.displayAffiliateStats(stats);
+                
+                // Generate affiliate link if user doesn't have one
+                if (!stats.affiliateCode) {
+                    await this.generateAffiliateLink();
+                }
+            }
+        } catch (error) {
+            console.error('Error loading affiliate stats:', error);
+        }
+    }
+    
+    displayAffiliateStats(stats) {
+        // Update stats display
+        const totalPointsEl = document.getElementById('totalPoints');
+        const totalReferralsEl = document.getElementById('totalReferrals');
+        const premiumReferralsEl = document.getElementById('premiumReferrals');
+        const affiliateLinkEl = document.getElementById('affiliateLink');
+        const referralsListEl = document.getElementById('referralsList');
+        
+        if (totalPointsEl) totalPointsEl.textContent = stats.totalPoints;
+        if (totalReferralsEl) totalReferralsEl.textContent = stats.totalReferrals;
+        if (premiumReferralsEl) premiumReferralsEl.textContent = stats.premiumReferrals;
+        
+        // Set affiliate link
+        if (affiliateLinkEl && stats.affiliateCode) {
+            const baseUrl = window.location.origin;
+            affiliateLinkEl.value = `${baseUrl}/login?ref=${stats.affiliateCode}`;
+        }
+        
+        // Display referrals
+        if (referralsListEl && stats.referrals && stats.referrals.length > 0) {
+            referralsListEl.innerHTML = stats.referrals.map(referral => `
+                <div class="referral-item">
+                    <div>
+                        <div class="referral-email">${referral.email.replace(/(.{3}).*@/, '$1***@')}</div>
+                        <div class="referral-date">${new Date(referral.signupDate).toLocaleDateString()}</div>
+                    </div>
+                    <div class="referral-points">+${referral.pointsAwarded} pts</div>
+                </div>
+            `).join('');
+        }
+    }
+    
+    async generateAffiliateLink() {
+        try {
+            const authToken = localStorage.getItem('authToken');
+            if (!authToken) return;
+
+            const response = await fetch('/api/affiliate/generate-link', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${authToken}` }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                const affiliateLinkEl = document.getElementById('affiliateLink');
+                if (affiliateLinkEl) {
+                    affiliateLinkEl.value = data.affiliateLink;
+                }
+            }
+        } catch (error) {
+            console.error('Error generating affiliate link:', error);
+        }
+    }
+    
+    async copyAffiliateLink() {
+        const affiliateLinkEl = document.getElementById('affiliateLink');
+        const copyBtn = document.getElementById('copyLinkBtn');
+        
+        if (affiliateLinkEl && affiliateLinkEl.value) {
+            try {
+                await navigator.clipboard.writeText(affiliateLinkEl.value);
+                
+                // Visual feedback
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = '✅ Copied!';
+                copyBtn.style.background = '#4CAF50';
+                
+                setTimeout(() => {
+                    copyBtn.textContent = originalText;
+                    copyBtn.style.background = '#667eea';
+                }, 2000);
+            } catch (error) {
+                // Fallback for older browsers
+                affiliateLinkEl.select();
+                document.execCommand('copy');
+                
+                copyBtn.textContent = '✅ Copied!';
+                setTimeout(() => {
+                    copyBtn.textContent = '📋 Copy';
+                }, 2000);
+            }
+        }
+    }
+    
+    async loadLeaderboard() {
+        try {
+            const response = await fetch('/api/affiliate/leaderboard');
+            
+            if (response.ok) {
+                const data = await response.json();
+                this.displayLeaderboard(data.leaderboard);
+            }
+        } catch (error) {
+            console.error('Error loading leaderboard:', error);
+        }
+    }
+    
+    displayLeaderboard(leaderboard) {
+        const leaderboardListEl = document.getElementById('leaderboardList');
+        
+        if (leaderboardListEl) {
+            if (!leaderboard || leaderboard.length === 0) {
+                leaderboardListEl.innerHTML = '<div class="loading-message">No leaderboard data available yet.</div>';
+                return;
+            }
+            
+            leaderboardListEl.innerHTML = leaderboard.map(user => {
+                const medal = user.rank <= 3 ? ['🥇', '🥈', '🥉'][user.rank - 1] : user.rank;
+                return `
+                    <div class="leaderboard-row">
+                        <div class="rank-col">
+                            ${user.rank <= 3 ? `<span class="rank-medal">${medal}</span>` : user.rank}
+                        </div>
+                        <div class="name-col">${user.name}</div>
+                        <div class="points-col">${user.points}</div>
+                        <div class="referrals-col">${user.referralCount}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+    }
 }
 
 // Global function to close log modal
@@ -1277,47 +1476,14 @@ function showUpgradeTab() {
     }
 }
 
-// Global function to close log modal
-function closeLogModal() {
-    const modal = document.getElementById('logModal');
-    if (modal) {
-        modal.style.display = 'none';
-    }
-}
+	let checker;
 
-// Global function to show upgrade tab  
-function showUpgradeTab() {
-    // Hide error message
-    if (checker) {
-        checker.hideError();
-    }
-    
-    // Check if user is authenticated
-    const authToken = localStorage.getItem('authToken');
-    const urlParams = new URLSearchParams(window.location.search);
-    const isTrial = urlParams.get('trial') === 'true';
-    
-    // If no token or in trial mode, redirect to login first
-    if (!authToken || isTrial) {
-        window.location.href = '/login';
-        return;
-    }
-    
-    // Switch to upgrade tab
-    const upgradeTab = document.querySelector('[data-tab="upgrade"]');
-    if (upgradeTab) {
-        upgradeTab.click();
-    }
-
-let checker;
-
-// Since script might be loaded dynamically, check if DOM is already ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        checker = new PregnancySafetyChecker();
-    });
-} else {
-    // DOM is already ready
-    checker = new PregnancySafetyChecker();
-}
-}
+	// Since script might be loaded dynamically, check if DOM is already ready
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', () => {
+			checker = new PregnancySafetyChecker();
+		});
+	} else {
+		// DOM is already ready
+		checker = new PregnancySafetyChecker();
+	}
