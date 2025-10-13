@@ -64,6 +64,17 @@ const userSchema = new mongoose.Schema({
         isImage: { type: Boolean, default: false }
     }],
     
+    // Pregnancy log entries (Premium feature)
+    logEntries: [{
+        id: String,
+        date: { type: Date, default: Date.now },
+        text: String,
+        type: { type: String, enum: ['text', 'voice'], default: 'text' },
+        audioUrl: String,
+        aiAnalysis: String,
+        createdAt: { type: Date, default: Date.now }
+    }],
+    
     // Usage tracking for free tier (3 searches per day)
     dailySearches: {
         count: { type: Number, default: 0 },

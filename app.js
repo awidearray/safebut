@@ -2,9 +2,15 @@ class PregnancySafetyChecker {
     constructor() {
         this.searchHistory = JSON.parse(localStorage.getItem('pregnancySafetyHistory') || '[]');
         this.capturedImage = null;
+        this.mediaRecorder = null;
+        this.audioChunks = [];
+        this.currentMonth = new Date().getMonth();
+        this.currentYear = new Date().getFullYear();
+        this.logEntries = [];
         this.initializeTabs();
         this.initializeEventListeners();
         this.initializeProfile();
+        this.initializeLog();
         this.displayHistory();
     }
 
@@ -651,6 +657,393 @@ class PregnancySafetyChecker {
 
     hideResults() {
         document.getElementById('results').style.display = 'none';
+    }
+
+    // Log Tab Methods
+    initializeLog() {
+        // Check if user is premium
+        const logTabBtn = document.getElementById('logTabBtn');
+        const isPremium = localStorage.getItem('isPremium') === 'true';
+        
+        if (!isPremium) {
+            // Hide log tab for non-premium users
+            if (logTabBtn) {
+                logTabBtn.style.display = 'none';
+            }
+            return;
+        }
+        
+        // Initialize calendar
+        this.initializeCalendar();
+        
+        // Initialize voice recording
+        this.initializeVoiceRecording();
+        
+        // Load existing entries
+        this.loadLogEntries();
+        
+        // Save button handler
+        const saveBtn = document.getElementById('saveLogEntry');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => this.saveLogEntry());
+        }
+        
+        // Calendar navigation
+        const prevBtn = document.getElementById('prevMonth');
+        const nextBtn = document.getElementById('nextMonth');
+        
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => this.changeMonth(-1));
+        }
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => this.changeMonth(1));
+        }
+    }
+    
+    initializeCalendar() {
+        this.updateCalendarDisplay();
+    }
+    
+    updateCalendarDisplay() {
+        const monthNames = ["January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"];
+        
+        document.getElementById('currentMonth').textContent = 
+            `${monthNames[this.currentMonth]} ${this.currentYear}`;
+        
+        this.generateCalendarDays();
+    }
+    
+    generateCalendarDays() {
+        const firstDay = new Date(this.currentYear, this.currentMonth, 1).getDay();
+        const daysInMonth = new Date(this.currentYear, this.currentMonth + 1, 0).getDate();
+        const daysContainer = document.getElementById('calendarDays');
+        
+        if (!daysContainer) return;
+        
+        daysContainer.innerHTML = '';
+        
+        // Add empty cells for days before month starts
+        for (let i = 0; i < firstDay; i++) {
+            const emptyDay = document.createElement('div');
+            emptyDay.className = 'calendar-day other-month';
+            daysContainer.appendChild(emptyDay);
+        }
+        
+        // Add days of the month
+        const today = new Date();
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dayElement = document.createElement('div');
+            dayElement.className = 'calendar-day';
+            dayElement.dataset.date = `${this.currentYear}-${String(this.currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            
+            // Check if it's today
+            if (today.getDate() === day && 
+                today.getMonth() === this.currentMonth && 
+                today.getFullYear() === this.currentYear) {
+                dayElement.classList.add('today');
+            }
+            
+            // Check if there are entries for this day
+            const dateStr = dayElement.dataset.date;
+            const dayEntries = this.logEntries.filter(entry => 
+                entry.date && entry.date.startsWith(dateStr)
+            );
+            
+            if (dayEntries.length > 0) {
+                dayElement.classList.add('has-entry');
+            }
+            
+            dayElement.innerHTML = `
+                <div class="calendar-day-number">${day}</div>
+                ${dayEntries.length > 0 ? 
+                    `<div class="calendar-day-entries">${dayEntries.length} entry${dayEntries.length > 1 ? 'ies' : ''}</div>` 
+                    : ''}
+            `;
+            
+            dayElement.addEventListener('click', () => this.showDayEntries(dateStr));
+            
+            daysContainer.appendChild(dayElement);
+        }
+    }
+    
+    changeMonth(direction) {
+        this.currentMonth += direction;
+        if (this.currentMonth > 11) {
+            this.currentMonth = 0;
+            this.currentYear++;
+        } else if (this.currentMonth < 0) {
+            this.currentMonth = 11;
+            this.currentYear--;
+        }
+        this.updateCalendarDisplay();
+    }
+    
+    initializeVoiceRecording() {
+        const recordBtn = document.getElementById('voiceRecordBtn');
+        const recordingIndicator = document.getElementById('recordingIndicator');
+        const voicePreview = document.getElementById('voicePreview');
+        
+        if (!recordBtn) return;
+        
+        let isRecording = false;
+        
+        // Mouse/touch events for hold-to-record
+        recordBtn.addEventListener('mousedown', () => this.startRecording());
+        recordBtn.addEventListener('mouseup', () => this.stopRecording());
+        recordBtn.addEventListener('mouseleave', () => {
+            if (isRecording) this.stopRecording();
+        });
+        
+        // Touch events for mobile
+        recordBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            this.startRecording();
+        });
+        recordBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            this.stopRecording();
+        });
+    }
+    
+    async startRecording() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            this.mediaRecorder = new MediaRecorder(stream);
+            this.audioChunks = [];
+            
+            this.mediaRecorder.ondataavailable = (event) => {
+                this.audioChunks.push(event.data);
+            };
+            
+            this.mediaRecorder.onstop = () => {
+                const audioBlob = new Blob(this.audioChunks, { type: 'audio/wav' });
+                const audioUrl = URL.createObjectURL(audioBlob);
+                const voicePreview = document.getElementById('voicePreview');
+                if (voicePreview) {
+                    voicePreview.src = audioUrl;
+                    voicePreview.style.display = 'block';
+                }
+                this.currentAudioBlob = audioBlob;
+            };
+            
+            this.mediaRecorder.start();
+            document.getElementById('recordingIndicator').style.display = 'flex';
+            
+        } catch (error) {
+            console.error('Error accessing microphone:', error);
+            alert('Please allow microphone access to record voice notes.');
+        }
+    }
+    
+    stopRecording() {
+        if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+            this.mediaRecorder.stop();
+            this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            document.getElementById('recordingIndicator').style.display = 'none';
+        }
+    }
+    
+    async saveLogEntry() {
+        const textInput = document.getElementById('logTextInput');
+        const text = textInput ? textInput.value.trim() : '';
+        
+        if (!text && !this.currentAudioBlob) {
+            alert('Please enter text or record a voice note');
+            return;
+        }
+        
+        const entry = {
+            id: Date.now().toString(),
+            date: new Date().toISOString(),
+            text: text,
+            type: this.currentAudioBlob ? 'voice' : 'text',
+            audioUrl: this.currentAudioBlob ? URL.createObjectURL(this.currentAudioBlob) : null
+        };
+        
+        // Save to backend
+        try {
+            const response = await fetch('/api/log-entry', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                },
+                body: JSON.stringify(entry)
+            });
+            
+            if (response.ok) {
+                const savedEntry = await response.json();
+                this.logEntries.push(savedEntry);
+                
+                // Clear inputs
+                if (textInput) textInput.value = '';
+                this.currentAudioBlob = null;
+                const voicePreview = document.getElementById('voicePreview');
+                if (voicePreview) {
+                    voicePreview.style.display = 'none';
+                    voicePreview.src = '';
+                }
+                
+                // Refresh calendar and recent entries
+                this.generateCalendarDays();
+                this.displayRecentEntries();
+                
+                alert('Entry saved successfully!');
+            }
+        } catch (error) {
+            console.error('Error saving log entry:', error);
+            alert('Failed to save entry. Please try again.');
+        }
+    }
+    
+    async loadLogEntries() {
+        try {
+            const response = await fetch('/api/log-entries', {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                }
+            });
+            
+            if (response.ok) {
+                this.logEntries = await response.json();
+                this.generateCalendarDays();
+                this.displayRecentEntries();
+            }
+        } catch (error) {
+            console.error('Error loading log entries:', error);
+        }
+    }
+    
+    displayRecentEntries() {
+        const container = document.getElementById('recentLogEntries');
+        if (!container) return;
+        
+        const recentEntries = this.logEntries
+            .sort((a, b) => new Date(b.date) - new Date(a.date))
+            .slice(0, 5);
+        
+        container.innerHTML = recentEntries.map(entry => `
+            <div class="log-entry-item" onclick="pregnancySafetyChecker.showLogEntry('${entry.id}')">
+                <div class="log-entry-date">
+                    ${new Date(entry.date).toLocaleDateString()} at ${new Date(entry.date).toLocaleTimeString()}
+                </div>
+                <div class="log-entry-preview">
+                    ${entry.text || 'Voice note'}
+                </div>
+                <span class="log-entry-type ${entry.type}">${entry.type === 'voice' ? '🎤 Voice' : '📝 Text'}</span>
+            </div>
+        `).join('');
+    }
+    
+    showDayEntries(dateStr) {
+        const dayEntries = this.logEntries.filter(entry => 
+            entry.date && entry.date.startsWith(dateStr)
+        );
+        
+        if (dayEntries.length === 0) {
+            return;
+        }
+        
+        if (dayEntries.length === 1) {
+            this.showLogEntry(dayEntries[0].id);
+        } else {
+            // Show list of entries for that day
+            this.showEntriesList(dayEntries, dateStr);
+        }
+    }
+    
+    showEntriesList(entries, dateStr) {
+        const modal = document.getElementById('logModal');
+        const modalBody = document.getElementById('logModalBody');
+        
+        modalBody.innerHTML = `
+            <h3>Entries for ${new Date(dateStr).toLocaleDateString()}</h3>
+            <div class="entries-list">
+                ${entries.map(entry => `
+                    <div class="log-entry-item" onclick="pregnancySafetyChecker.showLogEntry('${entry.id}')">
+                        <div class="log-entry-date">
+                            ${new Date(entry.date).toLocaleTimeString()}
+                        </div>
+                        <div class="log-entry-preview">
+                            ${entry.text || 'Voice note'}
+                        </div>
+                        <span class="log-entry-type ${entry.type}">${entry.type === 'voice' ? '🎤' : '📝'}</span>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        
+        modal.style.display = 'block';
+    }
+    
+    async showLogEntry(entryId) {
+        const entry = this.logEntries.find(e => e.id === entryId);
+        if (!entry) return;
+        
+        const modal = document.getElementById('logModal');
+        const modalBody = document.getElementById('logModalBody');
+        
+        modalBody.innerHTML = `
+            <div class="original-entry">
+                <h4>Your Entry</h4>
+                <div class="original-entry-text">
+                    ${entry.text || 'Voice note recorded'}
+                    ${entry.audioUrl ? `<audio controls src="${entry.audioUrl}" style="margin-top: 10px; width: 100%;"></audio>` : ''}
+                </div>
+                <small>${new Date(entry.date).toLocaleString()}</small>
+            </div>
+            
+            <div class="loading-analysis">
+                <div class="loading-spinner"></div>
+                <p>Analyzing your entry with Venice AI...</p>
+            </div>
+        `;
+        
+        modal.style.display = 'block';
+        
+        // Get Venice AI analysis
+        try {
+            const response = await fetch('/api/analyze-log-entry', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                },
+                body: JSON.stringify({ entryId, text: entry.text })
+            });
+            
+            if (response.ok) {
+                const analysis = await response.json();
+                
+                // Replace loading with analysis
+                const analysisDiv = modalBody.querySelector('.loading-analysis');
+                if (analysisDiv) {
+                    analysisDiv.outerHTML = `
+                        <div class="ai-analysis">
+                            <h4>🤖 AI Health Analysis</h4>
+                            <div class="ai-analysis-content">
+                                ${analysis.result}
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+        } catch (error) {
+            console.error('Error getting AI analysis:', error);
+            const analysisDiv = modalBody.querySelector('.loading-analysis');
+            if (analysisDiv) {
+                analysisDiv.innerHTML = '<p style="color: red;">Failed to get AI analysis</p>';
+            }
+        }
+    }
+}
+
+// Global function to close log modal
+function closeLogModal() {
+    const modal = document.getElementById('logModal');
+    if (modal) {
+        modal.style.display = 'none';
     }
 }
 

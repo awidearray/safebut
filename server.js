@@ -291,6 +291,137 @@ TIPS: [2-3 short practical tips based on what's in the image]`
     }
 });
 
+// Log Entries API (Premium feature)
+app.post('/api/log-entry', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        const token = authHeader && authHeader.split(' ')[1];
+        
+        if (!token) {
+            return res.status(401).json({ error: 'Authentication required' });
+        }
+        
+        // Get user from session
+        const userId = req.session.userId;
+        if (!userId) {
+            return res.status(401).json({ error: 'User not found' });
+        }
+        
+        const User = require('./models/User');
+        const user = await User.findById(userId);
+        
+        if (!user || !user.isPremium) {
+            return res.status(403).json({ error: 'Premium subscription required' });
+        }
+        
+        const { text, type, audioUrl } = req.body;
+        const entry = {
+            id: Date.now().toString(),
+            date: new Date(),
+            text,
+            type: type || 'text',
+            audioUrl,
+            createdAt: new Date()
+        };
+        
+        user.logEntries.push(entry);
+        await user.save();
+        
+        res.json(entry);
+    } catch (error) {
+        console.error('Error saving log entry:', error);
+        res.status(500).json({ error: 'Failed to save log entry' });
+    }
+});
+
+app.get('/api/log-entries', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        const token = authHeader && authHeader.split(' ')[1];
+        
+        if (!token) {
+            return res.status(401).json({ error: 'Authentication required' });
+        }
+        
+        const userId = req.session.userId;
+        if (!userId) {
+            return res.status(401).json({ error: 'User not found' });
+        }
+        
+        const User = require('./models/User');
+        const user = await User.findById(userId);
+        
+        if (!user || !user.isPremium) {
+            return res.status(403).json({ error: 'Premium subscription required' });
+        }
+        
+        res.json(user.logEntries || []);
+    } catch (error) {
+        console.error('Error loading log entries:', error);
+        res.status(500).json({ error: 'Failed to load log entries' });
+    }
+});
+
+app.post('/api/analyze-log-entry', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        const token = authHeader && authHeader.split(' ')[1];
+        
+        if (!token) {
+            return res.status(401).json({ error: 'Authentication required' });
+        }
+        
+        const { text } = req.body;
+        
+        if (!text) {
+            return res.status(400).json({ error: 'Text required for analysis' });
+        }
+        
+        const prompt = `Analyze this pregnancy log entry and provide detailed health insights:
+        
+Entry: "${text}"
+
+Please provide:
+1. Health Assessment - What this might indicate about the pregnancy
+2. Important Observations - Key things to note
+3. Recommendations - What actions to consider
+4. When to Contact Doctor - Any concerning signs
+
+Format as HTML with clear sections and bullet points.`;
+
+        const apiUrl = 'https://api.venice.ai/api/v1/chat/completions';
+        const requestBody = {
+            model: 'llama-3.3-70b',
+            messages: [
+                {
+                    role: 'system',
+                    content: 'You are a pregnancy health expert providing detailed analysis of pregnancy diary entries. Be thorough, supportive, and medically accurate.'
+                },
+                {
+                    role: 'user',
+                    content: prompt
+                }
+            ],
+            temperature: 0.3,
+            max_tokens: 500
+        };
+        
+        const response = await axios.post(apiUrl, requestBody, {
+            headers: {
+                'Authorization': `Bearer ${process.env.VENICE_API_KEY}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const aiResponse = response.data.choices[0].message.content;
+        
+        res.json({ result: aiResponse });
+    } catch (error) {
+        console.error('Venice AI analysis error:', error);
+        res.status(500).json({ error: 'Failed to analyze entry' });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`Pregnancy Safety Checker is running on http://localhost:${PORT}`);
     console.log(`Open your browser and navigate to http://localhost:${PORT}`);

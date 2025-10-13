@@ -18,6 +18,7 @@
                 <button class="tab-btn active" data-tab="search">🔍 Search</button>
                 <button class="tab-btn" data-tab="profile">👤 Profile</button>
                 <button class="tab-btn" data-tab="history">📜 History</button>
+                <button class="tab-btn" data-tab="log" id="logTabBtn">📝 Log</button>
                 <button class="tab-btn" data-tab="upgrade">🚀 Upgrade</button>
                 <button class="tab-btn logout-btn" id="logoutBtn" onclick="logout()">🚪 Logout</button>
             </div>
@@ -275,6 +276,67 @@
                 </div>
             </div>
 
+            <!-- Log Tab Content (Premium Feature) -->
+            <div id="logTab" class="tab-content" style="display: none;">
+                <div class="log-section">
+                    <!-- Log Input Section -->
+                    <div class="log-input-section">
+                        <h2>📝 Pregnancy Log</h2>
+                        <p class="log-subtitle">Track your pregnancy journey with voice or text entries</p>
+                        
+                        <div class="log-input-container">
+                            <!-- Text Input -->
+                            <textarea id="logTextInput" class="log-text-input" placeholder="What happened today? (e.g., 'Felt baby kick for the first time', 'Had morning sickness after breakfast', 'Went to prenatal yoga class')"></textarea>
+                            
+                            <!-- Voice Recording Controls -->
+                            <div class="voice-controls">
+                                <button id="voiceRecordBtn" class="voice-record-btn">
+                                    🎤 Hold to Record Voice Note
+                                </button>
+                                <div id="recordingIndicator" class="recording-indicator" style="display: none;">
+                                    <span class="recording-dot"></span> Recording...
+                                </div>
+                                <audio id="voicePreview" style="display: none;" controls></audio>
+                            </div>
+                            
+                            <button id="saveLogEntry" class="save-log-btn">💾 Save Entry</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Calendar View Section -->
+                    <div class="calendar-section">
+                        <div class="calendar-header">
+                            <button id="prevMonth" class="calendar-nav">‹</button>
+                            <h3 id="currentMonth">December 2024</h3>
+                            <button id="nextMonth" class="calendar-nav">›</button>
+                        </div>
+                        
+                        <div class="calendar-grid" id="calendarGrid">
+                            <div class="calendar-weekdays">
+                                <div>Sun</div>
+                                <div>Mon</div>
+                                <div>Tue</div>
+                                <div>Wed</div>
+                                <div>Thu</div>
+                                <div>Fri</div>
+                                <div>Sat</div>
+                            </div>
+                            <div class="calendar-days" id="calendarDays">
+                                <!-- Calendar days will be generated dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Entries -->
+                    <div class="recent-entries">
+                        <h3>📅 Recent Entries</h3>
+                        <div id="recentLogEntries" class="log-entries-list">
+                            <!-- Recent entries will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Upgrade Tab Content -->
             <div id="upgradeTab" class="tab-content" style="display: none;">
                 <div class="upgrade-section">
@@ -368,6 +430,19 @@
         <footer>
             <p>This tool provides general information only. Always consult your healthcare provider for personalized medical advice.</p>
         </footer>
+    </div>
+
+    <!-- Log Entry Modal -->
+    <div id="logModal" class="log-modal">
+        <div class="log-modal-content">
+            <div class="log-modal-header">
+                <h2>📝 Log Entry Details</h2>
+                <span class="log-modal-close" onclick="closeLogModal()">&times;</span>
+            </div>
+            <div class="log-modal-body" id="logModalBody">
+                <!-- Content will be dynamically loaded -->
+            </div>
+        </div>
     </div>
 
     <script>
