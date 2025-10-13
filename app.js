@@ -661,6 +661,17 @@ function showUpgradeTab() {
         checker.hideError();
     }
     
+    // Check if user is authenticated
+    const authToken = localStorage.getItem('authToken');
+    const urlParams = new URLSearchParams(window.location.search);
+    const isTrial = urlParams.get('trial') === 'true';
+    
+    // If no token or in trial mode, redirect to login first
+    if (!authToken || isTrial) {
+        window.location.href = '/login';
+        return;
+    }
+    
     // Switch to upgrade tab
     const upgradeTab = document.querySelector('[data-tab="upgrade"]');
     if (upgradeTab) {

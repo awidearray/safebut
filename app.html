@@ -530,11 +530,101 @@
                 }
             }
 
+            // Check if user is authenticated for premium features
+            function checkAuthForUpgrade() {
+                const authToken = localStorage.getItem('authToken');
+                const urlParams = new URLSearchParams(window.location.search);
+                const isTrial = urlParams.get('trial') === 'true';
+                
+                // If no token and not in trial mode, or if explicitly in trial mode, require login
+                if (!authToken || isTrial) {
+                    return false;
+                }
+                
+                return true;
+            }
+            
+            // Show login required message for upgrade
+            function showLoginRequired() {
+                const upgradeTab = document.getElementById('upgradeTab');
+                if (upgradeTab) {
+                    upgradeTab.innerHTML = `
+                        <div class="upgrade-section" style="text-align: center; padding: 40px 20px;">
+                            <div style="font-size: 3rem; margin-bottom: 20px;">🔐</div>
+                            <h2 style="color: #667eea; margin-bottom: 15px;">Login Required</h2>
+                            <p style="color: #666; font-size: 1.1rem; margin-bottom: 25px;">
+                                Please log in with your email to upgrade to premium features.
+                            </p>
+                            <div style="background: #f0f8ff; border-radius: 15px; padding: 20px; margin: 20px 0;">
+                                <h3 style="color: #667eea; margin-bottom: 15px;">Why create an account?</h3>
+                                <div style="text-align: left; display: inline-block;">
+                                    <div style="margin: 8px 0; color: #333;">✓ Secure payment processing</div>
+                                    <div style="margin: 8px 0; color: #333;">✓ Access your premium features anywhere</div>
+                                    <div style="margin: 8px 0; color: #333;">✓ Sync your search history</div>
+                                    <div style="margin: 8px 0; color: #333;">✓ Account recovery options</div>
+                                </div>
+                            </div>
+                            <button onclick="window.location.href='/login'" style="
+                                background: #667eea;
+                                color: white;
+                                border: none;
+                                padding: 15px 30px;
+                                border-radius: 10px;
+                                font-size: 1.1rem;
+                                font-weight: 600;
+                                cursor: pointer;
+                                margin: 10px;
+                                box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+                            ">🚀 Login & Upgrade</button>
+                            <br>
+                            <button onclick="document.querySelector('[data-tab=\\"search\\"]').click()" style="
+                                background: #6c757d;
+                                color: white;
+                                border: none;
+                                padding: 12px 24px;
+                                border-radius: 8px;
+                                font-size: 1rem;
+                                cursor: pointer;
+                                margin: 10px;
+                            ">Continue with Trial</button>
+                        </div>
+                    `;
+                }
+            }
+
             // Add event listener for upgrade button when DOM is ready
             document.addEventListener('DOMContentLoaded', () => {
                 const upgradeButton = document.getElementById('upgradePayButton');
                 if (upgradeButton) {
                     upgradeButton.addEventListener('click', handleUpgradePayment);
+                }
+                
+                // Add authentication check for upgrade tab
+                const upgradeTabBtn = document.querySelector('[data-tab="upgrade"]');
+                if (upgradeTabBtn) {
+                    upgradeTabBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        if (!checkAuthForUpgrade()) {
+                            // Show login required message
+                            showLoginRequired();
+                            
+                            // Switch to upgrade tab but show login message
+                            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                            
+                            upgradeTabBtn.classList.add('active');
+                            document.getElementById('upgradeTab').classList.add('active');
+                        } else {
+                            // Allow normal tab switching for authenticated users
+                            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                            
+                            upgradeTabBtn.classList.add('active');
+                            document.getElementById('upgradeTab').classList.add('active');
+                        }
+                    });
                 }
                 
                 // Check for payment success
