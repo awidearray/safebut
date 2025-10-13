@@ -162,9 +162,50 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
             process.env.STRIPE_WEBHOOK_SECRET
         );
 
+        console.log('Received Stripe webhook:', event.type);
+
+        // Handle checkout session completion (for Stripe Checkout)
+        if (event.type === 'checkout.session.completed') {
+            const session = event.data.object;
+            console.log('Checkout session completed:', session.id);
+            
+            const userId = session.metadata?.userId;
+            const customerEmail = session.customer_details?.email;
+            
+            console.log('Session metadata userId:', userId);
+            console.log('Customer email:', customerEmail);
+            
+            let user = null;
+            
+            // Try to find user by ID first, then by email
+            if (userId) {
+                user = await User.findById(userId);
+                console.log('Found user by ID:', user?.email);
+            }
+            
+            if (!user && customerEmail) {
+                user = await User.findOne({ email: customerEmail });
+                console.log('Found user by email:', user?.email);
+            }
+            
+            if (user && !user.isPremium) {
+                user.isPremium = true;
+                user.stripeSessionId = session.id;
+                user.subscriptionDate = new Date();
+                await user.save();
+                console.log(`🎉 Premium activated for user: ${user.email} (ID: ${user._id})`);
+            } else if (user && user.isPremium) {
+                console.log(`User ${user.email} is already premium`);
+            } else {
+                console.log(`No user found for email: ${customerEmail} or ID: ${userId}`);
+            }
+        }
+        
+        // Handle payment intent success (for direct payments)
         if (event.type === 'payment_intent.succeeded') {
             const paymentIntent = event.data.object;
             const userId = paymentIntent.metadata.userId;
+            console.log('Payment intent succeeded for user:', userId);
 
             if (userId) {
                 const user = await User.findById(userId);
@@ -173,7 +214,7 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
                     user.stripePaymentIntentId = paymentIntent.id;
                     user.subscriptionDate = new Date();
                     await user.save();
-                    console.log(`Premium activated for user ${userId}`);
+                    console.log(`🎉 Premium activated for user: ${user.email} (ID: ${user._id})`);
                 }
             }
         }
@@ -182,6 +223,46 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
     } catch (error) {
         console.error('Webhook error:', error);
         res.status(400).json({ error: 'Webhook error' });
+    }
+});
+
+// Manual premium activation (for development/testing)
+router.post('/manual-activate', async (req, res) => {
+    try {
+        const { email } = req.body;
+        
+        if (!email) {
+            return res.status(400).json({ error: 'Email required' });
+        }
+        
+        const user = await User.findOne({ email });
+        
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        if (user.isPremium) {
+            return res.json({ message: 'User is already premium', user: { email: user.email, isPremium: user.isPremium } });
+        }
+        
+        user.isPremium = true;
+        user.subscriptionDate = new Date();
+        await user.save();
+        
+        console.log(`🎉 Manually activated premium for user: ${user.email}`);
+        
+        res.json({ 
+            success: true, 
+            message: 'Premium activated successfully!',
+            user: { 
+                email: user.email, 
+                isPremium: user.isPremium,
+                subscriptionDate: user.subscriptionDate
+            }
+        });
+    } catch (error) {
+        console.error('Manual activation error:', error);
+        res.status(500).json({ error: 'Failed to activate premium' });
     }
 });
 
