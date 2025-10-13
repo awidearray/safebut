@@ -185,6 +185,13 @@ app.post('/api/profile', verifyToken, async (req, res) => {
 
 // API endpoint for safety checks (1 free per day for trial/free users, unlimited for premium)
 app.post('/api/check-safety', async (req, res) => {
+    console.log('🔍 Safety check request received:', {
+        item: req.body?.item,
+        hasAuth: !!req.header('Authorization'),
+        userAgent: req.header('User-Agent'),
+        origin: req.header('Origin')
+    });
+    
     try {
         if (!process.env.VENICE_API_KEY) {
             console.error('VENICE_API_KEY is not set in environment variables');
@@ -478,7 +485,14 @@ TIPS: [2-3 short practical tips specific to the patient's conditions if applicab
         
         res.json(responseData);
     } catch (error) {
-        console.error('Venice AI API error:', error.response?.data || error.message);
+        console.error('❌ Safety check error occurred:');
+        console.error('Error type:', error.constructor.name);
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+        if (error.response) {
+            console.error('API Response status:', error.response.status);
+            console.error('API Response data:', error.response.data);
+        }
         res.status(500).json({ 
             error: 'Failed to check safety. Please try again later.',
             details: error.response?.data?.error || error.message 
