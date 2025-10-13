@@ -493,10 +493,19 @@ TIPS: [2-3 short practical tips specific to the patient's conditions if applicab
             console.error('API Response status:', error.response.status);
             console.error('API Response data:', error.response.data);
         }
-        res.status(500).json({ 
-            error: 'Failed to check safety. Please try again later.',
-            details: error.response?.data?.error || error.message 
-        });
+        
+        // Provide a fallback response instead of 500 error for better UX
+        const fallbackResponse = {
+            result: `RISK_SCORE: 5\nSAFETY: Caution\nWHY: Unable to analyze "${req.body?.item || 'this item'}" right now due to a temporary service issue.\nTIPS: Please try again in a moment, consult your healthcare provider for specific guidance, and err on the side of caution.`,
+            riskScore: 5,
+            references: [
+                { title: 'Mayo Clinic - Pregnancy Week by Week', url: 'https://www.mayoclinic.org/healthy-lifestyle/pregnancy-week-by-week/basics/pregnancy-week-by-week/hlv-20049471' },
+                { title: 'American Pregnancy Association', url: 'https://americanpregnancy.org/healthy-pregnancy/' },
+                { title: 'CDC - Pregnancy Safety', url: 'https://www.cdc.gov/pregnancy/index.html' }
+            ]
+        };
+        
+        res.json(fallbackResponse);
     }
 });
 
