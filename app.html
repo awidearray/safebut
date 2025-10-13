@@ -321,10 +321,19 @@
                 return;
             }
             
-            // Load the main app script
-            const script = document.createElement('script');
-            script.src = 'app.js';
-            document.body.appendChild(script);
+            // Load the main app script after DOM is ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => {
+                    const script = document.createElement('script');
+                    script.src = 'app.js';
+                    document.body.appendChild(script);
+                });
+            } else {
+                // DOM already loaded
+                const script = document.createElement('script');
+                script.src = 'app.js';
+                document.body.appendChild(script);
+            }
         })();
     </script>
 </body>

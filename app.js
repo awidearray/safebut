@@ -2,8 +2,140 @@ class PregnancySafetyChecker {
     constructor() {
         this.searchHistory = JSON.parse(localStorage.getItem('pregnancySafetyHistory') || '[]');
         this.capturedImage = null;
+        this.initializeTabs();
         this.initializeEventListeners();
+        this.initializeProfile();
         this.displayHistory();
+    }
+
+    initializeTabs() {
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        tabButtons.forEach(button => {
+            if (button.id === 'logoutBtn') return; // Skip logout button
+            
+            button.addEventListener('click', () => {
+                const targetTab = button.dataset.tab;
+                
+                // Remove active class from all tabs and contents
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabContents.forEach(content => {
+                    content.style.display = 'none';
+                    content.classList.remove('active');
+                });
+                
+                // Add active class to clicked tab
+                button.classList.add('active');
+                
+                // Show corresponding content
+                const targetContent = document.getElementById(targetTab + 'Tab');
+                if (targetContent) {
+                    targetContent.style.display = 'block';
+                    targetContent.classList.add('active');
+                }
+            });
+        });
+    }
+    
+    initializeProfile() {
+        const saveProfileBtn = document.getElementById('saveProfile');
+        if (saveProfileBtn) {
+            saveProfileBtn.addEventListener('click', () => {
+                this.saveProfile();
+            });
+        }
+        
+        // Load saved profile data
+        this.loadProfile();
+    }
+    
+    saveProfile() {
+        const profile = {
+            name: document.getElementById('profile-name').value,
+            age: document.getElementById('profile-age').value,
+            dueDate: document.getElementById('due-date').value,
+            weeksPregnant: document.getElementById('weeks-pregnant').value,
+            pregnancyNumber: document.getElementById('pregnancy-number').value,
+            healthcareProvider: document.getElementById('healthcare-provider').value,
+            conditions: [],
+            riskFactors: [],
+            diet: [],
+            trimester: document.querySelector('input[name="trimester"]:checked')?.value
+        };
+        
+        // Save conditions
+        document.querySelectorAll('input[name="conditions"]:checked').forEach(input => {
+            profile.conditions.push(input.id);
+        });
+        
+        // Save risk factors
+        document.querySelectorAll('input[name="risk-factors"]:checked').forEach(input => {
+            profile.riskFactors.push(input.id);
+        });
+        
+        // Save diet
+        document.querySelectorAll('input[name="diet"]:checked').forEach(input => {
+            profile.diet.push(input.id);
+        });
+        
+        localStorage.setItem('pregnancyProfile', JSON.stringify(profile));
+        
+        // Show success message
+        const saveBtn = document.getElementById('saveProfile');
+        const originalText = saveBtn.textContent;
+        saveBtn.textContent = '✅ Saved!';
+        saveBtn.style.background = '#48bb78';
+        
+        setTimeout(() => {
+            saveBtn.textContent = originalText;
+            saveBtn.style.background = '';
+        }, 2000);
+    }
+    
+    loadProfile() {
+        const savedProfile = localStorage.getItem('pregnancyProfile');
+        if (!savedProfile) return;
+        
+        const profile = JSON.parse(savedProfile);
+        
+        // Load basic info
+        if (profile.name) document.getElementById('profile-name').value = profile.name;
+        if (profile.age) document.getElementById('profile-age').value = profile.age;
+        if (profile.dueDate) document.getElementById('due-date').value = profile.dueDate;
+        if (profile.weeksPregnant) document.getElementById('weeks-pregnant').value = profile.weeksPregnant;
+        if (profile.pregnancyNumber) document.getElementById('pregnancy-number').value = profile.pregnancyNumber;
+        if (profile.healthcareProvider) document.getElementById('healthcare-provider').value = profile.healthcareProvider;
+        
+        // Load conditions
+        if (profile.conditions) {
+            profile.conditions.forEach(id => {
+                const checkbox = document.getElementById(id);
+                if (checkbox) checkbox.checked = true;
+            });
+        }
+        
+        // Load risk factors
+        if (profile.riskFactors) {
+            profile.riskFactors.forEach(id => {
+                const checkbox = document.getElementById(id);
+                if (checkbox) checkbox.checked = true;
+            });
+        }
+        
+        // Load diet
+        if (profile.diet) {
+            profile.diet.forEach(id => {
+                const checkbox = document.getElementById(id);
+                if (checkbox) checkbox.checked = true;
+            });
+        }
+        
+        // Load trimester
+        if (profile.trimester) {
+            const radio = document.querySelector(`input[name="trimester"][value="${profile.trimester}"]`);
+            if (radio) radio.checked = true;
+        }
     }
 
     initializeEventListeners() {
@@ -376,15 +508,14 @@ class PregnancySafetyChecker {
     }
 
     displayHistory() {
-        const historySection = document.getElementById('historySection');
         const historyItems = document.getElementById('historyItems');
+        
+        if (!historyItems) return;
 
         if (this.searchHistory.length === 0) {
-            historySection.style.display = 'none';
+            historyItems.innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">No search history yet. Start searching to see your history here!</p>';
             return;
         }
-
-        historySection.style.display = 'block';
         
         historyItems.innerHTML = this.searchHistory.map(item => {
             const color = this.getRiskColor(item.riskScore);
@@ -498,6 +629,13 @@ class PregnancySafetyChecker {
 }
 
 let checker;
-document.addEventListener('DOMContentLoaded', () => {
+
+// Since script might be loaded dynamically, check if DOM is already ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        checker = new PregnancySafetyChecker();
+    });
+} else {
+    // DOM is already ready
     checker = new PregnancySafetyChecker();
-});
+}
