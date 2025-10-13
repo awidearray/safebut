@@ -4,8 +4,11 @@ const User = require('../models/User');
 // Verify JWT token
 const verifyToken = async (req, res, next) => {
     try {
-        const token = req.header('Authorization')?.replace('Bearer ', '') || 
-                     req.session?.token;
+        const headerToken = req.header('Authorization')?.replace('Bearer ', '');
+        const sessionToken = req.session?.token;
+        const queryToken = req.query?.token;
+        const bodyToken = req.body?.token;
+        const token = headerToken || sessionToken || queryToken || bodyToken;
 
         if (!token) {
             return res.status(401).json({ error: 'Please authenticate' });

@@ -87,13 +87,20 @@ router.post('/create-checkout-session', verifyToken, async (req, res) => {
         }];
 
         // Create Checkout Session
+        const forwardedProto = req.headers['x-forwarded-proto'];
+        const forwardedHost = req.headers['x-forwarded-host'];
+        const effectiveProto = forwardedProto || req.protocol;
+        const effectiveHost = forwardedHost || req.get('host');
+        const computedAppUrl = `${effectiveProto}://${effectiveHost}`;
+        const appUrl = process.env.APP_URL || computedAppUrl;
+
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             customer: customer.id,
             line_items: lineItems,
             mode: selectedPrice.mode,
-            success_url: `${process.env.APP_URL}/app.html?success=true&session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${process.env.APP_URL}/app.html`,
+            success_url: `${appUrl}/app.html?success=true&session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${appUrl}/app.html`,
             metadata: {
                 userId: req.user._id.toString(),
                 productType: selectedPrice.productType,
