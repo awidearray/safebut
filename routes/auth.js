@@ -170,6 +170,8 @@ router.get('/verify-magic-link', async (req, res) => {
         // Update session
         req.session.token = jwtToken;
         req.session.userId = user._id;
+        req.session.loginKeyType = 'email';
+        req.session.loginKeyValue = tokenData.email;
         
         // Update last login
         user.lastLogin = new Date();
@@ -304,13 +306,15 @@ router.get('/telegram/callback', async (req, res) => {
         // Update session
         req.session.token = token;
         req.session.userId = user._id;
+        req.session.loginKeyType = 'telegram';
+        req.session.loginKeyValue = authData.id;
         
         // Update last login
         user.lastLogin = new Date();
         await user.save();
         
         // Redirect to app with token
-        return res.redirect(`/app?token=${token}&premium=${user.isPremium}`);
+        return res.redirect(`/app.html?token=${token}&premium=${user.isPremium}`);
         
     } catch (error) {
         console.error('Telegram OAuth callback error:', error);

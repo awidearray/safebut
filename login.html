@@ -232,7 +232,17 @@
             
             <!-- Telegram Login Widget -->
             <div id="telegram-login-container" style="display: flex; justify-content: center; margin: 20px 0;">
-                <!-- Widget will be inserted here by Telegram script -->
+                <script async src="https://telegram.org/js/telegram-widget.js?22"
+                        data-telegram-login="safebutbot"
+                        data-size="large"
+                        data-onauth="onTelegramAuth(user)"
+                        data-request-access="write">
+                </script>
+            </div>
+
+            <!-- Fallback if widget blocked -->
+            <div id="telegram-fallback" style="display:none; text-align:center; margin-top:10px;">
+                <a href="https://t.me/safebutbot?start=login" target="_blank" class="telegram-login-button">Open Telegram to Login</a>
             </div>
             
             <!-- Email Login Form (hidden by default) -->
@@ -316,36 +326,22 @@
             }
         });
         
-        // Telegram Login Widget Auth Callback (for widget if it loads)
+        // Telegram Login Widget Auth Callback
         function onTelegramAuth(user) {
-            console.log('Telegram auth received:', user);
-            
-            // Send auth data to our backend
             fetch('/auth/telegram', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(user),
                 credentials: 'include'
             })
-            .then(response => response.json())
+            .then(r => r.json())
             .then(data => {
-                if (data.success) {
-                    // Store token
-                    localStorage.setItem('authToken', data.token);
-                    localStorage.setItem('isPremium', data.isPremium);
-                    
-                    // Redirect to app
-                    window.location.href = `/app?token=${data.token}&premium=${data.isPremium}`;
-                } else {
-                    showError(data.error || 'Telegram login failed');
-                }
+                if (!data.success) throw new Error(data.error || 'Telegram login failed');
+                localStorage.setItem('authToken', data.token);
+                localStorage.setItem('isPremium', data.isPremium);
+                window.location.href = `/app?token=${data.token}&premium=${data.isPremium}`;
             })
-            .catch(error => {
-                console.error('Telegram login error:', error);
-                showError('Failed to connect with Telegram');
-            });
+            .catch(() => showError('Failed to connect with Telegram'));
         }
 
         function showError(message) {
@@ -432,60 +428,15 @@
             showError('Magic link has expired. Please request a new one.');
         }
 
-        // Load Telegram Login Widget immediately
-        (function() {
-            // Show fallback message after 3 seconds if widget doesn't load
-            setTimeout(function() {
-                const container = document.getElementById('telegram-login-container');
-                if (container && container.children.length === 0) {
-                    const fallback = document.getElementById('telegram-fallback');
-                    if (fallback) {
-                        fallback.style.display = 'block';
-                    }
-                }
-            }, 3000);
-        })();
+        // Show fallback if widget blocked
+        setTimeout(function() {
+            const container = document.getElementById('telegram-login-container');
+            if (container && container.children.length === 0) {
+                const fallback = document.getElementById('telegram-fallback');
+                if (fallback) fallback.style.display = 'block';
+            }
+        }, 3000);
     </script>
-    
-    <!-- Telegram Login Widget -->
-    <script async src="https://telegram.org/js/telegram-widget.js?22" 
-            data-telegram-login="safebutbot" 
-            data-size="large" 
-            data-onauth="onTelegramAuth(user)" 
-            data-request-access="write">
-    </script>
-    
-    <script type="text/javascript">
-        function onTelegramAuth(user) {
-            console.log('Telegram auth successful:', user);
-            
-            // Send auth data to our backend
-            fetch('/auth/telegram', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(user),
-                credentials: 'include'
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Store token
-                    localStorage.setItem('authToken', data.token);
-                    localStorage.setItem('isPremium', data.isPremium);
-                    
-                    // Redirect to app
-                    window.location.href = `/app?token=${data.token}&premium=${data.isPremium}`;
-                } else {
-                    showError(data.error || 'Telegram login failed');
-                }
-            })
-            .catch(error => {
-                console.error('Telegram login error:', error);
-                showError('Failed to connect with Telegram');
-            });
-        }
-    </script>
+
 </body>
 </html>
