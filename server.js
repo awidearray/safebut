@@ -225,68 +225,127 @@ app.post('/api/check-image-safety', async (req, res) => {
 
         const { image } = req.body;
         
-        // Use Venice AI's vision model to analyze the image
+        if (!image) {
+            return res.status(400).json({ error: 'No image provided' });
+        }
+        
+        // Try vision model first, fallback to text analysis if vision fails
         const apiUrl = 'https://api.venice.ai/api/v1/chat/completions';
-        const requestBody = {
-            model: 'mistral-31-24b',  // Vision-capable model
-            messages: [
-                {
-                    role: 'system',
-                    content: 'You are a medical expert analyzing images for pregnancy safety. Provide accurate, evidence-based assessments.'
-                },
-                {
-                    role: 'user',
-                    content: [
-                        {
-                            type: 'text',
-                            text: `Analyze this image and determine if what's shown is safe during pregnancy. Provide:
+        
+        try {
+            // Try with vision model
+            const visionRequestBody = {
+                model: 'llama-3.2-90b-vision',  // Vision-capable model
+                messages: [
+                    {
+                        role: 'system',
+                        content: 'You are a medical expert analyzing images for pregnancy safety. Provide accurate, evidence-based assessments.'
+                    },
+                    {
+                        role: 'user',
+                        content: [
+                            {
+                                type: 'text',
+                                text: `Analyze this image and determine if what's shown is safe during pregnancy. Provide:
 RISK_SCORE: [1-10, where 1 is safest and 10 is most dangerous]
 SAFETY: [Safe/Caution/Avoid]
 WHY: [1 sentence explanation of what you see and why it's safe or not]
 TIPS: [2-3 short practical tips based on what's in the image]`
+                            },
+                            {
+                                type: 'image_url',
+                                image_url: {
+                                    url: image  // The base64 image data from client
+                                }
+                            }
+                        ]
+                    }
+                ],
+                temperature: 0.3,
+                max_tokens: 200
+            };
+
+            console.log('Analyzing image with vision model...');
+            
+            const response = await axios.post(apiUrl, visionRequestBody, {
+                headers: {
+                    'Authorization': `Bearer ${process.env.VENICE_API_KEY}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const aiResponse = response.data.choices[0].message.content;
+            const riskScoreMatch = aiResponse.match(/RISK_SCORE:\s*(\d+)/);
+            const riskScore = riskScoreMatch ? parseInt(riskScoreMatch[1]) : 5;
+            
+            const references = [
+                { title: 'Mayo Clinic - Pregnancy Week by Week', url: 'https://www.mayoclinic.org/healthy-lifestyle/pregnancy-week-by-week/basics/pregnancy-week-by-week/hlv-20049471' },
+                { title: 'American Pregnancy Association', url: 'https://americanpregnancy.org/healthy-pregnancy/' },
+                { title: 'CDC - Pregnancy Safety', url: 'https://www.cdc.gov/pregnancy/index.html' }
+            ];
+            
+            res.json({ 
+                result: aiResponse,
+                riskScore: riskScore,
+                references: references
+            });
+            
+        } catch (visionError) {
+            console.error('Vision model error, trying text fallback:', visionError.response?.data || visionError.message);
+            
+            // Fallback to text-only analysis
+            try {
+                const fallbackRequestBody = {
+                    model: 'llama-3.3-70b',
+                    messages: [
+                        {
+                            role: 'system',
+                            content: 'Medical expert. Answer pregnancy safety questions about items shown in images. Brief, factual only.'
                         },
                         {
-                            type: 'image_url',
-                            image_url: {
-                                url: image  // The base64 image data from client
-                            }
+                            role: 'user',
+                            content: `An image was uploaded for pregnancy safety analysis. Since I cannot see the image, please provide general guidance:
+RISK_SCORE: 5
+SAFETY: Caution
+WHY: Unable to analyze image directly - please describe what you want to check for specific guidance
+TIPS: Take a clear photo in good lighting, or type what you want to check instead of uploading an image`
                         }
+                    ],
+                    temperature: 0.1,
+                    max_tokens: 150
+                };
+                
+                const fallbackResponse = await axios.post(apiUrl, fallbackRequestBody, {
+                    headers: {
+                        'Authorization': `Bearer ${process.env.VENICE_API_KEY}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const aiResponse = fallbackResponse.data.choices[0].message.content;
+                
+                res.json({ 
+                    result: aiResponse,
+                    riskScore: 5,
+                    references: [
+                        { title: 'Mayo Clinic - Pregnancy Week by Week', url: 'https://www.mayoclinic.org/healthy-lifestyle/pregnancy-week-by-week/basics/pregnancy-week-by-week/hlv-20049471' },
+                        { title: 'American Pregnancy Association', url: 'https://americanpregnancy.org/healthy-pregnancy/' },
+                        { title: 'CDC - Pregnancy Safety', url: 'https://www.cdc.gov/pregnancy/index.html' }
                     ]
-                }
-            ],
-            temperature: 0.3,
-            max_tokens: 200
-        };
-
-        console.log('Analyzing image with vision model...');
-        
-        const response = await axios.post(apiUrl, requestBody, {
-            headers: {
-                'Authorization': `Bearer ${process.env.VENICE_API_KEY}`,
-                'Content-Type': 'application/json'
+                });
+            } catch (fallbackError) {
+                console.error('Fallback also failed:', fallbackError.response?.data || fallbackError.message);
+                res.status(500).json({ 
+                    error: 'Failed to analyze image. Please try typing your question instead.',
+                    details: fallbackError.response?.data?.error || fallbackError.message 
+                });
             }
-        });
-
-        const aiResponse = response.data.choices[0].message.content;
-        const riskScoreMatch = aiResponse.match(/RISK_SCORE:\s*(\d+)/);
-        const riskScore = riskScoreMatch ? parseInt(riskScoreMatch[1]) : 5;
-        
-        const references = [
-            { title: 'Mayo Clinic - Pregnancy Week by Week', url: 'https://www.mayoclinic.org/healthy-lifestyle/pregnancy-week-by-week/basics/pregnancy-week-by-week/hlv-20049471' },
-            { title: 'American Pregnancy Association', url: 'https://americanpregnancy.org/healthy-pregnancy/' },
-            { title: 'CDC - Pregnancy Safety', url: 'https://www.cdc.gov/pregnancy/index.html' }
-        ];
-        
-        res.json({ 
-            result: aiResponse,
-            riskScore: riskScore,
-            references: references
-        });
+        }
     } catch (error) {
-        console.error('Image analysis error:', error.response?.data || error.message);
+        console.error('Image analysis setup error:', error.message);
         res.status(500).json({ 
-            error: 'Failed to analyze image. Please try again later.',
-            details: error.response?.data?.error || error.message 
+            error: 'Failed to process image. Please try again later.',
+            details: error.message 
         });
     }
 });

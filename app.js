@@ -898,6 +898,11 @@ class PregnancySafetyChecker {
     }
     
     async loadLogEntries() {
+        // Only load if premium user
+        if (localStorage.getItem('isPremium') !== 'true') {
+            return;
+        }
+        
         try {
             const response = await fetch('/api/log-entries', {
                 headers: {
@@ -909,6 +914,8 @@ class PregnancySafetyChecker {
                 this.logEntries = await response.json();
                 this.generateCalendarDays();
                 this.displayRecentEntries();
+            } else if (response.status === 403) {
+                console.log('Premium subscription required for log entries');
             }
         } catch (error) {
             console.error('Error loading log entries:', error);
