@@ -955,7 +955,12 @@ footer {
 
 @media (max-width: 600px) {
     h1 {
-        font-size: 2rem;
+        font-size: 1.8rem;
+        margin-bottom: 5px;
+    }
+    
+    .subtitle {
+        font-size: 1rem;
     }
     
     .input-group {
@@ -983,23 +988,105 @@ footer {
     }
     
     main {
-        padding: 20px 15px;
+        padding: 15px 12px;
         overflow-y: auto;
         flex: 1;
         -webkit-overflow-scrolling: touch;
     }
     
     header {
-        padding: 30px 20px;
+        padding: 20px 15px 15px 15px;
         flex-shrink: 0;
+    }
+    
+    /* Tab Navigation Mobile Optimization */
+    .tab-navigation {
+        gap: 6px;
+        margin-top: 15px;
+        flex-wrap: wrap;
+    }
+    
+    .tab-btn {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+        border-radius: 20px;
+        flex: 1;
+        min-width: auto;
+        text-align: center;
+    }
+    
+    .tab-btn.logout-btn {
+        margin-left: 0;
+        flex: 0 0 auto;
+        padding: 8px 16px;
     }
     
     footer {
         flex-shrink: 0;
+        padding: 10px 15px;
+        font-size: 0.85rem;
     }
     
     .result-content {
         max-height: none;
+    }
+    
+    /* Mobile-specific upgrade tab adjustments */
+    .upgrade-section {
+        padding: 15px;
+    }
+    
+    .upgrade-header h2 {
+        font-size: 1.6rem;
+    }
+    
+    .upgrade-benefits {
+        padding: 20px;
+        margin-bottom: 25px;
+    }
+    
+    .price-card {
+        padding: 25px;
+    }
+    
+    .price {
+        font-size: 2.5rem;
+    }
+}
+
+/* Extra small mobile screens */
+@media (max-width: 400px) {
+    h1 {
+        font-size: 1.5rem;
+    }
+    
+    .subtitle {
+        font-size: 0.9rem;
+    }
+    
+    header {
+        padding: 15px 10px 12px 10px;
+    }
+    
+    main {
+        padding: 12px 8px;
+    }
+    
+    .tab-btn {
+        padding: 6px 8px;
+        font-size: 0.75rem;
+    }
+    
+    .tab-btn.logout-btn {
+        padding: 6px 12px;
+    }
+    
+    .upgrade-header h2 {
+        font-size: 1.4rem;
+    }
+    
+    .price {
+        font-size: 2rem;
     }
 }
 
