@@ -276,6 +276,18 @@ main {
     border-color: white;
 }
 
+.tab-btn.logout-btn {
+    background: #ef4444;
+    color: white;
+    margin-left: auto;
+    border-color: #ef4444;
+}
+
+.tab-btn.logout-btn:hover {
+    background: #dc2626;
+    border-color: #dc2626;
+}
+
 .tab-content {
     display: none;
 }

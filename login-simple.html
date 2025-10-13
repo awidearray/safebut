@@ -336,11 +336,8 @@
                     
                     // Redirect to app or upgrade page
                     setTimeout(() => {
-                        if (data.isPremium) {
-                            window.location.href = `/app?token=${data.token}`;
-                        } else {
-                            window.location.href = `/upgrade`;
-                        }
+                        // Always send to app with token
+                        window.location.href = `/app?token=${data.token}&premium=${data.isPremium}`;
                     }, 1000);
                 } else {
                     throw new Error(data.error || 'Login failed');

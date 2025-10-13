@@ -174,11 +174,19 @@ class PregnancySafetyChecker {
     }
 
     async checkSafety(item) {
+        const authToken = localStorage.getItem('authToken');
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        // Add auth token if available
+        if (authToken) {
+            headers['Authorization'] = `Bearer ${authToken}`;
+        }
+        
         const response = await fetch('/api/check-safety', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: headers,
             body: JSON.stringify({
                 item: item
             })
@@ -194,11 +202,19 @@ class PregnancySafetyChecker {
     }
 
     async checkImageSafety(imageData) {
+        const authToken = localStorage.getItem('authToken');
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        // Add auth token if available
+        if (authToken) {
+            headers['Authorization'] = `Bearer ${authToken}`;
+        }
+        
         const response = await fetch('/api/check-image-safety', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: headers,
             body: JSON.stringify({
                 image: imageData
             })
