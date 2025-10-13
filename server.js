@@ -10,6 +10,9 @@ const MongoStore = require('connect-mongo');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Behind a proxy (e.g., Vercel/Heroku), trust proxy to get correct protocol/host
+app.set('trust proxy', true);
+
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/safebut');
 

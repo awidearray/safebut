@@ -44,8 +44,14 @@ router.post('/request-magic-link', async (req, res) => {
             used: false
         });
         
-        // Create magic link
-        const magicLink = `${process.env.BASE_URL || 'http://localhost:3000'}/auth/verify-magic-link?token=${token}`;
+        // Create magic link with correct base URL (production-safe)
+        const forwardedProto = req.headers['x-forwarded-proto'];
+        const forwardedHost = req.headers['x-forwarded-host'];
+        const effectiveProto = forwardedProto || req.protocol;
+        const effectiveHost = forwardedHost || req.get('host');
+        const computedBaseUrl = `${effectiveProto}://${effectiveHost}`;
+        const baseUrl = process.env.BASE_URL || computedBaseUrl;
+        const magicLink = `${baseUrl}/auth/verify-magic-link?token=${token}`;
         
         // Send email (if SMTP is configured)
         if (process.env.SMTP_USER && process.env.SMTP_PASS) {
