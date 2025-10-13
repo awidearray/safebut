@@ -52,12 +52,11 @@ app.use((req, res, next) => {
     res.setHeader(
         'Content-Security-Policy',
         "default-src 'self'; " +
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://telegram.org; " +
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
         "style-src 'self' 'unsafe-inline'; " +
         "img-src 'self' data: blob: https:; " +
         "font-src 'self' data:; " +
-        "frame-src https://oauth.telegram.org; " +
-        "connect-src 'self' http://localhost:* https://api.venice.ai https://telegram.org;"
+        "connect-src 'self' http://localhost:* https://api.venice.ai;"
     );
     next();
 });

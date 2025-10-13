@@ -96,8 +96,8 @@
             color: white;
         }
 
-        .telegram-login-button {
-            background: #0088cc;
+        .email-login-button {
+            background: #667eea;
             color: white;
             border: none;
             padding: 15px 30px;
@@ -113,13 +113,13 @@
             transition: all 0.3s;
         }
 
-        .telegram-login-button:hover {
-            background: #0077b5;
+        .email-login-button:hover {
+            background: #5a67d8;
             transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(0, 136, 204, 0.4);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
         }
 
-        .telegram-login-button svg {
+        .email-login-button svg {
             width: 24px;
             height: 24px;
             margin-right: 10px;
@@ -221,30 +221,13 @@
         </div>
 
         <div class="login-buttons">
-            <!-- Skip Telegram for now and use email login -->
-            <button onclick="showEmailLogin()" class="telegram-login-button">
+            <!-- Email Login Form -->
+            <button onclick="showEmailLogin()" class="email-login-button">
                 <svg viewBox="0 0 24 24" fill="currentColor" style="width: 20px; height: 20px; margin-right: 8px;">
                     <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
                 </svg>
                 Continue with Email
             </button>
-            
-            <div style="margin: 20px 0; text-align: center; color: #666;">OR</div>
-            
-            <!-- Telegram Login Widget -->
-            <div id="telegram-login-container" style="display: flex; justify-content: center; margin: 20px 0;">
-                <script async src="https://telegram.org/js/telegram-widget.js?22"
-                        data-telegram-login="safebutbot"
-                        data-size="large"
-                        data-onauth="onTelegramAuth(user)"
-                        data-request-access="write">
-                </script>
-            </div>
-
-            <!-- Fallback if widget blocked -->
-            <div id="telegram-fallback" style="display:none; text-align:center; margin-top:10px;">
-                <a href="https://t.me/safebutbot?start=login" target="_blank" class="telegram-login-button">Open Telegram to Login</a>
-            </div>
             
             <!-- Email Login Form (hidden by default) -->
             <div id="email-login-form" style="display: none; margin-top: 20px;">
@@ -259,24 +242,6 @@
     </div>
 
     <script>
-        // Telegram Login Widget Auth Callback
-        function onTelegramAuth(user) {
-            fetch('/auth/telegram', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(user),
-                credentials: 'include'
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (!data.success) throw new Error(data.error || 'Telegram login failed');
-                localStorage.setItem('authToken', data.token);
-                localStorage.setItem('isPremium', data.isPremium);
-                window.location.href = `/app?token=${data.token}&premium=${data.isPremium}`;
-            })
-            .catch(() => showError('Failed to connect with Telegram'));
-        }
-        
         // Show email login form
         function showEmailLogin() {
             document.getElementById('email-login-form').style.display = 'block';
@@ -429,14 +394,6 @@
             showError('Magic link has expired. Please request a new one.');
         }
 
-        // Show fallback if widget blocked
-        setTimeout(function() {
-            const container = document.getElementById('telegram-login-container');
-            if (container && container.children.length === 0) {
-                const fallback = document.getElementById('telegram-fallback');
-                if (fallback) fallback.style.display = 'block';
-            }
-        }, 3000);
     </script>
 
 </body>
