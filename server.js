@@ -80,7 +80,9 @@ app.use(express.static(path.join(__dirname), {
 
 // Import and mount auth routes
 const authRoutes = require('./routes/auth');
+const affiliateRoutes = require('./routes/affiliate');
 app.use('/auth', authRoutes);
+app.use('/api/affiliate', affiliateRoutes);
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
@@ -336,7 +338,7 @@ TIPS: [2-3 short practical tips based on what's in the image]`
                 { title: 'CDC - Pregnancy Safety', url: 'https://www.cdc.gov/pregnancy/index.html' }
             ];
             
-            res.json({ 
+            return res.json({ 
                 result: aiResponse,
                 riskScore: riskScore,
                 references: references
@@ -376,7 +378,7 @@ TIPS: Take a clear photo in good lighting, or type what you want to check instea
                 
                 const aiResponse = fallbackResponse.data.choices[0].message.content;
                 
-                res.json({ 
+                return res.json({ 
                     result: aiResponse,
                     riskScore: 5,
                     references: [
@@ -387,17 +389,31 @@ TIPS: Take a clear photo in good lighting, or type what you want to check instea
                 });
             } catch (fallbackError) {
                 console.error('Fallback also failed:', fallbackError.response?.data || fallbackError.message);
-                res.status(500).json({ 
-                    error: 'Failed to analyze image. Please try typing your question instead.',
-                    details: fallbackError.response?.data?.error || fallbackError.message 
+                // Final graceful fallback without external API
+                const generic = `RISK_SCORE: 5\nSAFETY: Caution\nWHY: Unable to analyze the image right now.\nTIPS: Try again with a clearer photo, Good lighting helps, You can also type what you want to check`;
+                return res.json({
+                    result: generic,
+                    riskScore: 5,
+                    references: [
+                        { title: 'Mayo Clinic - Pregnancy Week by Week', url: 'https://www.mayoclinic.org/healthy-lifestyle/pregnancy-week-by-week/basics/pregnancy-week-by-week/hlv-20049471' },
+                        { title: 'American Pregnancy Association', url: 'https://americanpregnancy.org/healthy-pregnancy/' },
+                        { title: 'CDC - Pregnancy Safety', url: 'https://www.cdc.gov/pregnancy/index.html' }
+                    ]
                 });
             }
         }
     } catch (error) {
         console.error('Image analysis setup error:', error.message);
-        res.status(500).json({ 
-            error: 'Failed to process image. Please try again later.',
-            details: error.message 
+        // Final catch-all graceful response
+        const generic = `RISK_SCORE: 5\nSAFETY: Caution\nWHY: Unable to analyze the image right now.\nTIPS: Try again with a clearer photo, Good lighting helps, You can also type what you want to check`;
+        return res.json({
+            result: generic,
+            riskScore: 5,
+            references: [
+                { title: 'Mayo Clinic - Pregnancy Week by Week', url: 'https://www.mayoclinic.org/healthy-lifestyle/pregnancy-week-by-week/basics/pregnancy-week-by-week/hlv-20049471' },
+                { title: 'American Pregnancy Association', url: 'https://americanpregnancy.org/healthy-pregnancy/' },
+                { title: 'CDC - Pregnancy Safety', url: 'https://www.cdc.gov/pregnancy/index.html' }
+            ]
         });
     }
 });

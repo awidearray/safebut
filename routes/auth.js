@@ -27,7 +27,7 @@ const generateToken = (userId) => {
 // Request magic link
 router.post('/request-magic-link', async (req, res) => {
     try {
-        const { email } = req.body;
+        const { email, referralCode } = req.body;
         
         if (!email || !email.includes('@')) {
             return res.status(400).json({ success: false, error: 'Valid email required' });
@@ -37,9 +37,10 @@ router.post('/request-magic-link', async (req, res) => {
         const token = crypto.randomBytes(32).toString('hex');
         const expires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
         
-        // Store token with email and expiration
+        // Store token with email, referral code, and expiration
         magicLinkTokens.set(token, {
             email,
+            referralCode: referralCode || null,
             expires,
             used: false
         });
@@ -170,16 +171,35 @@ router.get('/verify-magic-link', async (req, res) => {
         
         // Find or create user by email
         let user = await User.findOne({ email: tokenData.email.toLowerCase() });
+        let isNewUser = false;
         
         if (!user) {
+            isNewUser = true;
             // Create new user with email
             user = new User({
                 email: tokenData.email.toLowerCase(),
                 name: tokenData.email.split('@')[0], // Use email prefix as name
-                provider: 'email'
+                provider: 'email',
+                referredBy: tokenData.referralCode || null
             });
             await user.save();
             console.log('Created new user:', user.email);
+            
+            // Handle referral if referralCode provided
+            if (tokenData.referralCode) {
+                try {
+                    const referrer = await User.findOne({ affiliateCode: tokenData.referralCode });
+                    if (referrer && referrer.isPremium) {
+                        // Award points to referrer (10 points for signup)
+                        await referrer.addReferral(user, 10);
+                        console.log(`Referral tracked: ${referrer.email} referred ${user.email}`);
+                    } else {
+                        console.log('Referral code invalid or referrer not premium:', tokenData.referralCode);
+                    }
+                } catch (referralError) {
+                    console.error('Referral processing error:', referralError);
+                }
+            }
         } else {
             console.log('Found existing user:', user.email);
         }

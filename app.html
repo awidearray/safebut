@@ -19,6 +19,7 @@
                 <button class="tab-btn" data-tab="profile">👤 Profile</button>
                 <button class="tab-btn" data-tab="history">📜 History</button>
                 <button class="tab-btn" data-tab="log" id="logTabBtn">📝 Log</button>
+                <button class="tab-btn" data-tab="leaderboard" id="leaderboardTabBtn" style="display: none;">🏆 Leaderboard</button>
                 <button class="tab-btn" data-tab="upgrade">🚀 Upgrade</button>
                 <button class="tab-btn logout-btn" id="logoutBtn" onclick="logout()">🚪 Logout</button>
             </div>
@@ -384,10 +385,80 @@
                         </div>
                     </div>
                     
+                    <!-- Affiliate Section (Premium Only) -->
+                    <div id="affiliateSection" class="affiliate-section" style="display: none;">
+                        <h3>🎯 Refer Friends & Earn Points</h3>
+                        <p class="affiliate-intro">Share Safebut with friends and earn points for future rewards!</p>
+                        
+                        <div class="affiliate-stats">
+                            <div class="stat-item">
+                                <span class="stat-value" id="totalPoints">0</span>
+                                <span class="stat-label">Total Points</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-value" id="totalReferrals">0</span>
+                                <span class="stat-label">Referrals</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-value" id="premiumReferrals">0</span>
+                                <span class="stat-label">Premium Referrals</span>
+                            </div>
+                        </div>
+                        
+                        <div class="affiliate-link-container">
+                            <label for="affiliateLink">Your Referral Link:</label>
+                            <div class="link-input-group">
+                                <input type="text" id="affiliateLink" readonly placeholder="Generating your link...">
+                                <button id="copyLinkBtn" class="copy-btn">📋 Copy</button>
+                            </div>
+                            <p class="affiliate-note">
+                                💡 Earn 10 points when someone signs up with your link, plus 50 bonus points if they upgrade to premium!
+                            </p>
+                        </div>
+                        
+                        <div class="referral-history">
+                            <h4>Recent Referrals</h4>
+                            <div id="referralsList" class="referrals-list">
+                                <p class="no-referrals">No referrals yet. Start sharing your link!</p>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <button id="saveProfile" class="save-profile-btn">💾 Save Profile</button>
                     
                     <div class="profile-note">
                         <p>🔒 Your health information is stored locally and only used to personalize your safety recommendations.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Leaderboard Tab Content -->
+            <div id="leaderboardTab" class="tab-content" style="display: none;">
+                <div class="leaderboard-section">
+                    <h2>🏆 Points Leaderboard</h2>
+                    <p class="leaderboard-intro">See how you rank among our top referrers!</p>
+                    
+                    <div class="leaderboard-filters">
+                        <button class="filter-btn active" data-filter="all">All Time</button>
+                        <button class="filter-btn" data-filter="month">This Month</button>
+                        <button class="refresh-btn" id="refreshLeaderboard">🔄 Refresh</button>
+                    </div>
+                    
+                    <div class="leaderboard-table">
+                        <div class="table-header">
+                            <div class="rank-col">Rank</div>
+                            <div class="name-col">User</div>
+                            <div class="points-col">Points</div>
+                            <div class="referrals-col">Referrals</div>
+                        </div>
+                        <div id="leaderboardList" class="table-body">
+                            <div class="loading-message">Loading leaderboard...</div>
+                        </div>
+                    </div>
+                    
+                    <div class="leaderboard-note">
+                        <p>💡 Points are earned by referring new users (10 points) and when they upgrade to premium (50 bonus points)!</p>
+                        <p>🎁 Points will be redeemable for exciting rewards - stay tuned!</p>
                     </div>
                 </div>
             </div>

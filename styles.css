@@ -2065,3 +2065,337 @@ footer {
         max-height: 400px;
     }
 }
+
+/* Affiliate Section */
+.affiliate-section {
+    background: linear-gradient(135deg, #667eea22 0%, #764ba244 100%);
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 30px;
+    border: 2px solid #667eea33;
+}
+
+.affiliate-section h3 {
+    color: #667eea;
+    margin-bottom: 15px;
+    font-size: 1.4rem;
+    text-align: center;
+}
+
+.affiliate-intro {
+    color: #666;
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.affiliate-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.stat-item {
+    background: white;
+    border-radius: 10px;
+    padding: 15px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+    border: 1px solid #e9ecef;
+}
+
+.stat-value {
+    display: block;
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #667eea;
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.affiliate-link-container {
+    margin-bottom: 25px;
+}
+
+.affiliate-link-container label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #333;
+}
+
+.link-input-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.link-input-group input {
+    flex: 1;
+    padding: 12px;
+    border: 2px solid #667eea33;
+    border-radius: 8px;
+    background: white;
+    font-size: 0.9rem;
+}
+
+.copy-btn {
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.copy-btn:hover {
+    background: #5a67d8;
+    transform: translateY(-2px);
+}
+
+.affiliate-note {
+    font-size: 0.9rem;
+    color: #666;
+    background: white;
+    padding: 12px;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+}
+
+.referral-history h4 {
+    color: #333;
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+}
+
+.referrals-list {
+    background: white;
+    border-radius: 10px;
+    padding: 15px;
+    min-height: 100px;
+    border: 1px solid #e9ecef;
+}
+
+.no-referrals {
+    text-align: center;
+    color: #666;
+    font-style: italic;
+    margin: 0;
+}
+
+.referral-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.referral-item:last-child {
+    border-bottom: none;
+}
+
+.referral-email {
+    font-weight: 600;
+    color: #333;
+}
+
+.referral-date {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.referral-points {
+    background: #4CAF50;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+/* Leaderboard Section */
+.leaderboard-section {
+    background: #f8f9fa;
+    border-radius: 15px;
+    padding: 25px;
+}
+
+.leaderboard-section h2 {
+    color: #667eea;
+    margin-bottom: 10px;
+    text-align: center;
+    font-size: 1.8rem;
+}
+
+.leaderboard-intro {
+    color: #666;
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.leaderboard-filters {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    background: white;
+    border: 2px solid #667eea33;
+    color: #667eea;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: 600;
+}
+
+.filter-btn.active {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+.filter-btn:hover {
+    background: #667eea22;
+}
+
+.refresh-btn {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.refresh-btn:hover {
+    background: #45a049;
+    transform: translateY(-2px);
+}
+
+.leaderboard-table {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-bottom: 25px;
+}
+
+.table-header {
+    display: grid;
+    grid-template-columns: 60px 1fr 100px 100px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 15px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.table-body {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.leaderboard-row {
+    display: grid;
+    grid-template-columns: 60px 1fr 100px 100px;
+    padding: 15px;
+    border-bottom: 1px solid #f0f0f0;
+    align-items: center;
+    transition: background-color 0.2s;
+}
+
+.leaderboard-row:hover {
+    background: #f8f9fa;
+}
+
+.leaderboard-row:last-child {
+    border-bottom: none;
+}
+
+.rank-col {
+    font-weight: bold;
+    color: #667eea;
+    text-align: center;
+}
+
+.name-col {
+    color: #333;
+}
+
+.points-col {
+    text-align: center;
+    font-weight: 600;
+    color: #4CAF50;
+}
+
+.referrals-col {
+    text-align: center;
+    color: #666;
+}
+
+.rank-medal {
+    font-size: 1.2rem;
+}
+
+.loading-message {
+    text-align: center;
+    color: #666;
+    padding: 30px;
+    font-style: italic;
+}
+
+.leaderboard-note {
+    background: linear-gradient(135deg, #667eea11, #764ba222);
+    border-radius: 10px;
+    padding: 20px;
+    border-left: 4px solid #667eea;
+}
+
+.leaderboard-note p {
+    margin: 0 0 10px;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.leaderboard-note p:last-child {
+    margin-bottom: 0;
+}
+
+/* Mobile responsiveness for affiliate and leaderboard */
+@media (max-width: 768px) {
+    .affiliate-stats {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .link-input-group {
+        flex-direction: column;
+    }
+    
+    .table-header,
+    .leaderboard-row {
+        grid-template-columns: 40px 1fr 70px 70px;
+        padding: 10px;
+        font-size: 0.85rem;
+    }
+    
+    .leaderboard-filters {
+        flex-direction: column;
+        gap: 8px;
+    }
+}

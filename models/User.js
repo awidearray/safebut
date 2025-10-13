@@ -81,6 +81,18 @@ const userSchema = new mongoose.Schema({
         date: { type: Date, default: Date.now }
     },
     
+    // Affiliate system
+    affiliateCode: { type: String, unique: true, sparse: true },
+    affiliatePoints: { type: Number, default: 0 },
+    referredBy: { type: String }, // affiliate code of referrer
+    referrals: [{ 
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        email: String,
+        signupDate: { type: Date, default: Date.now },
+        pointsAwarded: { type: Number, default: 0 },
+        isPremium: { type: Boolean, default: false }
+    }],
+    
     // Account timestamps
     createdAt: { type: Date, default: Date.now },
     lastLogin: { type: Date, default: Date.now }
@@ -136,6 +148,36 @@ userSchema.methods.saveProfile = function(profileData) {
 // Get decrypted profile
 userSchema.methods.getProfile = function() {
     return decrypt(this.encryptedProfile) || {};
+};
+
+// Generate unique affiliate code
+userSchema.methods.generateAffiliateCode = function() {
+    if (this.affiliateCode) return this.affiliateCode;
+    
+    const code = crypto.randomBytes(4).toString('hex').toUpperCase();
+    this.affiliateCode = `SB${code}`;
+    return this.affiliateCode;
+};
+
+// Award points for referral
+userSchema.methods.awardReferralPoints = function(pointsToAward) {
+    this.affiliatePoints += pointsToAward;
+    return this.save();
+};
+
+// Add referral
+userSchema.methods.addReferral = function(referredUser, pointsAwarded = 10) {
+    this.referrals.push({
+        userId: referredUser._id,
+        email: referredUser.email,
+        signupDate: new Date(),
+        pointsAwarded: pointsAwarded,
+        isPremium: referredUser.isPremium
+    });
+    
+    // Award points to referrer
+    this.affiliatePoints += pointsAwarded;
+    return this.save();
 };
 
 module.exports = mongoose.model('User', userSchema);
