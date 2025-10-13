@@ -51,8 +51,8 @@ router.post('/create-checkout-session', verifyToken, async (req, res) => {
                 quantity: 1
             }],
             mode: 'payment',
-            success_url: `${process.env.APP_URL}/upgrade?success=true&session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${process.env.APP_URL}/upgrade`,
+            success_url: `${process.env.APP_URL}/app.html?success=true&session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${process.env.APP_URL}/app.html`,
             metadata: {
                 userId: req.user._id.toString(),
                 productType: 'lifetime_premium'

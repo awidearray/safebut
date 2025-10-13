@@ -441,12 +441,104 @@
                 });
             }
             
+            // Handle payment success from Stripe redirect
+            function handlePaymentSuccess() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const success = urlParams.get('success');
+                const sessionId = urlParams.get('session_id');
+                
+                if (success === 'true' && sessionId) {
+                    // Verify the payment session with backend
+                    fetch('/payment/verify-session', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + localStorage.getItem('authToken')
+                        },
+                        body: JSON.stringify({ sessionId })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Update local storage
+                            localStorage.setItem('isPremium', 'true');
+                            
+                            // Show success message
+                            showUpgradeSuccess();
+                            
+                            // Clean up URL
+                            window.history.replaceState({}, document.title, '/app.html');
+                            
+                            // Reload page to reflect premium status
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 3000);
+                        } else {
+                            showUpgradeError('Payment verification failed');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Payment verification error:', error);
+                        showUpgradeError('Failed to verify payment');
+                    });
+                }
+            }
+            
+            function showUpgradeSuccess() {
+                const upgradeTab = document.getElementById('upgradeTab');
+                if (upgradeTab) {
+                    upgradeTab.innerHTML = `
+                        <div class="upgrade-section" style="text-align: center; padding: 40px 20px;">
+                            <div style="font-size: 4rem; margin-bottom: 20px;">🎉</div>
+                            <h2 style="color: #4CAF50; margin-bottom: 15px;">Welcome to Premium!</h2>
+                            <p style="color: #666; font-size: 1.1rem; margin-bottom: 25px;">
+                                Your payment was successful. You now have unlimited access to all features!
+                            </p>
+                            <div style="background: #e8f5e8; border-radius: 15px; padding: 20px; margin: 20px 0;">
+                                <h3 style="color: #4CAF50; margin-bottom: 15px;">✨ You now have access to:</h3>
+                                <div style="text-align: left; display: inline-block;">
+                                    <div style="margin: 8px 0; color: #333;">✓ Unlimited safety checks</div>
+                                    <div style="margin: 8px 0; color: #333;">✓ Image analysis with camera</div>
+                                    <div style="margin: 8px 0; color: #333;">✓ Detailed medical reports</div>
+                                    <div style="margin: 8px 0; color: #333;">✓ Export history as PDF</div>
+                                </div>
+                            </div>
+                            <button onclick="document.querySelector('[data-tab=\\"search\\"]').click()" style="
+                                background: #4CAF50;
+                                color: white;
+                                border: none;
+                                padding: 15px 30px;
+                                border-radius: 10px;
+                                font-size: 1.1rem;
+                                font-weight: 600;
+                                cursor: pointer;
+                                margin-top: 20px;
+                            ">🚀 Start Using Premium Features</button>
+                        </div>
+                    `;
+                    
+                    // Switch to upgrade tab to show success
+                    document.querySelector('[data-tab="upgrade"]').click();
+                }
+            }
+            
+            function showUpgradeError(message) {
+                const errorDiv = document.getElementById('upgradeErrorMessage');
+                if (errorDiv) {
+                    errorDiv.textContent = message;
+                    errorDiv.style.display = 'block';
+                }
+            }
+
             // Add event listener for upgrade button when DOM is ready
             document.addEventListener('DOMContentLoaded', () => {
                 const upgradeButton = document.getElementById('upgradePayButton');
                 if (upgradeButton) {
                     upgradeButton.addEventListener('click', handleUpgradePayment);
                 }
+                
+                // Check for payment success
+                handlePaymentSuccess();
             });
 
             // Load the main app script after DOM is ready

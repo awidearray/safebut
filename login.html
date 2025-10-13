@@ -239,7 +239,7 @@
             <div id="email-login-form" style="display: none; margin-top: 20px;">
                 <input type="email" id="email-input" placeholder="Enter your email" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; font-size: 16px;">
                 <button onclick="loginWithEmail()" style="width: 100%; padding: 12px; background: #667eea; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">
-                    Sign In & Get Premium Access
+                    Send Magic Link
                 </button>
             </div>
         </div>
@@ -254,17 +254,23 @@
             document.getElementById('email-input').focus();
         }
         
-        // Email login function
+        // Email magic link function
         function loginWithEmail() {
             const email = document.getElementById('email-input').value;
+            const button = document.querySelector('#email-login-form button');
             
             if (!email || !email.includes('@')) {
                 showError('Please enter a valid email address');
                 return;
             }
             
-            // Send login request
-            fetch('/auth/email-login', {
+            // Show loading state
+            const originalText = button.textContent;
+            button.textContent = 'Sending magic link...';
+            button.disabled = true;
+            
+            // Request magic link
+            fetch('/auth/request-magic-link', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -275,20 +281,26 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Store token
-                    localStorage.setItem('authToken', data.token);
-                    localStorage.setItem('userEmail', email);
-                    localStorage.setItem('isPremium', data.isPremium);
+                    // Show success message
+                    showSuccess(data.message);
                     
-                    // Redirect to upgrade page for payment
-                    window.location.href = '/upgrade';
+                    // In development, show the magic link
+                    if (data.magicLink) {
+                        showMagicLinkDemo(data.magicLink);
+                    } else {
+                        showEmailSentMessage(email);
+                    }
                 } else {
-                    showError(data.error || 'Login failed');
+                    showError(data.error || 'Failed to send magic link');
+                    button.textContent = originalText;
+                    button.disabled = false;
                 }
             })
             .catch(error => {
-                console.error('Login error:', error);
-                showError('Failed to sign in. Please try again.');
+                console.error('Magic link error:', error);
+                showError('Failed to send magic link. Please try again.');
+                button.textContent = originalText;
+                button.disabled = false;
             });
         }
         
@@ -340,6 +352,70 @@
             const errorDiv = document.getElementById('errorMessage');
             errorDiv.textContent = message;
             errorDiv.style.display = 'block';
+            errorDiv.style.background = '#f8d7da';
+            errorDiv.style.color = '#721c24';
+        }
+        
+        function showSuccess(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            errorDiv.style.background = '#d4edda';
+            errorDiv.style.color = '#155724';
+        }
+        
+        function showMagicLinkDemo(magicLink) {
+            const container = document.querySelector('.login-container');
+            const demoDiv = document.createElement('div');
+            demoDiv.innerHTML = `
+                <div style="background: #e7f3ff; border: 2px solid #0066cc; border-radius: 10px; padding: 20px; margin: 20px 0; text-align: center;">
+                    <h3 style="color: #0066cc; margin-bottom: 15px;">🔗 Development Mode</h3>
+                    <p style="margin-bottom: 15px; color: #333;">In development, here's your magic link:</p>
+                    <a href="${magicLink}" style="
+                        display: inline-block;
+                        background: #0066cc;
+                        color: white;
+                        padding: 12px 24px;
+                        border-radius: 8px;
+                        text-decoration: none;
+                        font-weight: 600;
+                        margin: 10px 0;
+                    ">🚀 Click to Login</a>
+                    <p style="font-size: 0.9em; color: #666; margin-top: 10px;">
+                        This link expires in 15 minutes
+                    </p>
+                </div>
+            `;
+            container.appendChild(demoDiv);
+        }
+        
+        function showEmailSentMessage(email) {
+            const container = document.querySelector('.login-container');
+            const messageDiv = document.createElement('div');
+            messageDiv.innerHTML = `
+                <div style="background: #e8f5e8; border: 2px solid #4CAF50; border-radius: 10px; padding: 20px; margin: 20px 0; text-align: center;">
+                    <h3 style="color: #4CAF50; margin-bottom: 15px;">📧 Check Your Email</h3>
+                    <p style="margin-bottom: 10px; color: #333;">
+                        We've sent a secure login link to:<br>
+                        <strong>${email}</strong>
+                    </p>
+                    <p style="font-size: 0.9em; color: #666;">
+                        Click the link in your email to log in securely.<br>
+                        The link expires in 15 minutes.
+                    </p>
+                    <button onclick="location.reload()" style="
+                        background: #4CAF50;
+                        color: white;
+                        border: none;
+                        padding: 10px 20px;
+                        border-radius: 6px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        margin-top: 15px;
+                    ">Send Another Link</button>
+                </div>
+            `;
+            container.appendChild(messageDiv);
         }
 
         // Check for auth errors in URL
@@ -348,6 +424,12 @@
         
         if (error === 'auth_failed') {
             showError('Authentication failed. Please try again.');
+        } else if (error === 'invalid_token') {
+            showError('Invalid or expired magic link. Please request a new one.');
+        } else if (error === 'token_used') {
+            showError('This magic link has already been used. Please request a new one.');
+        } else if (error === 'token_expired') {
+            showError('Magic link has expired. Please request a new one.');
         }
 
         // Load Telegram Login Widget immediately
