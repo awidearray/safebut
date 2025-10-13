@@ -24,22 +24,26 @@ if (process.env.NODE_ENV === 'production') {
     app.set('trust proxy', 1);
 }
 
-// Connect to MongoDB
-connectDB();
+// Connect to MongoDB (gracefully skip if not configured to avoid serverless crash)
+if (process.env.MONGODB_URI) {
+    connectDB();
+} else {
+    console.warn('MONGODB_URI is not set. Running without database connection.');
+}
 
 // Simple in-memory cache
 const responseCache = new Map();
 const CACHE_DURATION = 60 * 60 * 1000; // 1 hour in milliseconds
 
-// Session configuration
+// Session configuration (fallbacks to prevent crashes when env missing)
 app.use(session({
-    secret: process.env.SESSION_SECRET,
+    secret: process.env.SESSION_SECRET || 'change-me-fallback-secret',
     resave: false,
     saveUninitialized: false,
-    store: MongoStore.create({
+    store: process.env.MONGODB_URI ? MongoStore.create({
         mongoUrl: process.env.MONGODB_URI,
         ttl: 14 * 24 * 60 * 60 // 14 days
-    }),
+    }) : undefined, // Use MemoryStore if no Mongo configured
     cookie: {
         secure: process.env.NODE_ENV === 'production',
         httpOnly: true,
@@ -217,12 +221,34 @@ app.post('/api/check-safety', async (req, res) => {
         
         if (cached && (Date.now() - cached.timestamp < CACHE_DURATION)) {
             console.log('Returning cached response for:', cacheKey);
-            
-            // Still increment search count and save to history
-            await req.user.incrementSearchCount();
-            await req.user.addToHistory(item, cached.data.riskScore);
-            
-            return res.json(cached.data);
+            const cachedData = cached.data;
+
+            // Enforce limits and track usage similarly to fresh calls
+            if (user) {
+                const canSearch = await user.checkDailyLimit();
+                if (!canSearch && !user.isPremium) {
+                    return res.status(403).json({ 
+                        error: 'Daily limit reached', 
+                        message: 'You\'ve used your free daily check. Upgrade to premium for unlimited checks!',
+                        requiresUpgrade: true 
+                    });
+                }
+                await user.incrementSearchCount();
+                const riskForHistory = cachedData.pregnancyRiskScore || cachedData.riskScore || 5;
+                await user.addToHistory(item, riskForHistory);
+            } else {
+                if (!req.session.trialSearchCount) req.session.trialSearchCount = 0;
+                req.session.trialSearchCount++;
+                if (req.session.trialSearchCount > 1) {
+                    return res.status(403).json({ 
+                        error: 'Trial limit reached', 
+                        message: 'Trial users get 1 free check. Please sign up for unlimited access!',
+                        requiresUpgrade: true 
+                    });
+                }
+            }
+
+            return res.json(cachedData);
         }
 
         // Build personalized context from user profile
