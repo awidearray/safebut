@@ -134,7 +134,15 @@ router.get('/verify-magic-link', async (req, res) => {
     try {
         const { token } = req.query;
         
+        // Log the verification attempt
+        console.log('Magic link verification attempt:', {
+            token: token ? `${token.substring(0, 8)}...` : 'missing',
+            userAgent: req.headers['user-agent'],
+            referer: req.headers['referer']
+        });
+        
         if (!token) {
+            console.error('No token provided in magic link');
             return res.redirect('/login?error=invalid_token');
         }
         
@@ -142,14 +150,17 @@ router.get('/verify-magic-link', async (req, res) => {
         const tokenData = magicLinkTokens.get(token);
         
         if (!tokenData) {
+            console.error('Token not found in storage:', token.substring(0, 8));
             return res.redirect('/login?error=invalid_token');
         }
         
         if (tokenData.used) {
+            console.error('Token already used:', token.substring(0, 8));
             return res.redirect('/login?error=token_used');
         }
         
         if (new Date() > tokenData.expires) {
+            console.error('Token expired:', token.substring(0, 8));
             magicLinkTokens.delete(token);
             return res.redirect('/login?error=token_expired');
         }
@@ -158,26 +169,43 @@ router.get('/verify-magic-link', async (req, res) => {
         tokenData.used = true;
         
         // Find or create user by email
-        let user = await User.findOne({ email: tokenData.email });
+        let user = await User.findOne({ email: tokenData.email.toLowerCase() });
         
         if (!user) {
             // Create new user with email
             user = new User({
-                email: tokenData.email,
+                email: tokenData.email.toLowerCase(),
                 name: tokenData.email.split('@')[0], // Use email prefix as name
                 provider: 'email'
             });
             await user.save();
+            console.log('Created new user:', user.email);
+        } else {
+            console.log('Found existing user:', user.email);
         }
         
         // Generate JWT token
         const jwtToken = generateToken(user._id);
         
-        // Update session
+        // Save session with explicit save to ensure it persists
         req.session.token = jwtToken;
-        req.session.userId = user._id;
+        req.session.userId = user._id.toString();
+        req.session.userEmail = user.email;
         req.session.loginKeyType = 'email';
         req.session.loginKeyValue = tokenData.email;
+        
+        // Force session save before redirect
+        await new Promise((resolve, reject) => {
+            req.session.save((err) => {
+                if (err) {
+                    console.error('Session save error:', err);
+                    reject(err);
+                } else {
+                    console.log('Session saved successfully');
+                    resolve();
+                }
+            });
+        });
         
         // Update last login
         user.lastLogin = new Date();
@@ -186,8 +214,38 @@ router.get('/verify-magic-link', async (req, res) => {
         // Clean up the magic link token
         magicLinkTokens.delete(token);
         
-        // Redirect to app with token
-        return res.redirect(`/app.html?token=${jwtToken}&premium=${user.isPremium}`);
+        console.log('Magic link verified successfully, redirecting user:', user.email);
+        
+        // Use encodeURIComponent for token in URL to handle special characters
+        const encodedToken = encodeURIComponent(jwtToken);
+        const redirectUrl = `/app?token=${encodedToken}&premium=${user.isPremium}&auth=success`;
+        
+        // Send HTML with JavaScript redirect as fallback for email clients
+        return res.send(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Login Successful</title>
+                <meta http-equiv="refresh" content="0;url=${redirectUrl}">
+            </head>
+            <body>
+                <div style="text-align: center; padding: 50px; font-family: Arial, sans-serif;">
+                    <h2>✅ Login Successful!</h2>
+                    <p>Redirecting to the app...</p>
+                    <p>If you are not redirected automatically, <a href="${redirectUrl}">click here</a>.</p>
+                </div>
+                <script>
+                    // Store auth data in localStorage as backup
+                    localStorage.setItem('authToken', '${jwtToken}');
+                    localStorage.setItem('isPremium', '${user.isPremium}');
+                    localStorage.setItem('userEmail', '${user.email}');
+                    // Redirect
+                    window.location.href = '${redirectUrl}';
+                </script>
+            </body>
+            </html>
+        `);
         
     } catch (error) {
         console.error('Magic link verification error:', error);

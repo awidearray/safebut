@@ -18,6 +18,11 @@ const User = require('./models/User');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust proxy for production (needed for secure cookies and proper IPs)
+if (process.env.NODE_ENV === 'production') {
+    app.set('trust proxy', 1);
+}
+
 // Connect to MongoDB
 connectDB();
 
@@ -37,7 +42,8 @@ app.use(session({
     cookie: {
         secure: process.env.NODE_ENV === 'production',
         httpOnly: true,
-        maxAge: 14 * 24 * 60 * 60 * 1000 // 14 days
+        maxAge: 14 * 24 * 60 * 60 * 1000, // 14 days
+        sameSite: 'lax' // Allow cookies from email client redirects
     }
 }));
 
