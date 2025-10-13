@@ -83,6 +83,18 @@
                     
                     <div id="resultContent" class="result-content"></div>
                     
+                    <!-- More Details Section -->
+                    <div id="detailsSection" class="details-section">
+                        <button id="getDetailsBtn" class="get-details-btn">
+                            <span class="details-btn-text">🔍 Get More Detailed Answer</span>
+                            <span class="details-loader" style="display: none;"></span>
+                        </button>
+                        <div id="detailedContent" class="detailed-content" style="display: none;">
+                            <h3>📋 Detailed Analysis</h3>
+                            <div id="detailedAnswer"></div>
+                        </div>
+                    </div>
+                    
                     <div id="referencesSection" class="references-section">
                         <h3>📚 Learn More</h3>
                         <div id="referenceLinks"></div>
@@ -254,6 +266,121 @@
                                 <input type="radio" name="trimester" value="third" id="third-trimester">
                                 <span class="radio-label">Third Trimester (Weeks 28-40)</span>
                             </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Response Preferences -->
+                    <div class="preferences-section">
+                        <h3>⚙️ Response Preferences</h3>
+                        <p class="preferences-intro">Customize how Venice AI provides recommendations:</p>
+                        
+                        <!-- Measurement System -->
+                        <div class="preference-group">
+                            <h4>📏 Measurement System</h4>
+                            <div class="radio-group">
+                                <label class="radio-option">
+                                    <input type="radio" name="measurement-system" value="imperial" id="imperial-system">
+                                    <span class="radio-label">Imperial (lbs, °F, cups, inches)</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="measurement-system" value="metric" id="metric-system">
+                                    <span class="radio-label">Metric (kg, °C, ml, cm)</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Caffeine Measurement -->
+                        <div class="preference-group">
+                            <h4>☕ Caffeine Measurement</h4>
+                            <div class="radio-group">
+                                <label class="radio-option">
+                                    <input type="radio" name="caffeine-measurement" value="cups" id="caffeine-cups">
+                                    <span class="radio-label">Cups/Servings (1-2 cups of coffee)</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="caffeine-measurement" value="milligrams" id="caffeine-mg">
+                                    <span class="radio-label">Milligrams (200mg caffeine limit)</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Temperature Preference -->
+                        <div class="preference-group">
+                            <h4>🌡️ Temperature Unit</h4>
+                            <div class="radio-group">
+                                <label class="radio-option">
+                                    <input type="radio" name="temperature-unit" value="fahrenheit" id="temp-fahrenheit">
+                                    <span class="radio-label">Fahrenheit (°F)</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="temperature-unit" value="celsius" id="temp-celsius">
+                                    <span class="radio-label">Celsius (°C)</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Weight/Dosage Preference -->
+                        <div class="preference-group">
+                            <h4>⚖️ Weight & Dosage</h4>
+                            <div class="radio-group">
+                                <label class="radio-option">
+                                    <input type="radio" name="weight-unit" value="imperial" id="weight-imperial">
+                                    <span class="radio-label">Imperial (lbs, ounces)</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="weight-unit" value="metric" id="weight-metric">
+                                    <span class="radio-label">Metric (kg, grams)</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Response Detail Level -->
+                        <div class="preference-group">
+                            <h4>📖 Response Detail Level</h4>
+                            <div class="radio-group">
+                                <label class="radio-option">
+                                    <input type="radio" name="detail-level" value="brief" id="detail-brief">
+                                    <span class="radio-label">Brief (Quick answers, key points only)</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="detail-level" value="detailed" id="detail-detailed">
+                                    <span class="radio-label">Detailed (Comprehensive explanations)</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Scientific vs Layman -->
+                        <div class="preference-group">
+                            <h4>🧬 Language Style</h4>
+                            <div class="radio-group">
+                                <label class="radio-option">
+                                    <input type="radio" name="language-style" value="simple" id="language-simple">
+                                    <span class="radio-label">Simple Language (Easy to understand)</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="language-style" value="scientific" id="language-scientific">
+                                    <span class="radio-label">Scientific Terms (Medical terminology)</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Risk Communication Style -->
+                        <div class="preference-group">
+                            <h4>⚠️ Risk Communication</h4>
+                            <div class="radio-group">
+                                <label class="radio-option">
+                                    <input type="radio" name="risk-style" value="reassuring" id="risk-reassuring">
+                                    <span class="radio-label">Reassuring (Focus on what's safe)</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="risk-style" value="cautious" id="risk-cautious">
+                                    <span class="radio-label">Cautious (Emphasize potential risks)</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="risk-style" value="balanced" id="risk-balanced">
+                                    <span class="radio-label">Balanced (Neutral presentation)</span>
+                                </label>
+                            </div>
                         </div>
                     </div>
                     

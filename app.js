@@ -7,6 +7,8 @@ class PregnancySafetyChecker {
         this.currentMonth = new Date().getMonth();
         this.currentYear = new Date().getFullYear();
         this.logEntries = [];
+        this.currentSearchItem = null;
+        this.currentSearchType = null; // 'text' or 'image'
         this.initializeTabs();
         this.initializeEventListeners();
         this.initializeProfile();
@@ -67,7 +69,17 @@ class PregnancySafetyChecker {
             conditions: [],
             riskFactors: [],
             diet: [],
-            trimester: document.querySelector('input[name="trimester"]:checked')?.value
+            trimester: document.querySelector('input[name="trimester"]:checked')?.value,
+            // Response preferences
+            preferences: {
+                measurementSystem: document.querySelector('input[name="measurement-system"]:checked')?.value || 'imperial',
+                caffeineMeasurement: document.querySelector('input[name="caffeine-measurement"]:checked')?.value || 'cups',
+                temperatureUnit: document.querySelector('input[name="temperature-unit"]:checked')?.value || 'fahrenheit',
+                weightUnit: document.querySelector('input[name="weight-unit"]:checked')?.value || 'imperial',
+                detailLevel: document.querySelector('input[name="detail-level"]:checked')?.value || 'brief',
+                languageStyle: document.querySelector('input[name="language-style"]:checked')?.value || 'simple',
+                riskStyle: document.querySelector('input[name="risk-style"]:checked')?.value || 'balanced'
+            }
         };
         
         // Save conditions
@@ -187,6 +199,14 @@ class PregnancySafetyChecker {
         removeImageBtn.addEventListener('click', () => {
             this.removeImage();
         });
+
+        // Detailed answer functionality
+        const getDetailsBtn = document.getElementById('getDetailsBtn');
+        if (getDetailsBtn) {
+            getDetailsBtn.addEventListener('click', () => {
+                this.requestDetailedAnswer();
+            });
+        }
     }
 
     async handleImageCapture(file) {
@@ -281,6 +301,9 @@ class PregnancySafetyChecker {
                 const result = await this.checkImageSafety(this.capturedImage);
                 this.displayResults('Analyzed Image', result);
                 this.addToHistory('Photo Analysis', result.riskScore);
+                // Track current search for detailed answers
+                this.currentSearchItem = this.capturedImage;
+                this.currentSearchType = 'image';
             } catch (error) {
                 this.showError('Failed to analyze image. Please try again.');
                 console.error('Error:', error);
@@ -303,6 +326,9 @@ class PregnancySafetyChecker {
             const result = await this.checkSafety(query);
             this.displayResults(query, result);
             this.addToHistory(query, result.riskScore);
+            // Track current search for detailed answers
+            this.currentSearchItem = query;
+            this.currentSearchType = 'text';
         } catch (error) {
             console.error('Error:', error);
             
@@ -420,6 +446,76 @@ class PregnancySafetyChecker {
         }
 
         resultsSection.style.display = 'block';
+        
+        // Show the details section and reset its state
+        const detailsSection = document.getElementById('detailsSection');
+        const detailedContent = document.getElementById('detailedContent');
+        const getDetailsBtn = document.getElementById('getDetailsBtn');
+        
+        if (detailsSection && detailedContent && getDetailsBtn) {
+            detailsSection.style.display = 'block';
+            detailedContent.style.display = 'none';
+            getDetailsBtn.disabled = false;
+            
+            // Reset button text and loader
+            const btnText = getDetailsBtn.querySelector('.details-btn-text');
+            const loader = getDetailsBtn.querySelector('.details-loader');
+            if (btnText && loader) {
+                btnText.style.display = 'inline';
+                loader.style.display = 'none';
+            }
+        }
+    }
+
+    async requestDetailedAnswer() {
+        if (!this.currentSearchItem || !this.currentSearchType) {
+            this.showError('No search to get details for. Please search first.');
+            return;
+        }
+
+        const getDetailsBtn = document.getElementById('getDetailsBtn');
+        const btnText = getDetailsBtn.querySelector('.details-btn-text');
+        const loader = getDetailsBtn.querySelector('.details-loader');
+        const detailedContent = document.getElementById('detailedContent');
+        const detailedAnswer = document.getElementById('detailedAnswer');
+
+        // Show loading state
+        if (btnText && loader) {
+            btnText.style.display = 'none';
+            loader.style.display = 'block';
+        }
+        getDetailsBtn.disabled = true;
+
+        try {
+            let result;
+            if (this.currentSearchType === 'text') {
+                result = await this.getDetailedSafetyInfo(this.currentSearchItem);
+            } else if (this.currentSearchType === 'image') {
+                result = await this.getDetailedImageSafetyInfo(this.currentSearchItem);
+            }
+
+            // Display detailed results
+            if (detailedAnswer && result) {
+                const formattedContent = this.formatContent(result.result);
+                detailedAnswer.innerHTML = formattedContent;
+                detailedContent.style.display = 'block';
+                
+                // Change button text to indicate more details were loaded
+                if (btnText) {
+                    btnText.textContent = '✅ Detailed Analysis Loaded';
+                }
+            }
+        } catch (error) {
+            console.error('Error getting detailed answer:', error);
+            this.showError('Failed to get detailed answer. Please try again.');
+        } finally {
+            // Reset loading state
+            if (btnText && loader) {
+                loader.style.display = 'none';
+                btnText.style.display = 'inline';
+            }
+            getDetailsBtn.disabled = true; // Keep disabled since details are now loaded
+        }
     }
 
     getRiskColor(score) {
