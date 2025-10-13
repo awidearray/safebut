@@ -298,8 +298,14 @@ class PregnancySafetyChecker {
             this.displayResults(query, result);
             this.addToHistory(query, result.riskScore);
         } catch (error) {
-            this.showError('Failed to check safety. Please try again.');
             console.error('Error:', error);
+            
+            // Check if it's a daily limit error
+            if (error.message.includes('Daily limit reached') || error.message.includes('Trial limit reached')) {
+                this.showUpgradePrompt();
+            } else {
+                this.showError('Failed to check safety. Please try again.');
+            }
         } finally {
             this.showLoading(false);
         }
@@ -610,6 +616,26 @@ class PregnancySafetyChecker {
             loader.style.display = 'none';
             searchBtn.disabled = false;
         }
+    }
+
+    showUpgradePrompt() {
+        const errorDiv = document.getElementById('error');
+        const errorText = document.getElementById('errorText');
+        
+        // Create upgrade prompt HTML
+        errorText.innerHTML = `
+            <div style="text-align: center;">
+                <div style="font-size: 1.2em; margin-bottom: 10px;">🎯 Daily Limit Reached</div>
+                <div style="margin-bottom: 15px;">You've used your free search for today! Upgrade to get unlimited searches, image analysis, and more.</div>
+                <button onclick="window.location.href='/login'" style="background: #667eea; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; margin-right: 10px;">
+                    🚀 Upgrade Now - $0.99
+                </button>
+                <button onclick="checker.hideError()" style="background: #6c757d; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; cursor: pointer;">
+                    Maybe Later
+                </button>
+            </div>
+        `;
+        errorDiv.style.display = 'flex';
     }
 
     showError(message) {
