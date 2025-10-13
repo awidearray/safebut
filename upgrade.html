@@ -289,10 +289,9 @@
                 // Initialize Stripe with the correct publishable key from server
                 if (data.publishableKey) {
                     stripe = Stripe(data.publishableKey);
-                } else {
-                    // Fallback to test key if not provided
-                    console.warn('Using fallback test Stripe key');
-                    stripe = Stripe('pk_test_51QYNdXKLU1UKqSmA1xlIJJgJ0M9rEFHBSjCUajNgKHAaUl7pAXgYy02oU8vnBMZ0DQdPvyCGGGqUdTqKzlgYZklr00JlMlIEUP');
+                } else if (!stripe) {
+                    // No key provided and stripe not initialized yet
+                    throw new Error('Stripe is not configured. Please contact support.');
                 }
                 
                 // Redirect to Stripe Checkout
@@ -361,17 +360,20 @@
             .then(config => {
                 if (config.publishableKey) {
                     console.log('Stripe mode:', config.isTestMode ? 'TEST' : 'LIVE');
+                    console.log('Stripe key loaded:', config.publishableKey.substring(0, 20) + '...');
                     stripe = Stripe(config.publishableKey);
                 } else {
-                    console.warn('No Stripe publishable key configured on server');
-                    // Use test key as fallback
-                    stripe = Stripe('pk_test_51QYNdXKLU1UKqSmA1xlIJJgJ0M9rEFHBSjCUajNgKHAaUl7pAXgYy02oU8vnBMZ0DQdPvyCGGGqUdTqKzlgYZklr00JlMlIEUP');
+                    console.error('No Stripe publishable key configured on server');
+                    document.getElementById('errorMessage').textContent = 'Payment system is not configured. Please contact support.';
+                    document.getElementById('errorMessage').style.display = 'block';
+                    document.getElementById('payButton').disabled = true;
                 }
             })
             .catch(error => {
                 console.error('Failed to load Stripe config:', error);
-                // Use test key as fallback
-                stripe = Stripe('pk_test_51QYNdXKLU1UKqSmA1xlIJJgJ0M9rEFHBSjCUajNgKHAaUl7pAXgYy02oU8vnBMZ0DQdPvyCGGGqUdTqKzlgYZklr00JlMlIEUP');
+                document.getElementById('errorMessage').textContent = 'Failed to load payment configuration.';
+                document.getElementById('errorMessage').style.display = 'block';
+                document.getElementById('payButton').disabled = true;
             });
     </script>
 </body>
