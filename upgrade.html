@@ -249,10 +249,8 @@
     </div>
 
     <script>
-        // Initialize Stripe with the test publishable key
-        // In production, this should come from your environment configuration
-        const STRIPE_PUBLISHABLE_KEY = 'pk_test_51QYNdXKLU1UKqSmA1xlIJJgJ0M9rEFHBSjCUajNgKHAaUl7pAXgYy02oU8vnBMZ0DQdPvyCGGGqUdTqKzlgYZklr00JlMlIEUP';
-        const stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
+        // Stripe will be initialized after fetching the correct key from server
+        let stripe = null;
 
         document.getElementById('payButton').addEventListener('click', async () => {
             const button = document.getElementById('payButton');
@@ -286,6 +284,15 @@
                 
                 if (data.error) {
                     throw new Error(data.error);
+                }
+                
+                // Initialize Stripe with the correct publishable key from server
+                if (data.publishableKey) {
+                    stripe = Stripe(data.publishableKey);
+                } else {
+                    // Fallback to test key if not provided
+                    console.warn('Using fallback test Stripe key');
+                    stripe = Stripe('pk_test_51QYNdXKLU1UKqSmA1xlIJJgJ0M9rEFHBSjCUajNgKHAaUl7pAXgYy02oU8vnBMZ0DQdPvyCGGGqUdTqKzlgYZklr00JlMlIEUP');
                 }
                 
                 // Redirect to Stripe Checkout
@@ -347,6 +354,25 @@
             // Redirect to login if not authenticated
             window.location.href = '/login';
         }
+        
+        // Preload Stripe configuration
+        fetch('/payment/config')
+            .then(response => response.json())
+            .then(config => {
+                if (config.publishableKey) {
+                    console.log('Stripe mode:', config.isTestMode ? 'TEST' : 'LIVE');
+                    stripe = Stripe(config.publishableKey);
+                } else {
+                    console.warn('No Stripe publishable key configured on server');
+                    // Use test key as fallback
+                    stripe = Stripe('pk_test_51QYNdXKLU1UKqSmA1xlIJJgJ0M9rEFHBSjCUajNgKHAaUl7pAXgYy02oU8vnBMZ0DQdPvyCGGGqUdTqKzlgYZklr00JlMlIEUP');
+                }
+            })
+            .catch(error => {
+                console.error('Failed to load Stripe config:', error);
+                // Use test key as fallback
+                stripe = Stripe('pk_test_51QYNdXKLU1UKqSmA1xlIJJgJ0M9rEFHBSjCUajNgKHAaUl7pAXgYy02oU8vnBMZ0DQdPvyCGGGqUdTqKzlgYZklr00JlMlIEUP');
+            });
     </script>
 </body>
 </html>

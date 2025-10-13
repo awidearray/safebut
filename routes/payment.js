@@ -4,6 +4,14 @@ const User = require('../models/User');
 const { verifyToken } = require('../middleware/auth');
 const router = express.Router();
 
+// Get Stripe configuration
+router.get('/config', (req, res) => {
+    res.json({
+        publishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
+        isTestMode: process.env.STRIPE_PUBLISHABLE_KEY ? process.env.STRIPE_PUBLISHABLE_KEY.startsWith('pk_test_') : true
+    });
+});
+
 // Create Stripe Checkout Session for $0.99 lifetime subscription
 router.post('/create-checkout-session', verifyToken, async (req, res) => {
     try {
@@ -53,7 +61,8 @@ router.post('/create-checkout-session', verifyToken, async (req, res) => {
 
         res.json({
             sessionId: session.id,
-            url: session.url
+            url: session.url,
+            publishableKey: process.env.STRIPE_PUBLISHABLE_KEY
         });
     } catch (error) {
         console.error('Checkout session error:', error);
