@@ -434,7 +434,7 @@ TIPS: [2-3 short practical tips specific to the patient's conditions if applicab
             { title: 'CDC - Pregnancy Safety', url: 'https://www.cdc.gov/pregnancy/index.html' }
         ];
         
-        const responseData = { 
+        responseData = { 
             result: aiResponse,
             riskScore: riskScore,
             references: references
