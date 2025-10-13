@@ -473,6 +473,267 @@ TIPS: [2-3 short practical tips based on what's in the image]`
     }
 });
 
+// Detailed Safety Information endpoint
+app.post('/api/detailed-safety', async (req, res) => {
+    try {
+        if (!process.env.VENICE_API_KEY) {
+            console.error('VENICE_API_KEY is not set in environment variables');
+            return res.status(500).json({ error: 'Venice API key not configured' });
+        }
+
+        const { item } = req.body;
+        
+        // Try to get authenticated user for personalization
+        let user = null;
+        let userProfile = {};
+        
+        const token = req.header('Authorization')?.replace('Bearer ', '') || 
+                     req.session?.token;
+        
+        if (token) {
+            try {
+                const jwt = require('jsonwebtoken');
+                const decoded = jwt.verify(token, process.env.JWT_SECRET);
+                const User = require('./models/User');
+                user = await User.findById(decoded.userId);
+                if (user) {
+                    userProfile = user.getProfile();
+                }
+            } catch (authError) {
+                console.log('Auth failed, continuing as trial user');
+            }
+        }
+
+        // Build personalized context from user profile
+        let contextInfo = '';
+        if (userProfile.conditions) {
+            const activeConditions = Object.entries(userProfile.conditions)
+                .filter(([key, value]) => value === true)
+                .map(([key, value]) => {
+                    const conditionMap = {
+                        'gestational-diabetes': 'gestational diabetes',
+                        'preeclampsia': 'preeclampsia/high blood pressure',
+                        'anemia': 'anemia',
+                        'thyroid': 'thyroid disorders',
+                        'placenta-previa': 'placenta previa',
+                        'hyperemesis': 'hyperemesis gravidarum',
+                        'rh-negative': 'Rh negative blood type',
+                        'multiples': 'multiple pregnancy (twins/triplets)'
+                    };
+                    return conditionMap[key] || key;
+                });
+            if (activeConditions.length > 0) {
+                contextInfo += `\nPatient has: ${activeConditions.join(', ')}.`;
+            }
+        }
+        
+        if (userProfile.trimester) {
+            contextInfo += `\nCurrently in ${userProfile.trimester} trimester.`;
+        }
+        
+        if (userProfile.age && parseInt(userProfile.age) >= 35) {
+            contextInfo += `\nAdvanced maternal age (${userProfile.age}).`;
+        }
+
+        // Add user preferences to context
+        let preferenceContext = '';
+        if (userProfile.preferences) {
+            const prefs = userProfile.preferences;
+            
+            if (prefs.measurementSystem === 'metric') {
+                preferenceContext += '\nUse metric units (kg, °C, ml, cm).';
+            } else {
+                preferenceContext += '\nUse imperial units (lbs, °F, cups, inches).';
+            }
+            
+            if (prefs.caffeineMeasurement === 'milligrams') {
+                preferenceContext += '\nFor caffeine, use milligrams (e.g., "200mg limit" instead of "1-2 cups").';
+            } else {
+                preferenceContext += '\nFor caffeine, use cups/servings (e.g., "1-2 cups" instead of mg amounts).';
+            }
+            
+            if (prefs.temperatureUnit === 'celsius') {
+                preferenceContext += '\nUse Celsius for temperatures.';
+            } else {
+                preferenceContext += '\nUse Fahrenheit for temperatures.';
+            }
+            
+            // For detailed answers, always provide comprehensive information regardless of brief/detailed preference
+            preferenceContext += '\nProvide comprehensive, detailed explanations with specific medical information.';
+            
+            if (prefs.languageStyle === 'scientific') {
+                preferenceContext += '\nUse medical terminology and scientific language.';
+            } else {
+                preferenceContext += '\nUse clear, understandable language while being comprehensive.';
+            }
+            
+            if (prefs.riskStyle === 'reassuring') {
+                preferenceContext += '\nEmphasize what is safe and provide reassuring information where appropriate.';
+            } else if (prefs.riskStyle === 'cautious') {
+                preferenceContext += '\nEmphasize potential risks and provide thorough cautions.';
+            } else {
+                preferenceContext += '\nPresent both risks and benefits in a balanced, detailed way.';
+            }
+        }
+
+        const prompt = `Provide a comprehensive, detailed analysis of "${item}" during pregnancy. ${contextInfo}${preferenceContext}
+
+Please provide a thorough examination including:
+
+1. **Safety Overview**: Detailed safety assessment and risk level
+2. **Trimester Considerations**: How safety/recommendations change by trimester
+3. **Dosage/Amount Guidelines**: Specific limits and recommendations if applicable
+4. **Medical Mechanisms**: How this affects pregnancy and fetal development
+5. **Special Circumstances**: Considerations for high-risk pregnancies or specific conditions
+6. **Practical Guidelines**: Detailed practical advice and alternatives
+7. **Warning Signs**: What symptoms to watch for
+8. **Healthcare Consultation**: When to contact healthcare providers
+
+Be comprehensive and evidence-based. Address any specific conditions mentioned.`;
+
+        const apiUrl = 'https://api.venice.ai/api/v1/chat/completions';
+        const requestBody = {
+            model: 'llama-3.3-70b',
+            messages: [
+                {
+                    role: 'system',
+                    content: 'You are a comprehensive pregnancy health expert providing detailed, evidence-based information. Give thorough, well-structured responses with specific medical guidance while considering patient-specific conditions and preferences.'
+                },
+                {
+                    role: 'user',
+                    content: prompt
+                }
+            ],
+            temperature: 0.2,
+            max_tokens: 800
+        };
+
+        const response = await axios.post(apiUrl, requestBody, {
+            headers: {
+                'Authorization': `Bearer ${process.env.VENICE_API_KEY}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const aiResponse = response.data.choices[0].message.content;
+        
+        res.json({ 
+            result: aiResponse
+        });
+    } catch (error) {
+        console.error('Venice AI detailed API error:', error.response?.data || error.message);
+        res.status(500).json({ 
+            error: 'Failed to get detailed information. Please try again later.',
+            details: error.response?.data?.error || error.message 
+        });
+    }
+});
+
+// Detailed Image Analysis endpoint
+app.post('/api/detailed-image-safety', async (req, res) => {
+    try {
+        if (!process.env.VENICE_API_KEY) {
+            return res.status(500).json({ error: 'Venice API key not configured' });
+        }
+
+        const { image } = req.body;
+        
+        // Try to get authenticated user for personalization
+        let user = null;
+        let userProfile = {};
+        
+        const token = req.header('Authorization')?.replace('Bearer ', '') || 
+                     req.session?.token;
+        
+        if (token) {
+            try {
+                const jwt = require('jsonwebtoken');
+                const decoded = jwt.verify(token, process.env.JWT_SECRET);
+                const User = require('./models/User');
+                user = await User.findById(decoded.userId);
+                if (user) {
+                    userProfile = user.getProfile();
+                }
+            } catch (authError) {
+                console.log('Auth failed, continuing as trial user');
+            }
+        }
+
+        // Build personalized context
+        let contextInfo = '';
+        if (userProfile.trimester) {
+            contextInfo += `\nCurrently in ${userProfile.trimester} trimester.`;
+        }
+        if (userProfile.conditions) {
+            const activeConditions = Object.entries(userProfile.conditions)
+                .filter(([key, value]) => value === true);
+            if (activeConditions.length > 0) {
+                contextInfo += `\nPatient has specific medical conditions that may affect recommendations.`;
+            }
+        }
+        
+        const apiUrl = 'https://api.venice.ai/api/v1/chat/completions';
+        const requestBody = {
+            model: 'mistral-31-24b',  // Vision-capable model
+            messages: [
+                {
+                    role: 'system',
+                    content: 'You are a comprehensive medical expert analyzing images for detailed pregnancy safety assessment. Provide thorough, evidence-based analysis with specific guidance.'
+                },
+                {
+                    role: 'user',
+                    content: [
+                        {
+                            type: 'text',
+                            text: `Provide a comprehensive analysis of what's shown in this image regarding pregnancy safety. ${contextInfo}
+
+Please include:
+
+1. **Item Identification**: What you see in the image
+2. **Detailed Safety Assessment**: Comprehensive safety evaluation
+3. **Specific Risks/Benefits**: Detailed explanation of any risks or benefits
+4. **Trimester Considerations**: How recommendations might vary by pregnancy stage
+5. **Usage Guidelines**: Specific recommendations for safe use if applicable
+6. **Alternatives**: Safer alternatives if the item should be avoided
+7. **Medical Considerations**: How this relates to pregnancy health
+8. **When to Consult**: Specific situations requiring medical consultation
+
+Be thorough and evidence-based in your analysis.`
+                        },
+                        {
+                            type: 'image_url',
+                            image_url: {
+                                url: image
+                            }
+                        }
+                    ]
+                }
+            ],
+            temperature: 0.2,
+            max_tokens: 600
+        };
+        
+        const response = await axios.post(apiUrl, requestBody, {
+            headers: {
+                'Authorization': `Bearer ${process.env.VENICE_API_KEY}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const aiResponse = response.data.choices[0].message.content;
+        
+        res.json({ 
+            result: aiResponse
+        });
+    } catch (error) {
+        console.error('Detailed image analysis error:', error.response?.data || error.message);
+        res.status(500).json({ 
+            error: 'Failed to get detailed image analysis. Please try again later.',
+            details: error.response?.data?.error || error.message 
+        });
+    }
+});
+
 // Log Entries API (Premium feature)
 app.post('/api/log-entry', async (req, res) => {
     try {
