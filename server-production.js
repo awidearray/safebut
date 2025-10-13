@@ -306,7 +306,28 @@ app.post('/api/check-safety', async (req, res) => {
             }
         }
 
-        const prompt = `Is "${item}" safe during pregnancy? ${contextInfo}${preferenceContext}
+        const includeBreastfeeding = !!(user && user.isPremium);
+
+        const prompt = includeBreastfeeding
+            ? `Provide a concise, dual safety assessment of "${item}" for both pregnancy and breastfeeding.${contextInfo}${preferenceContext}
+
+Respond EXACTLY in this structured format:
+PREGNANCY_RISK_SCORE: [1-10]
+BREASTFEEDING_RISK_SCORE: [1-10]
+PREGNANCY:
+SAFETY: [Safe/Caution/Avoid]
+WHY: [1 sentence]
+TIPS:
+- [short tip 1]
+- [short tip 2]
+
+BREASTFEEDING:
+SAFETY: [Safe/Caution/Avoid]
+WHY: [1 sentence]
+TIPS:
+- [short tip 1]
+- [short tip 2]`
+            : `Is "${item}" safe during pregnancy? ${contextInfo}${preferenceContext}
 Give risk score 1-10 (1=safest, 10=most dangerous). Consider any mentioned conditions. Follow user preferences for units and communication style:
 RISK_SCORE: [1-10]
 SAFETY: [Safe/Caution/Avoid]
@@ -338,6 +359,46 @@ TIPS: [2-3 short practical tips specific to the patient's conditions if applicab
         });
 
         const aiResponse = response.data.choices[0].message.content;
+        // Parse risk scores for either single or dual format
+        let responseData;
+        if (includeBreastfeeding) {
+            const pregMatch = aiResponse.match(/PREGNANCY_RISK_SCORE:\s*(\d+)/i);
+            const bfMatch = aiResponse.match(/BREASTFEEDING_RISK_SCORE:\s*(\d+)/i);
+            const pregnancyRiskScore = pregMatch ? parseInt(pregMatch[1]) : 5;
+            const breastfeedingRiskScore = bfMatch ? parseInt(bfMatch[1]) : null;
+            responseData = {
+                result: aiResponse,
+                hasBothSections: true,
+                pregnancyRiskScore,
+                breastfeedingRiskScore,
+                references
+            };
+            // Track usage and history if authenticated
+            if (user) {
+                const canSearch = await user.checkDailyLimit();
+                if (!canSearch && !user.isPremium) {
+                    return res.status(403).json({ 
+                        error: 'Daily limit reached', 
+                        message: 'You\'ve used your free daily check. Upgrade to premium for unlimited checks!',
+                        requiresUpgrade: true 
+                    });
+                }
+                await user.incrementSearchCount();
+                await user.addToHistory(item, pregnancyRiskScore);
+            } else {
+                if (!req.session.trialSearchCount) req.session.trialSearchCount = 0;
+                req.session.trialSearchCount++;
+                if (req.session.trialSearchCount > 1) {
+                    return res.status(403).json({ 
+                        error: 'Trial limit reached', 
+                        message: 'Trial users get 1 free check. Please sign up for unlimited access!',
+                        requiresUpgrade: true 
+                    });
+                }
+            }
+            return res.json(responseData);
+        }
+
         const riskScoreMatch = aiResponse.match(/RISK_SCORE:\s*(\d+)/);
         const riskScore = riskScoreMatch ? parseInt(riskScoreMatch[1]) : 5;
         

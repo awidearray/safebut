@@ -191,7 +191,28 @@ app.post('/api/check-safety', async (req, res) => {
             }
         }
 
-        const prompt = `Is "${item}" safe during pregnancy?${preferenceContext} Give risk score 1-10 (1=safest, 10=most dangerous). Follow user preferences for units and style. Be brief:
+        // Local server: support dual output if the caller is premium via session
+        const isPremium = req.session?.userId ? true : false; // local dev heuristic
+        const prompt = isPremium
+            ? `Provide a concise, dual safety assessment of "${item}" for both pregnancy and breastfeeding.${preferenceContext}
+
+Respond EXACTLY in this structured format:
+PREGNANCY_RISK_SCORE: [1-10]
+BREASTFEEDING_RISK_SCORE: [1-10]
+PREGNANCY:
+SAFETY: [Safe/Caution/Avoid]
+WHY: [1 sentence]
+TIPS:
+- [short tip 1]
+- [short tip 2]
+
+BREASTFEEDING:
+SAFETY: [Safe/Caution/Avoid]
+WHY: [1 sentence]
+TIPS:
+- [short tip 1]
+- [short tip 2]`
+            : `Is "${item}" safe during pregnancy?${preferenceContext} Give risk score 1-10 (1=safest, 10=most dangerous). Follow user preferences for units and style. Be brief:
 RISK_SCORE: [1-10]
 SAFETY: [Safe/Caution/Avoid]
 WHY: [1 sentence explanation]
@@ -227,6 +248,27 @@ TIPS: [2-3 short practical tips]`;
         const aiResponse = response.data.choices[0].message.content;
         
         // Parse the response to extract risk score
+        // Parse single or dual format
+        const pregMatch = aiResponse.match(/PREGNANCY_RISK_SCORE:\s*(\d+)/i);
+        const bfMatch = aiResponse.match(/BREASTFEEDING_RISK_SCORE:\s*(\d+)/i);
+        if (pregMatch) {
+            const pregnancyRiskScore = parseInt(pregMatch[1]) || 5;
+            const breastfeedingRiskScore = bfMatch ? parseInt(bfMatch[1]) : null;
+            const responseData = {
+                result: aiResponse,
+                hasBothSections: true,
+                pregnancyRiskScore,
+                breastfeedingRiskScore,
+                references
+            };
+            // Cache the response
+            responseCache.set(cacheKey, {
+                data: responseData,
+                timestamp: Date.now()
+            });
+            return res.json(responseData);
+        }
+
         const riskScoreMatch = aiResponse.match(/RISK_SCORE:\s*(\d+)/);
         const riskScore = riskScoreMatch ? parseInt(riskScoreMatch[1]) : 5;
         
