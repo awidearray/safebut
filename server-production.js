@@ -427,7 +427,13 @@ app.get('/api/history', verifyToken, async (req, res) => {
     }
 });
 
-app.listen(PORT, () => {
-    console.log(`Pregnancy Safety Checker (Premium) is running on http://localhost:${PORT}`);
-    console.log(`Open your browser and navigate to http://localhost:${PORT}`);
-});
+// Only start server if not in Vercel environment
+if (process.env.VERCEL !== '1') {
+    app.listen(PORT, () => {
+        console.log(`Pregnancy Safety Checker (Premium) is running on http://localhost:${PORT}`);
+        console.log(`Open your browser and navigate to http://localhost:${PORT}`);
+    });
+}
+
+// Export app for Vercel
+module.exports = app;

@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Safebut?</title>
+    <!-- TONConnect SDK -->
+    <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.css">
     <style>
         * {
             margin: 0;
@@ -230,20 +233,20 @@
             
             <div style="margin: 20px 0; text-align: center; color: #666;">OR</div>
             
-            <!-- Telegram Login Widget -->
-            <div id="telegram-login-container" style="display: flex; justify-content: center; margin: 20px 0;">
-                <script async src="https://telegram.org/js/telegram-widget.js?22"
-                        data-telegram-login="safebutbot"
-                        data-size="large"
-                        data-onauth="onTelegramAuth(user)"
-                        data-request-access="write">
-                </script>
+            <!-- TONConnect Wallet Login -->
+            <div id="ton-connect-container" style="display: flex; justify-content: center; margin: 20px 0;">
+                <!-- TONConnect button will be inserted here -->
+                <div id="ton-connect-button"></div>
             </div>
-
-            <!-- Fallback if widget blocked -->
-            <div id="telegram-fallback" style="display:none; text-align:center; margin-top:10px;">
-                <a href="https://t.me/safebutbot?start=login" target="_blank" class="telegram-login-button">Open Telegram to Login</a>
-            </div>
+            
+            <!-- Custom TON Wallet Button -->
+            <button id="ton-wallet-btn" class="telegram-login-button" style="background: #0098EA; margin-bottom: 15px;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style="margin-right: 8px;">
+                    <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="white"/>
+                    <path d="M2 17L12 22L22 17V7L12 12L2 7V17Z" fill="white" opacity="0.8"/>
+                </svg>
+                Connect TON Wallet
+            </button>
             
             <!-- Email Login Form (hidden by default) -->
             <div id="email-login-form" style="display: none; margin-top: 20px;">
@@ -258,6 +261,67 @@
     </div>
 
     <script>
+        // Initialize TONConnect
+        let tonConnectUI;
+        
+        async function initTonConnect() {
+            tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+                manifestUrl: 'https://safebut.com/tonconnect-manifest.json',
+                buttonRootId: 'ton-connect-button'
+            });
+            
+            // Handle wallet connection status changes
+            tonConnectUI.onStatusChange(async (walletInfo) => {
+                if (walletInfo) {
+                    // Wallet connected, send to backend
+                    await handleTonWalletAuth(walletInfo);
+                }
+            });
+            
+            // Custom button handler
+            document.getElementById('ton-wallet-btn').addEventListener('click', async () => {
+                await tonConnectUI.openModal();
+            });
+        }
+        
+        async function handleTonWalletAuth(walletInfo) {
+            try {
+                const response = await fetch('/auth/ton-wallet', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        address: walletInfo.account.address,
+                        publicKey: walletInfo.account.publicKey,
+                        chain: walletInfo.account.chain
+                    }),
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    localStorage.setItem('authToken', data.token);
+                    localStorage.setItem('isPremium', data.isPremium);
+                    localStorage.setItem('tonWallet', walletInfo.account.address);
+                    
+                    // Redirect to app
+                    window.location.href = `/app?token=${data.token}&premium=${data.isPremium}`;
+                } else {
+                    showError(data.error || 'TON wallet authentication failed');
+                }
+            } catch (error) {
+                console.error('TON wallet auth error:', error);
+                showError('Failed to authenticate with TON wallet');
+            }
+        }
+        
+        // Initialize TONConnect on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            initTonConnect();
+        });
+        
         // Show email login form
         function showEmailLogin() {
             document.getElementById('email-login-form').style.display = 'block';
@@ -325,24 +389,6 @@
                 });
             }
         });
-        
-        // Telegram Login Widget Auth Callback
-        function onTelegramAuth(user) {
-            fetch('/auth/telegram', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(user),
-                credentials: 'include'
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (!data.success) throw new Error(data.error || 'Telegram login failed');
-                localStorage.setItem('authToken', data.token);
-                localStorage.setItem('isPremium', data.isPremium);
-                window.location.href = `/app?token=${data.token}&premium=${data.isPremium}`;
-            })
-            .catch(() => showError('Failed to connect with Telegram'));
-        }
 
         function showError(message) {
             const errorDiv = document.getElementById('errorMessage');

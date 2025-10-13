@@ -299,7 +299,7 @@
     </div>
 
     <script>
-        // Email login handler
+        // Email login handler -> request magic link then show success
         document.getElementById('emailLoginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -309,12 +309,12 @@
             const successDiv = document.getElementById('successMessage');
             
             button.disabled = true;
-            button.textContent = 'Signing in...';
+            button.textContent = 'Sending magic link...';
             errorDiv.style.display = 'none';
             successDiv.style.display = 'none';
             
             try {
-                const response = await fetch('/auth/email-login', {
+                const response = await fetch('/auth/request-magic-link', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -323,29 +323,26 @@
                     credentials: 'include'
                 });
                 
-                const data = await response.json();
+                // Guard for non-JSON responses
+                const text = await response.text();
+                let data;
+                try { data = JSON.parse(text); } catch (_) { throw new Error('Unexpected response from server'); }
                 
                 if (data.success) {
-                    // Store auth data
-                    localStorage.setItem('authToken', data.token);
-                    localStorage.setItem('isPremium', data.isPremium);
-                    localStorage.setItem('userEmail', email);
-                    
-                    successDiv.textContent = 'Login successful! Redirecting...';
+                    successDiv.textContent = data.message || 'Magic link sent! Check your email.';
                     successDiv.style.display = 'block';
                     
-                    // Redirect to app or upgrade page
-                    setTimeout(() => {
-                        // Always send to app with token
-                        window.location.href = `/app?token=${data.token}&premium=${data.isPremium}`;
-                    }, 1000);
+                    if (data.magicLink) {
+                        successDiv.innerHTML += ` <a href="${data.magicLink}">Open magic link</a>`;
+                    }
                 } else {
-                    throw new Error(data.error || 'Login failed');
+                    throw new Error(data.error || 'Failed to send magic link');
                 }
             } catch (error) {
                 console.error('Login error:', error);
-                errorDiv.textContent = error.message || 'Failed to sign in. Please try again.';
+                errorDiv.textContent = error.message || 'Failed to send magic link. Please try again.';
                 errorDiv.style.display = 'block';
+            } finally {
                 button.disabled = false;
                 button.textContent = 'Continue with Email';
             }

@@ -1,77 +1,13 @@
 {
-  "builds": [
-    {
-      "src": "server-production.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "*.html",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "*.css",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "*.js",
-      "use": "@vercel/static",
-      "config": {
-        "excludeFiles": "server-production.js"
-      }
+  "functions": {
+    "api/index.js": {
+      "maxDuration": 30
     }
-  ],
-  "routes": [
+  },
+  "rewrites": [
     {
-      "src": "/styles.css",
-      "dest": "/styles.css"
-    },
-    {
-      "src": "/app.js",
-      "dest": "/app.js"
-    },
-    {
-      "src": "/app-premium.js",
-      "dest": "/app-premium.js"
-    },
-    {
-      "src": "/login",
-      "dest": "/server-production.js"
-    },
-    {
-      "src": "/upgrade",
-      "dest": "/server-production.js"
-    },
-    {
-      "src": "/app",
-      "dest": "/server-production.js"
-    },
-    {
-      "src": "/auth/(.*)",
-      "dest": "/server-production.js"
-    },
-    {
-      "src": "/payment/(.*)",
-      "dest": "/server-production.js"
-    },
-    {
-      "src": "/policy",
-      "dest": "/server-production.js"
-    },
-    {
-      "src": "/terms",
-      "dest": "/server-production.js"
-    },
-    {
-      "src": "/delete-my-data",
-      "dest": "/server-production.js"
-    },
-    {
-      "src": "/api/(.*)",
-      "dest": "/server-production.js"
-    },
-    {
-      "src": "/",
-      "dest": "/server-production.js"
+      "source": "/(.*)",
+      "destination": "/api"
     }
   ]
 }
