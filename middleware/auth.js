@@ -31,6 +31,11 @@ const verifyToken = async (req, res, next) => {
 
 // Check if user has premium subscription
 const requirePremium = async (req, res, next) => {
+    // TEMPORARILY DISABLED - All users have access to all features
+    next();
+    return;
+    
+    /* ORIGINAL CODE - TO BE RESTORED LATER
     try {
         if (!req.user) {
             return res.status(401).json({ error: 'Please authenticate' });
@@ -53,6 +58,7 @@ const requirePremium = async (req, res, next) => {
     } catch (error) {
         res.status(500).json({ error: 'Server error' });
     }
+    */
 };
 
 module.exports = { verifyToken, requirePremium };

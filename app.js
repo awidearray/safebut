@@ -165,12 +165,15 @@ class PregnancySafetyChecker {
 
         // Camera functionality
         cameraBtn.addEventListener('click', () => {
+            // TEMPORARILY DISABLED - All users have camera access
+            /*
             // Check if user is premium (camera is premium-only feature)
             const isPremium = localStorage.getItem('isPremium') === 'true';
             if (!isPremium) {
                 this.showUpgradePrompt();
                 return;
             }
+            */
             cameraInput.click();
         });
 
@@ -186,12 +189,15 @@ class PregnancySafetyChecker {
     async handleImageCapture(file) {
         if (!file) return;
 
+        // TEMPORARILY DISABLED - All users have camera access
+        /*
         // Check if user is premium (camera is premium-only feature)
         const isPremium = localStorage.getItem('isPremium') === 'true';
         if (!isPremium) {
             this.showUpgradePrompt();
             return;
         }
+        */
 
         // Compress image before processing
         const compressedImage = await this.compressImage(file);
@@ -300,12 +306,16 @@ class PregnancySafetyChecker {
         } catch (error) {
             console.error('Error:', error);
             
+            // TEMPORARILY DISABLED - No daily limits
+            /*
             // Check if it's a daily limit error
             if (error.message.includes('Daily limit reached') || error.message.includes('Trial limit reached')) {
                 this.showUpgradePrompt();
             } else {
                 this.showError('Failed to check safety. Please try again.');
             }
+            */
+            this.showError('Failed to check safety. Please try again.');
         } finally {
             this.showLoading(false);
         }

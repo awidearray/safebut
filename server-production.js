@@ -301,6 +301,13 @@ TIPS: [2-3 short practical tips specific to the patient's conditions if applicab
             timestamp: Date.now()
         });
         
+        // TEMPORARILY DISABLED - All users have unlimited searches
+        if (user) {
+            // Still track history but don't enforce limits
+            await user.addToHistory(item, riskScore);
+        }
+        
+        /* ORIGINAL CODE - TO BE RESTORED LATER
         // Check daily limit for authenticated free users
         if (user) {
             const canSearch = await user.checkDailyLimit();
@@ -330,6 +337,7 @@ TIPS: [2-3 short practical tips specific to the patient's conditions if applicab
                 });
             }
         }
+        */
         
         res.json(responseData);
     } catch (error) {
