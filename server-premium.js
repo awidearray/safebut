@@ -92,31 +92,41 @@ app.get('/login', (req, res) => {
 
 app.get('/app', async (req, res) => {
     try {
+        // Check if it's a trial user
+        if (req.query.trial === 'true') {
+            // Trial users can access without login
+            return res.sendFile(path.join(__dirname, 'app.html'));
+        }
+        
         // Check for token in query or session
         const token = req.query.token || req.session.token;
         
         if (!token) {
-            return res.redirect('/login');
+            // No token, allow trial access
+            return res.sendFile(path.join(__dirname, 'app.html'));
         }
         
-        // Verify token and get user
-        const jwt = require('jsonwebtoken');
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await User.findById(decoded.userId);
-        
-        if (!user) {
-            return res.redirect('/login');
+        // Verify token and get user if provided
+        try {
+            const jwt = require('jsonwebtoken');
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            const user = await User.findById(decoded.userId);
+            
+            if (user) {
+                // Store in session for future requests
+                req.session.token = token;
+                req.session.userId = user._id;
+            }
+        } catch (tokenError) {
+            console.log('Token verification failed, allowing trial access');
         }
         
-        // Store in session for future requests
-        req.session.token = token;
-        req.session.userId = user._id;
-        
-        // All users can access the app (1 free check per day for non-premium)
+        // Serve the app to all users
         res.sendFile(path.join(__dirname, 'app.html'));
     } catch (error) {
-        console.error('Auth error:', error);
-        return res.redirect('/login');
+        console.error('App access error:', error);
+        // On any error, still serve the app for trial users
+        res.sendFile(path.join(__dirname, 'app.html'));
     }
 });
 
@@ -161,8 +171,8 @@ app.post('/api/profile', verifyToken, async (req, res) => {
     }
 });
 
-// Protected API endpoint for safety checks with auth (1 free per day, then premium required)
-app.post('/api/check-safety', verifyToken, async (req, res) => {
+// API endpoint for safety checks (1 free per day for trial/free users, unlimited for premium)
+app.post('/api/check-safety', async (req, res) => {
     try {
         if (!process.env.VENICE_API_KEY) {
             console.error('VENICE_API_KEY is not set in environment variables');
@@ -171,8 +181,27 @@ app.post('/api/check-safety', verifyToken, async (req, res) => {
 
         const { item } = req.body;
         
-        // Get user's health profile
-        const userProfile = req.user.getProfile();
+        // Try to get authenticated user
+        let user = null;
+        let userProfile = {};
+        
+        // Check for auth token
+        const token = req.header('Authorization')?.replace('Bearer ', '') || 
+                     req.session?.token;
+        
+        if (token) {
+            try {
+                const jwt = require('jsonwebtoken');
+                const decoded = jwt.verify(token, process.env.JWT_SECRET);
+                const User = require('./models/User');
+                user = await User.findById(decoded.userId);
+                if (user) {
+                    userProfile = user.getProfile();
+                }
+            } catch (authError) {
+                console.log('Auth failed, continuing as trial user');
+            }
+        }
         
         // Check cache first
         const cacheKey = item.toLowerCase();
@@ -272,19 +301,35 @@ TIPS: [2-3 short practical tips specific to the patient's conditions if applicab
             timestamp: Date.now()
         });
         
-        // Check daily limit for free users
-        const canSearch = await req.user.checkDailyLimit();
-        if (!canSearch && !req.user.isPremium) {
-            return res.status(403).json({ 
-                error: 'Daily limit reached', 
-                message: 'You\'ve used your free daily check. Upgrade to premium for unlimited checks!',
-                requiresUpgrade: true 
-            });
+        // Check daily limit for authenticated free users
+        if (user) {
+            const canSearch = await user.checkDailyLimit();
+            if (!canSearch && !user.isPremium) {
+                return res.status(403).json({ 
+                    error: 'Daily limit reached', 
+                    message: 'You\'ve used your free daily check. Upgrade to premium for unlimited checks!',
+                    requiresUpgrade: true 
+                });
+            }
+            
+            // Increment search count and save to user's history
+            await user.incrementSearchCount();
+            await user.addToHistory(item, riskScore);
+        } else {
+            // Trial users get 1 check per session
+            if (!req.session.trialSearchCount) {
+                req.session.trialSearchCount = 0;
+            }
+            req.session.trialSearchCount++;
+            
+            if (req.session.trialSearchCount > 1) {
+                return res.status(403).json({ 
+                    error: 'Trial limit reached', 
+                    message: 'Trial users get 1 free check. Please sign up for unlimited access!',
+                    requiresUpgrade: true 
+                });
+            }
         }
-        
-        // Increment search count and save to user's history
-        await req.user.incrementSearchCount();
-        await req.user.addToHistory(item, riskScore);
         
         res.json(responseData);
     } catch (error) {
@@ -296,8 +341,8 @@ TIPS: [2-3 short practical tips specific to the patient's conditions if applicab
     }
 });
 
-// Protected image analysis endpoint (1 free per day, then premium required)
-app.post('/api/check-image-safety', verifyToken, async (req, res) => {
+// Image analysis endpoint (premium feature only)
+app.post('/api/check-image-safety', async (req, res) => {
     try {
         if (!process.env.VENICE_API_KEY) {
             return res.status(500).json({ error: 'Venice API key not configured' });
