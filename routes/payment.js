@@ -208,6 +208,37 @@ router.post('/confirm-payment', verifyToken, async (req, res) => {
     }
 });
 
+// Verify checkout session after redirect and activate premium
+router.post('/verify-session', verifyToken, async (req, res) => {
+    try {
+        const { sessionId } = req.body;
+        if (!sessionId) {
+            return res.status(400).json({ error: 'sessionId required' });
+        }
+
+        // Retrieve the checkout session
+        const session = await stripe.checkout.sessions.retrieve(sessionId);
+        if (!session) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+
+        if (session.status !== 'complete' && session.payment_status !== 'paid') {
+            return res.status(400).json({ error: 'Payment not completed' });
+        }
+
+        // Mark user premium
+        req.user.isPremium = true;
+        req.user.stripeSessionId = session.id;
+        req.user.subscriptionDate = new Date();
+        await req.user.save();
+
+        res.json({ success: true, isPremium: true });
+    } catch (error) {
+        console.error('Verify session error:', error);
+        res.status(500).json({ error: 'Failed to verify session' });
+    }
+});
+
 // Stripe webhook for payment confirmation
 router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
     const sig = req.headers['stripe-signature'];

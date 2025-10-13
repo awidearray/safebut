@@ -626,6 +626,14 @@
 
             // Add event listener for upgrade buttons when DOM is ready
             document.addEventListener('DOMContentLoaded', () => {
+                // Apply premium badge
+                const isPremium = localStorage.getItem('isPremium') === 'true';
+                if (isPremium) {
+                    const header = document.querySelector('header h1');
+                    if (header && !header.textContent.includes('⭐')) {
+                        header.textContent = '🤰Safebut? ⭐';
+                    }
+                }
                 // Handle all upgrade buttons
                 const upgradeButtons = document.querySelectorAll('.upgrade-pay-btn');
                 upgradeButtons.forEach(button => {
