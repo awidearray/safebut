@@ -209,7 +209,7 @@ router.post('/confirm-payment', verifyToken, async (req, res) => {
 });
 
 // Verify checkout session after redirect and activate premium
-router.post('/verify-session', verifyToken, async (req, res) => {
+router.post('/verify-session', async (req, res) => {
     try {
         const { sessionId } = req.body;
         if (!sessionId) {
@@ -226,11 +226,26 @@ router.post('/verify-session', verifyToken, async (req, res) => {
             return res.status(400).json({ error: 'Payment not completed' });
         }
 
+        // Resolve user: prefer metadata.userId, fallback to customer email
+        let user = null;
+        const userId = session.metadata?.userId;
+        const customerEmail = session.customer_details?.email;
+
+        if (userId) {
+            user = await User.findById(userId);
+        }
+        if (!user && customerEmail) {
+            user = await User.findOne({ email: customerEmail });
+        }
+        if (!user) {
+            return res.status(404).json({ error: 'User not found for session' });
+        }
+
         // Mark user premium
-        req.user.isPremium = true;
-        req.user.stripeSessionId = session.id;
-        req.user.subscriptionDate = new Date();
-        await req.user.save();
+        user.isPremium = true;
+        user.stripeSessionId = session.id;
+        user.subscriptionDate = new Date();
+        await user.save();
 
         res.json({ success: true, isPremium: true });
     } catch (error) {
