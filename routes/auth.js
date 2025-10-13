@@ -208,6 +208,53 @@ function verifyTelegramAuth(authData) {
     return hash === authData.hash;
 }
 
+// TON Wallet login
+router.post('/ton-wallet', async (req, res) => {
+    try {
+        const { address, publicKey, chain } = req.body;
+        
+        if (!address) {
+            return res.status(400).json({ success: false, error: 'Wallet address required' });
+        }
+        
+        // Find or create user based on TON wallet address
+        let user = await User.findOne({ tonWalletAddress: address });
+        
+        if (!user) {
+            user = new User({
+                tonWalletAddress: address,
+                tonPublicKey: publicKey,
+                tonChain: chain,
+                provider: 'ton',
+                name: `TON User ${address.slice(0, 6)}...${address.slice(-4)}`,
+                isPremium: false // Default to free tier, can be updated after payment
+            });
+            await user.save();
+        }
+        
+        // Generate JWT token
+        const token = generateToken(user._id);
+        
+        // Update session
+        req.session.token = token;
+        req.session.userId = user._id;
+        
+        // Update last login
+        user.lastLogin = new Date();
+        await user.save();
+        
+        res.json({
+            success: true,
+            token,
+            isPremium: user.isPremium || false,
+            walletAddress: address
+        });
+    } catch (error) {
+        console.error('TON wallet auth error:', error);
+        res.status(500).json({ success: false, error: 'Authentication failed' });
+    }
+});
+
 // Telegram login
 router.post('/telegram', async (req, res) => {
     try {

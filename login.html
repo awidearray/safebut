@@ -473,15 +473,6 @@
         } else if (error === 'token_expired') {
             showError('Magic link has expired. Please request a new one.');
         }
-
-        // Show fallback if widget blocked
-        setTimeout(function() {
-            const container = document.getElementById('telegram-login-container');
-            if (container && container.children.length === 0) {
-                const fallback = document.getElementById('telegram-fallback');
-                if (fallback) fallback.style.display = 'block';
-            }
-        }, 3000);
     </script>
 
 </body>
