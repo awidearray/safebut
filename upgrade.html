@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Upgrade to Premium - Safebut?</title>
+    <script src="https://js.stripe.com/v3/"></script>
     <style>
         * {
             margin: 0;
@@ -246,6 +247,12 @@
             </svg>
             Secure payment processed by Stripe
         </div>
+        
+        <!-- Error Message -->
+        <div id="errorMessage" style="display: none; background: #f8d7da; color: #721c24; padding: 15px; border-radius: 10px; margin-top: 20px; border: 1px solid #f5c6cb;"></div>
+        
+        <!-- Success Message -->
+        <div id="successMessage" style="display: none; background: #d4edda; color: #155724; padding: 15px; border-radius: 10px; margin-top: 20px; border: 1px solid #c3e6cb;"></div>
     </div>
 
     <script>

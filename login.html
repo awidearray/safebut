@@ -220,15 +220,20 @@
         </div>
 
         <div class="login-buttons">
-            <!-- Telegram Login Widget Container -->
-            <div id="telegram-login-container" style="display: flex; justify-content: center; margin: 20px 0;">
-                <!-- Widget will be inserted here by Telegram script -->
-            </div>
+            <!-- Skip Telegram for now and use email login -->
+            <button onclick="showEmailLogin()" class="telegram-login-button">
+                <svg viewBox="0 0 24 24" fill="currentColor" style="width: 20px; height: 20px; margin-right: 8px;">
+                    <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                </svg>
+                Continue with Email
+            </button>
             
-            <!-- Fallback message -->
-            <div id="telegram-fallback" style="display: none; text-align: center; padding: 20px;">
-                <p style="margin-bottom: 15px;">Telegram login widget is loading...</p>
-                <p style="font-size: 0.9rem; color: #666;">If it doesn't appear, please disable any ad blockers and refresh the page.</p>
+            <!-- Email Login Form (hidden by default) -->
+            <div id="email-login-form" style="display: none; margin-top: 20px;">
+                <input type="email" id="email-input" placeholder="Enter your email" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; font-size: 16px;">
+                <button onclick="loginWithEmail()" style="width: 100%; padding: 12px; background: #667eea; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">
+                    Sign In & Get Premium Access
+                </button>
             </div>
         </div>
 
@@ -236,7 +241,63 @@
     </div>
 
     <script>
-        // Telegram Login Widget Auth Callback
+        // Show email login form
+        function showEmailLogin() {
+            document.getElementById('email-login-form').style.display = 'block';
+            document.getElementById('email-input').focus();
+        }
+        
+        // Email login function
+        function loginWithEmail() {
+            const email = document.getElementById('email-input').value;
+            
+            if (!email || !email.includes('@')) {
+                showError('Please enter a valid email address');
+                return;
+            }
+            
+            // Send login request
+            fetch('/auth/email-login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email }),
+                credentials: 'include'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Store token
+                    localStorage.setItem('authToken', data.token);
+                    localStorage.setItem('userEmail', email);
+                    localStorage.setItem('isPremium', data.isPremium);
+                    
+                    // Redirect to upgrade page for payment
+                    window.location.href = '/upgrade';
+                } else {
+                    showError(data.error || 'Login failed');
+                }
+            })
+            .catch(error => {
+                console.error('Login error:', error);
+                showError('Failed to sign in. Please try again.');
+            });
+        }
+        
+        // Enter key support for email input
+        document.addEventListener('DOMContentLoaded', function() {
+            const emailInput = document.getElementById('email-input');
+            if (emailInput) {
+                emailInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        loginWithEmail();
+                    }
+                });
+            }
+        });
+        
+        // Telegram Login Widget Auth Callback (for widget if it loads)
         function onTelegramAuth(user) {
             console.log('Telegram auth received:', user);
             
@@ -292,16 +353,6 @@
                 }
             }, 3000);
         })();
-    </script>
-    
-    <!-- Telegram Login Widget Script -->
-    <!-- IMPORTANT: This must be loaded directly, not dynamically -->
-    <script async src="https://telegram.org/js/telegram-widget.js?22" 
-            data-telegram-login="safebutbot"
-            data-size="large" 
-            data-onauth="onTelegramAuth(user)"
-            data-request-access="write"
-            data-radius="20">
     </script>
 </body>
 </html>

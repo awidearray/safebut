@@ -140,6 +140,57 @@ router.post('/telegram', async (req, res) => {
     }
 });
 
+// Telegram OAuth callback
+router.get('/telegram/callback', async (req, res) => {
+    try {
+        const authData = req.query;
+        
+        // Verify the authentication data from Telegram
+        if (!verifyTelegramAuth(authData)) {
+            return res.redirect('/login?error=auth_failed');
+        }
+        
+        // Check if auth_date is not too old (5 minutes)
+        const authDate = parseInt(authData.auth_date);
+        const currentTime = Math.floor(Date.now() / 1000);
+        if (currentTime - authDate > 300) {
+            return res.redirect('/login?error=auth_expired');
+        }
+        
+        // Find or create user
+        let user = await User.findOne({ telegramId: authData.id });
+        
+        if (!user) {
+            user = new User({
+                telegramId: authData.id,
+                name: `${authData.first_name} ${authData.last_name || ''}`.trim(),
+                username: authData.username,
+                profilePicture: authData.photo_url,
+                provider: 'telegram'
+            });
+            await user.save();
+        }
+        
+        // Generate JWT token
+        const token = generateToken(user._id);
+        
+        // Update session
+        req.session.token = token;
+        req.session.userId = user._id;
+        
+        // Update last login
+        user.lastLogin = new Date();
+        await user.save();
+        
+        // Redirect to app with token
+        return res.redirect(`/app?token=${token}&premium=${user.isPremium}`);
+        
+    } catch (error) {
+        console.error('Telegram OAuth callback error:', error);
+        res.redirect('/login?error=auth_failed');
+    }
+});
+
 // Logout
 router.post('/logout', (req, res) => {
     req.logout((err) => {
