@@ -426,23 +426,30 @@ TIPS: [2-3 short practical tips based on what's in the image]`
 // Log Entries API (Premium feature)
 app.post('/api/log-entry', async (req, res) => {
     try {
-        const authHeader = req.headers.authorization;
-        const token = authHeader && authHeader.split(' ')[1];
+        // Check for auth token (same pattern as /api/check-safety)
+        const token = req.header('Authorization')?.replace('Bearer ', '') || 
+                     req.session?.token;
         
         if (!token) {
             return res.status(401).json({ error: 'Authentication required' });
         }
         
-        // Get user from session
-        const userId = req.session.userId;
-        if (!userId) {
+        // Verify token and get user
+        let user = null;
+        try {
+            const jwt = require('jsonwebtoken');
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            const User = require('./models/User');
+            user = await User.findById(decoded.userId);
+        } catch (authError) {
+            return res.status(401).json({ error: 'Invalid authentication token' });
+        }
+        
+        if (!user) {
             return res.status(401).json({ error: 'User not found' });
         }
         
-        const User = require('./models/User');
-        const user = await User.findById(userId);
-        
-        if (!user || !user.isPremium) {
+        if (!user.isPremium) {
             return res.status(403).json({ error: 'Premium subscription required' });
         }
         
@@ -468,22 +475,30 @@ app.post('/api/log-entry', async (req, res) => {
 
 app.get('/api/log-entries', async (req, res) => {
     try {
-        const authHeader = req.headers.authorization;
-        const token = authHeader && authHeader.split(' ')[1];
+        // Check for auth token (same pattern as /api/check-safety)
+        const token = req.header('Authorization')?.replace('Bearer ', '') || 
+                     req.session?.token;
         
         if (!token) {
             return res.status(401).json({ error: 'Authentication required' });
         }
         
-        const userId = req.session.userId;
-        if (!userId) {
+        // Verify token and get user
+        let user = null;
+        try {
+            const jwt = require('jsonwebtoken');
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            const User = require('./models/User');
+            user = await User.findById(decoded.userId);
+        } catch (authError) {
+            return res.status(401).json({ error: 'Invalid authentication token' });
+        }
+        
+        if (!user) {
             return res.status(401).json({ error: 'User not found' });
         }
         
-        const User = require('./models/User');
-        const user = await User.findById(userId);
-        
-        if (!user || !user.isPremium) {
+        if (!user.isPremium) {
             return res.status(403).json({ error: 'Premium subscription required' });
         }
         
@@ -496,11 +511,31 @@ app.get('/api/log-entries', async (req, res) => {
 
 app.post('/api/analyze-log-entry', async (req, res) => {
     try {
-        const authHeader = req.headers.authorization;
-        const token = authHeader && authHeader.split(' ')[1];
+        // Check for auth token (same pattern as /api/check-safety)
+        const token = req.header('Authorization')?.replace('Bearer ', '') || 
+                     req.session?.token;
         
         if (!token) {
             return res.status(401).json({ error: 'Authentication required' });
+        }
+        
+        // Verify token and get user
+        let user = null;
+        try {
+            const jwt = require('jsonwebtoken');
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            const User = require('./models/User');
+            user = await User.findById(decoded.userId);
+        } catch (authError) {
+            return res.status(401).json({ error: 'Invalid authentication token' });
+        }
+        
+        if (!user) {
+            return res.status(401).json({ error: 'User not found' });
+        }
+        
+        if (!user.isPremium) {
+            return res.status(403).json({ error: 'Premium subscription required' });
         }
         
         const { text } = req.body;
