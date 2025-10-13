@@ -31,9 +31,6 @@ function decrypt(encryptedData) {
 }
 
 const userSchema = new mongoose.Schema({
-    // Social login info
-    telegramId: { type: String, unique: true, sparse: true },
-    
     // TON Wallet info
     tonWalletAddress: { type: String, unique: true, sparse: true },
     tonPublicKey: String,
@@ -44,7 +41,7 @@ const userSchema = new mongoose.Schema({
     username: String,
     email: { type: String, unique: true, sparse: true },
     profilePicture: String,
-    provider: { type: String, enum: ['telegram', 'email', 'ton'], required: true },
+    provider: { type: String, enum: ['email', 'ton'], required: true },
     
     // Encrypted health profile
     encryptedProfile: String,
