@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Safebut? - Pregnancy Safety Checker</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://js.stripe.com/v3/"></script>
 </head>
 <body>
     <div class="container">
@@ -17,6 +18,7 @@
                 <button class="tab-btn active" data-tab="search">🔍 Search</button>
                 <button class="tab-btn" data-tab="profile">👤 Profile</button>
                 <button class="tab-btn" data-tab="history">📜 History</button>
+                <button class="tab-btn" data-tab="upgrade">🚀 Upgrade</button>
                 <button class="tab-btn logout-btn" id="logoutBtn" onclick="logout()">🚪 Logout</button>
             </div>
         </header>
@@ -273,6 +275,66 @@
                 </div>
             </div>
 
+            <!-- Upgrade Tab Content -->
+            <div id="upgradeTab" class="tab-content" style="display: none;">
+                <div class="upgrade-section">
+                    <div class="upgrade-header">
+                        <h2>🚀 Upgrade to Premium</h2>
+                        <p>Get unlimited access to all features</p>
+                    </div>
+                    
+                    <div class="upgrade-benefits">
+                        <h3>✨ Premium Benefits</h3>
+                        <div class="benefit-item">
+                            <span>✓</span> Unlimited safety checks (vs 1/day free)
+                        </div>
+                        <div class="benefit-item">
+                            <span>✓</span> 📸 Camera & image analysis
+                        </div>
+                        <div class="benefit-item">
+                            <span>✓</span> 🔬 Detailed medical reports
+                        </div>
+                        <div class="benefit-item">
+                            <span>✓</span> 📄 Export history as PDF
+                        </div>
+                        <div class="benefit-item">
+                            <span>✓</span> No subscriptions or hidden fees
+                        </div>
+                    </div>
+
+                    <div class="upgrade-pricing">
+                        <div class="price-card">
+                            <div class="price-label">One-time payment</div>
+                            <div class="price">$0.99</div>
+                            <div class="price-subtitle">Lifetime access</div>
+                            <div class="price-features">
+                                No subscriptions • No hidden fees • Forever yours
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="upgrade-actions">
+                        <button id="upgradePayButton" class="upgrade-pay-btn">
+                            🚀 Upgrade Now for $0.99
+                        </button>
+                        
+                        <div class="upgrade-loading" id="upgradeLoading" style="display: none;">
+                            Processing payment...
+                        </div>
+                        
+                        <div class="security-note">
+                            🔒 Secure payment processed by Stripe
+                        </div>
+                        
+                        <!-- Error Message -->
+                        <div id="upgradeErrorMessage" class="upgrade-error" style="display: none;"></div>
+                        
+                        <!-- Success Message -->
+                        <div id="upgradeSuccessMessage" class="upgrade-success" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+
         </main>
 
         <footer>
@@ -321,6 +383,72 @@
                 return;
             }
             
+            // Upgrade functionality
+            let stripe = null;
+            
+            // Initialize Stripe
+            fetch('/payment/config')
+                .then(response => response.json())
+                .then(config => {
+                    if (config.publishableKey) {
+                        stripe = Stripe(config.publishableKey);
+                    }
+                })
+                .catch(error => console.error('Failed to load Stripe config:', error));
+            
+            // Upgrade payment handler
+            function handleUpgradePayment() {
+                const button = document.getElementById('upgradePayButton');
+                const loading = document.getElementById('upgradeLoading');
+                const errorDiv = document.getElementById('upgradeErrorMessage');
+                const successDiv = document.getElementById('upgradeSuccessMessage');
+                
+                button.disabled = true;
+                loading.style.display = 'block';
+                errorDiv.style.display = 'none';
+                successDiv.style.display = 'none';
+                
+                // Create checkout session
+                fetch('/payment/create-checkout-session', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + localStorage.getItem('authToken')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    
+                    // Redirect to Stripe Checkout
+                    return stripe.redirectToCheckout({
+                        sessionId: data.sessionId
+                    });
+                })
+                .then(result => {
+                    if (result && result.error) {
+                        throw new Error(result.error.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Payment error:', error);
+                    errorDiv.textContent = error.message || 'Payment failed. Please try again.';
+                    errorDiv.style.display = 'block';
+                    button.disabled = false;
+                    loading.style.display = 'none';
+                });
+            }
+            
+            // Add event listener for upgrade button when DOM is ready
+            document.addEventListener('DOMContentLoaded', () => {
+                const upgradeButton = document.getElementById('upgradePayButton');
+                if (upgradeButton) {
+                    upgradeButton.addEventListener('click', handleUpgradePayment);
+                }
+            });
+
             // Load the main app script after DOM is ready
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', () => {

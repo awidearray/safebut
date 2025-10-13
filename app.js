@@ -627,7 +627,7 @@ class PregnancySafetyChecker {
             <div style="text-align: center;">
                 <div style="font-size: 1.2em; margin-bottom: 10px;">🎯 Daily Limit Reached</div>
                 <div style="margin-bottom: 15px;">You've used your free search for today! Upgrade to get unlimited searches, image analysis, and more.</div>
-                <button onclick="window.location.href='/login'" style="background: #667eea; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; margin-right: 10px;">
+                <button onclick="showUpgradeTab()" style="background: #667eea; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; margin-right: 10px;">
                     🚀 Upgrade Now - $0.99
                 </button>
                 <button onclick="checker.hideError()" style="background: #6c757d; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; cursor: pointer;">
@@ -651,6 +651,20 @@ class PregnancySafetyChecker {
 
     hideResults() {
         document.getElementById('results').style.display = 'none';
+    }
+}
+
+// Global function to show upgrade tab
+function showUpgradeTab() {
+    // Hide error message
+    if (checker) {
+        checker.hideError();
+    }
+    
+    // Switch to upgrade tab
+    const upgradeTab = document.querySelector('[data-tab="upgrade"]');
+    if (upgradeTab) {
+        upgradeTab.click();
     }
 }
 

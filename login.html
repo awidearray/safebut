@@ -228,6 +228,13 @@
                 Continue with Email
             </button>
             
+            <div style="margin: 20px 0; text-align: center; color: #666;">OR</div>
+            
+            <!-- Telegram Login Widget -->
+            <div id="telegram-login-container" style="display: flex; justify-content: center; margin: 20px 0;">
+                <!-- Widget will be inserted here by Telegram script -->
+            </div>
+            
             <!-- Email Login Form (hidden by default) -->
             <div id="email-login-form" style="display: none; margin-top: 20px;">
                 <input type="email" id="email-input" placeholder="Enter your email" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; font-size: 16px;">
@@ -353,6 +360,47 @@
                 }
             }, 3000);
         })();
+    </script>
+    
+    <!-- Telegram Login Widget -->
+    <script async src="https://telegram.org/js/telegram-widget.js?22" 
+            data-telegram-login="safebutbot" 
+            data-size="large" 
+            data-onauth="onTelegramAuth(user)" 
+            data-request-access="write">
+    </script>
+    
+    <script type="text/javascript">
+        function onTelegramAuth(user) {
+            console.log('Telegram auth successful:', user);
+            
+            // Send auth data to our backend
+            fetch('/auth/telegram', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(user),
+                credentials: 'include'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Store token
+                    localStorage.setItem('authToken', data.token);
+                    localStorage.setItem('isPremium', data.isPremium);
+                    
+                    // Redirect to app
+                    window.location.href = `/app?token=${data.token}&premium=${data.isPremium}`;
+                } else {
+                    showError(data.error || 'Telegram login failed');
+                }
+            })
+            .catch(error => {
+                console.error('Telegram login error:', error);
+                showError('Failed to connect with Telegram');
+            });
+        }
     </script>
 </body>
 </html>

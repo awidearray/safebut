@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test App</title>
+</head>
+<body>
+    <h1>Test Page</h1>
+    <button onclick="testClick()">Test Button</button>
+    <div id="output"></div>
+    
+    <script>
+        console.log('Script loaded');
+        
+        function testClick() {
+            console.log('Button clicked');
+            document.getElementById('output').innerHTML = 'Button was clicked!';
+            alert('Button clicked!');
+        }
+        
+        // Test if DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM loaded');
+            document.getElementById('output').innerHTML = 'Page loaded successfully';
+        });
+    </script>
+</body>
+</html>
