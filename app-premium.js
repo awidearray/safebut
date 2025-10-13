@@ -120,7 +120,7 @@ class PregnancySafetyChecker {
                 <h2>🎯 Daily Limit Reached</h2>
                 <p>You've used your free daily check</p>
                 <div class="upgrade-benefits">
-                    <h3>Upgrade to Premium for just $0.99</h3>
+                    <h3>Upgrade to Premium for just €24.99</h3>
                     <ul>
                         <li>✅ Unlimited searches forever</li>
                         <li>✅ Image analysis feature</li>
@@ -129,7 +129,7 @@ class PregnancySafetyChecker {
                     </ul>
                 </div>
                 <button id="upgradeBtn" class="upgrade-btn">
-                    Upgrade Now for $0.99
+                    Upgrade Now for €24.99
                 </button>
                 <button class="close-modal" onclick="this.parentElement.parentElement.remove()">
                     Maybe later
@@ -177,12 +177,12 @@ class PregnancySafetyChecker {
         modal.innerHTML = `
             <div class="payment-modal-content">
                 <h2>Complete Your Purchase</h2>
-                <p class="payment-amount">$0.99 - Lifetime Access</p>
+                <p class="payment-amount">€24.99 - Lifetime Access</p>
                 <form id="payment-form">
                     <div id="card-element"></div>
                     <div id="card-errors" role="alert"></div>
                     <button type="submit" id="submit-payment">
-                        <span id="button-text">Pay $0.99</span>
+                        <span id="button-text">Pay €24.99</span>
                         <span id="spinner" class="hidden">Processing...</span>
                     </button>
                 </form>

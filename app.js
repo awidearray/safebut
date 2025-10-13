@@ -470,8 +470,8 @@ class PregnancySafetyChecker {
         safetyBadge.textContent = safetyLevel.text;
         safetyBadge.className = `safety-badge ${safetyLevel.class}`;
 
-        // Set risk score and position indicator
-        const riskScore = data.riskScore || 5;
+        // Set risk score and position indicator (use pregnancy as primary)
+        const riskScore = data.pregnancyRiskScore || data.riskScore || 5;
         riskIndicator.textContent = riskScore;
         const position = ((riskScore - 1) / 9) * 100;
         riskIndicator.style.left = `calc(${position}% - 25px)`;
@@ -490,8 +490,14 @@ class PregnancySafetyChecker {
             safetyVerdict.className = 'safety-verdict unsafe';
         }
 
-        // Format and display content
-        const formattedContent = this.formatContent(data.result);
+        // Format and display content - handle both single and dual format
+        let formattedContent = this.formatContent(data.result);
+        
+        // If we have both pregnancy and breastfeeding sections, format them separately
+        if (data.hasBothSections && data.breastfeedingRiskScore !== null) {
+            formattedContent = this.formatDualContent(data.result, data.pregnancyRiskScore, data.breastfeedingRiskScore);
+        }
+        
         resultContent.innerHTML = formattedContent;
 
         // Add reference links
@@ -650,6 +656,39 @@ class PregnancySafetyChecker {
         return finalFormatted;
     }
 
+    formatDualContent(content, pregnancyRisk, breastfeedingRisk) {
+        // Split content into pregnancy and breastfeeding sections
+        const sections = content.split(/(?=BREASTFEEDING:)/);
+        const pregnancySection = sections[0];
+        const breastfeedingSection = sections[1] || '';
+
+        let html = '<div class="dual-safety-sections">';
+        
+        // Pregnancy section
+        html += '<div class="safety-section pregnancy-section">';
+        html += '<h2 class="section-title">🤰 During Pregnancy</h2>';
+        html += `<div class="risk-badge pregnancy-risk" style="background: ${this.getRiskColor(pregnancyRisk)}22; color: ${this.getRiskColor(pregnancyRisk)}; border: 1px solid ${this.getRiskColor(pregnancyRisk)}">Risk Score: ${pregnancyRisk}/10</div>`;
+        html += this.formatSectionContent(pregnancySection.replace('PREGNANCY:', ''));
+        html += '</div>';
+        
+        // Breastfeeding section (premium only)
+        if (breastfeedingSection) {
+            html += '<div class="safety-section breastfeeding-section">';
+            html += '<h2 class="section-title">🤱 While Breastfeeding</h2>';
+            html += `<div class="risk-badge breastfeeding-risk" style="background: ${this.getRiskColor(breastfeedingRisk)}22; color: ${this.getRiskColor(breastfeedingRisk)}; border: 1px solid ${this.getRiskColor(breastfeedingRisk)}">Risk Score: ${breastfeedingRisk}/10</div>`;
+            html += this.formatSectionContent(breastfeedingSection.replace('BREASTFEEDING:', ''));
+            html += '</div>';
+        }
+        
+        html += '</div>';
+        
+        return html;
+    }
+
+    formatSectionContent(content) {
+        return this.formatContent(content);
+    }
+
     addToHistory(item, riskScore) {
         // Remove duplicate if exists
         this.searchHistory = this.searchHistory.filter(h => h.item.toLowerCase() !== item.toLowerCase());
@@ -726,7 +765,7 @@ class PregnancySafetyChecker {
             ">
                 <h2 style="color: #667eea; margin-bottom: 20px;">📸 Camera Access is Premium Only</h2>
                 <p style="color: #666; margin-bottom: 25px;">
-                    Upgrade to Premium for just $0.99 lifetime to unlock:
+                    Upgrade to Premium for just €24.99 lifetime to unlock:
                 </p>
                 <ul style="text-align: left; margin: 0 auto 25px; max-width: 300px; color: #333;">
                     <li style="margin-bottom: 10px;">✅ Camera & Image Analysis</li>
@@ -786,7 +825,7 @@ class PregnancySafetyChecker {
                 <div style="font-size: 1.2em; margin-bottom: 10px;">🎯 Daily Limit Reached</div>
                 <div style="margin-bottom: 15px;">You've used your free search for today! Upgrade to get unlimited searches, image analysis, and more.</div>
                 <button onclick="showUpgradeTab()" style="background: #667eea; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; margin-right: 10px;">
-                    🚀 Upgrade Now - $0.99
+                    🚀 Upgrade Now - €24.99
                 </button>
                 <button onclick="checker.hideError()" style="background: #6c757d; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; cursor: pointer;">
                     Maybe Later

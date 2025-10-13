@@ -577,6 +577,65 @@ footer {
     color: #721c24;
 }
 
+/* Dual Safety Sections */
+.dual-safety-sections {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.safety-section {
+    background: #f8f9ff;
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid #e2e8f0;
+    position: relative;
+}
+
+.safety-section .section-title {
+    font-size: 1.3rem;
+    margin-bottom: 15px;
+    color: #4a5568;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.safety-section .risk-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.pregnancy-section {
+    border-left: 4px solid #667eea;
+}
+
+.breastfeeding-section {
+    border-left: 4px solid #48bb78;
+}
+
+/* Mobile responsive for dual sections */
+@media (max-width: 768px) {
+    .dual-safety-sections {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .safety-section {
+        padding: 15px;
+    }
+    
+    .safety-section .section-title {
+        font-size: 1.1rem;
+    }
+}
+
 .references-section {
     margin-top: 20px;
     padding: 15px;

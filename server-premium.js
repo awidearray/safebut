@@ -248,12 +248,24 @@ app.post('/api/check-safety', async (req, res) => {
             contextInfo += `\nAdvanced maternal age (${userProfile.age}).`;
         }
 
+        // Determine if user wants breastfeeding info (premium only)
+        const includeBreastfeeding = user && user.isPremium;
+        
         const prompt = `Is "${item}" safe during pregnancy? ${contextInfo}
+${includeBreastfeeding ? `Also provide safety information for breastfeeding.` : ''}
 Give risk score 1-10 (1=safest, 10=most dangerous). Consider any mentioned conditions. Be brief:
+
+PREGNANCY:
 RISK_SCORE: [1-10]
 SAFETY: [Safe/Caution/Avoid]
 WHY: [1 sentence explanation]
-TIPS: [2-3 short practical tips specific to the patient's conditions if applicable]`;
+TIPS: [2-3 short practical tips specific to the patient's conditions if applicable]
+
+${includeBreastfeeding ? `BREASTFEEDING:
+RISK_SCORE: [1-10]
+SAFETY: [Safe/Caution/Avoid]
+WHY: [1 sentence explanation]
+TIPS: [2-3 short practical tips for breastfeeding mothers]` : ''}`;
 
         const apiUrl = 'https://api.venice.ai/api/v1/chat/completions';
         const requestBody = {
@@ -261,7 +273,7 @@ TIPS: [2-3 short practical tips specific to the patient's conditions if applicab
             messages: [
                 {
                     role: 'system',
-                    content: 'Medical expert specializing in pregnancy. Answer pregnancy safety questions considering patient-specific conditions. Brief, factual, personalized advice when conditions are present.'
+                    content: 'Medical expert specializing in pregnancy and breastfeeding. Answer safety questions considering patient-specific conditions. For premium users, provide both pregnancy and breastfeeding information. Brief, factual, personalized advice when conditions are present.'
                 },
                 {
                     role: 'user',
@@ -280,8 +292,20 @@ TIPS: [2-3 short practical tips specific to the patient's conditions if applicab
         });
 
         const aiResponse = response.data.choices[0].message.content;
-        const riskScoreMatch = aiResponse.match(/RISK_SCORE:\s*(\d+)/);
-        const riskScore = riskScoreMatch ? parseInt(riskScoreMatch[1]) : 5;
+        
+        // Parse pregnancy risk score (default section)
+        const pregnancyRiskMatch = aiResponse.match(/PREGNANCY:[\s\S]*?RISK_SCORE:\s*(\d+)/);
+        const pregnancyRiskScore = pregnancyRiskMatch ? parseInt(pregnancyRiskMatch[1]) : 5;
+        
+        // Parse breastfeeding risk score if premium user
+        let breastfeedingRiskScore = null;
+        if (includeBreastfeeding) {
+            const breastfeedingRiskMatch = aiResponse.match(/BREASTFEEDING:[\s\S]*?RISK_SCORE:\s*(\d+)/);
+            breastfeedingRiskScore = breastfeedingRiskMatch ? parseInt(breastfeedingRiskMatch[1]) : 5;
+        }
+        
+        // Use pregnancy risk score as primary for backward compatibility
+        const riskScore = pregnancyRiskScore;
         
         const references = [
             { title: 'Mayo Clinic - Pregnancy Week by Week', url: 'https://www.mayoclinic.org/healthy-lifestyle/pregnancy-week-by-week/basics/pregnancy-week-by-week/hlv-20049471' },
@@ -292,6 +316,9 @@ TIPS: [2-3 short practical tips specific to the patient's conditions if applicab
         const responseData = { 
             result: aiResponse,
             riskScore: riskScore,
+            pregnancyRiskScore: pregnancyRiskScore,
+            breastfeedingRiskScore: breastfeedingRiskScore,
+            hasBothSections: includeBreastfeeding,
             references: references
         };
         
@@ -363,11 +390,19 @@ app.post('/api/check-image-safety', async (req, res) => {
                     content: [
                         {
                             type: 'text',
-                            text: `Analyze this image and determine if what's shown is safe during pregnancy. Provide:
+                            text: `Analyze this image and determine if what's shown is safe during pregnancy and breastfeeding. Provide:
+
+PREGNANCY:
 RISK_SCORE: [1-10, where 1 is safest and 10 is most dangerous]
 SAFETY: [Safe/Caution/Avoid]
 WHY: [1 sentence explanation of what you see and why it's safe or not]
-TIPS: [2-3 short practical tips based on what's in the image]`
+TIPS: [2-3 short practical tips based on what's in the image]
+
+BREASTFEEDING:
+RISK_SCORE: [1-10, where 1 is safest and 10 is most dangerous]
+SAFETY: [Safe/Caution/Avoid]
+WHY: [1 sentence explanation for breastfeeding mothers]
+TIPS: [2-3 short practical tips for breastfeeding mothers]`
                         },
                         {
                             type: 'image_url',
@@ -390,8 +425,17 @@ TIPS: [2-3 short practical tips based on what's in the image]`
         });
 
         const aiResponse = response.data.choices[0].message.content;
-        const riskScoreMatch = aiResponse.match(/RISK_SCORE:\s*(\d+)/);
-        const riskScore = riskScoreMatch ? parseInt(riskScoreMatch[1]) : 5;
+        
+        // Parse pregnancy risk score (default section)
+        const pregnancyRiskMatch = aiResponse.match(/PREGNANCY:[\s\S]*?RISK_SCORE:\s*(\d+)/);
+        const pregnancyRiskScore = pregnancyRiskMatch ? parseInt(pregnancyRiskMatch[1]) : 5;
+        
+        // Parse breastfeeding risk score (premium users get both)
+        const breastfeedingRiskMatch = aiResponse.match(/BREASTFEEDING:[\s\S]*?RISK_SCORE:\s*(\d+)/);
+        const breastfeedingRiskScore = breastfeedingRiskMatch ? parseInt(breastfeedingRiskMatch[1]) : 5;
+        
+        // Use pregnancy risk score as primary for backward compatibility
+        const riskScore = pregnancyRiskScore;
         
         // Increment search count and save to history
         await req.user.incrementSearchCount();
@@ -406,6 +450,9 @@ TIPS: [2-3 short practical tips based on what's in the image]`
         res.json({ 
             result: aiResponse,
             riskScore: riskScore,
+            pregnancyRiskScore: pregnancyRiskScore,
+            breastfeedingRiskScore: breastfeedingRiskScore,
+            hasBothSections: true, // Image analysis always provides both for premium users
             references: references
         });
     } catch (error) {

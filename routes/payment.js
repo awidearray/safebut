@@ -27,7 +27,7 @@ router.post('/create-checkout-session', verifyToken, async (req, res) => {
             monthly: {
                 name: 'Safebut Premium - Monthly',
                 description: 'Monthly subscription to pregnancy safety checks',
-                unit_amount: 99, // $0.99 in cents
+                unit_amount: 2499, // €24.99 in cents
                 mode: 'subscription',
                 recurring: {
                     interval: 'month'
@@ -37,7 +37,7 @@ router.post('/create-checkout-session', verifyToken, async (req, res) => {
             annual: {
                 name: 'Safebut Premium - Annual',
                 description: 'Annual subscription to pregnancy safety checks (Save 17%)',
-                unit_amount: 999, // $9.99 in cents
+                unit_amount: 9999, // €99.99 in cents
                 mode: 'subscription',
                 recurring: {
                     interval: 'year'
@@ -47,7 +47,7 @@ router.post('/create-checkout-session', verifyToken, async (req, res) => {
             lifetime: {
                 name: 'Safebut Premium - Lifetime',
                 description: 'Lifetime access to all premium features',
-                unit_amount: 1999, // $19.99 in cents
+                unit_amount: 2499, // €24.99 in cents
                 mode: 'payment',
                 productType: 'lifetime_premium'
             }
@@ -74,7 +74,7 @@ router.post('/create-checkout-session', verifyToken, async (req, res) => {
         // Build line items based on selected price
         const lineItems = [{
             price_data: {
-                currency: 'usd',
+                currency: 'eur',
                 product_data: {
                     name: selectedPrice.name,
                     description: selectedPrice.description
@@ -153,7 +153,7 @@ router.post('/create-payment-intent', verifyToken, async (req, res) => {
 
         // Create payment intent for $0.99
         const paymentIntent = await stripe.paymentIntents.create({
-            amount: 99, // $0.99 in cents
+            amount: 2499, // €24.99 in cents
             currency: 'usd',
             customer: customer.id,
             metadata: {
