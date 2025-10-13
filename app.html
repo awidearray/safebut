@@ -489,7 +489,11 @@
                         },
                         body: JSON.stringify({ sessionId })
                     })
-                    .then(response => response.json())
+                    .then(async (response) => {
+                        // Accept both JSON and HTML (in case of edge error)
+                        const text = await response.text();
+                        try { return JSON.parse(text); } catch(_) { throw new Error('Verification response not JSON'); }
+                    })
                     .then(data => {
                         if (data.success) {
                             // Update local storage
