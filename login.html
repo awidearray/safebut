@@ -269,7 +269,7 @@
             button.textContent = 'Sending magic link...';
             button.disabled = true;
             
-            // Request magic link
+            // Request magic link - using the correct endpoint
             fetch('/auth/request-magic-link', {
                 method: 'POST',
                 headers: {
