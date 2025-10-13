@@ -284,9 +284,8 @@ router.get('/me', async (req, res) => {
                 profilePicture: user.profilePicture,
                 isPremium: user.isPremium,
                 provider: user.provider,
-                // TEMPORARILY DISABLED - All users have unlimited searches
-                dailySearchesRemaining: 'unlimited',
-                canSearch: true
+                dailySearchesRemaining: user.isPremium ? 'unlimited' : (1 - user.dailySearches.count),
+                canSearch: user.isPremium || hasFreebies
             }
         });
     } catch (error) {

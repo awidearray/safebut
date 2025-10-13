@@ -279,50 +279,111 @@ router.post('/verify-session', async (req, res) => {
 // Stripe webhook for payment confirmation
 router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
     const sig = req.headers['stripe-signature'];
+    
+    // Log webhook attempt
+    console.log('📨 Webhook received with signature:', sig ? 'Present' : 'Missing');
 
     try {
-        const event = stripe.webhooks.constructEvent(
-            req.body,
-            sig,
-            process.env.STRIPE_WEBHOOK_SECRET
-        );
+        let event;
+        
+        // If webhook secret is not configured, parse the raw event (for testing)
+        if (!process.env.STRIPE_WEBHOOK_SECRET) {
+            console.log('⚠️ WARNING: STRIPE_WEBHOOK_SECRET not configured - processing without verification');
+            event = JSON.parse(req.body.toString());
+        } else {
+            // Verify webhook signature
+            event = stripe.webhooks.constructEvent(
+                req.body,
+                sig,
+                process.env.STRIPE_WEBHOOK_SECRET
+            );
+        }
 
-        console.log('Received Stripe webhook:', event.type);
+        console.log('✅ Received Stripe webhook:', event.type);
 
         // Handle checkout session completion (for Stripe Checkout)
         if (event.type === 'checkout.session.completed') {
             const session = event.data.object;
-            console.log('Checkout session completed:', session.id);
+            console.log('💳 Checkout session completed:', session.id);
+            console.log('   Payment status:', session.payment_status);
+            console.log('   Mode:', session.mode);
             
             const userId = session.metadata?.userId;
-            const customerEmail = session.customer_details?.email;
+            const customerEmail = session.customer_details?.email || session.customer_email;
+            const customerId = session.customer;
             
-            console.log('Session metadata userId:', userId);
-            console.log('Customer email:', customerEmail);
+            console.log('   Session metadata:', JSON.stringify(session.metadata));
+            console.log('   Customer ID:', customerId);
+            console.log('   Customer email:', customerEmail);
+            console.log('   User ID from metadata:', userId);
             
             let user = null;
             
-            // Try to find user by ID first, then by email
-            if (userId) {
-                user = await User.findById(userId);
-                console.log('Found user by ID:', user?.email);
+            // Try multiple methods to find the user
+            // 1. By userId from metadata
+            if (userId && userId !== 'undefined' && userId !== 'null') {
+                try {
+                    user = await User.findById(userId);
+                    if (user) {
+                        console.log('   ✅ Found user by ID:', user.email);
+                    }
+                } catch (err) {
+                    console.log('   ❌ Error finding user by ID:', err.message);
+                }
             }
             
+            // 2. By Stripe customer ID
+            if (!user && customerId) {
+                user = await User.findOne({ stripeCustomerId: customerId });
+                if (user) {
+                    console.log('   ✅ Found user by Stripe customer ID:', user.email);
+                }
+            }
+            
+            // 3. By email
             if (!user && customerEmail) {
-                user = await User.findOne({ email: customerEmail });
-                console.log('Found user by email:', user?.email);
+                user = await User.findOne({ email: customerEmail.toLowerCase() });
+                if (user) {
+                    console.log('   ✅ Found user by email:', user.email);
+                }
             }
             
-            if (user && !user.isPremium) {
+            if (user) {
+                // Always update premium status on successful payment
+                const wasAlreadyPremium = user.isPremium;
                 user.isPremium = true;
                 user.stripeSessionId = session.id;
                 user.subscriptionDate = new Date();
+                
+                // Store subscription details based on mode
+                if (session.mode === 'subscription') {
+                    user.subscriptionType = session.metadata?.priceType || 'subscription';
+                    if (session.subscription) {
+                        user.stripeSubscriptionId = session.subscription;
+                    }
+                } else {
+                    user.subscriptionType = 'lifetime';
+                }
+                
                 await user.save();
-                console.log(`🎉 Premium activated for user: ${user.email} (ID: ${user._id})`);
-            } else if (user && user.isPremium) {
-                console.log(`User ${user.email} is already premium`);
+                
+                if (wasAlreadyPremium) {
+                    console.log(`   ℹ️ User ${user.email} was already premium - status refreshed`);
+                } else {
+                    console.log(`   🎉 PREMIUM ACTIVATED for ${user.email} (ID: ${user._id})`);
+                }
             } else {
-                console.log(`No user found for email: ${customerEmail} or ID: ${userId}`);
+                console.error(`   ❌ ERROR: No user found for payment!`);
+                console.error(`      - Tried userId: ${userId}`);
+                console.error(`      - Tried customerId: ${customerId}`);
+                console.error(`      - Tried email: ${customerEmail}`);
+                // Log this critical error for investigation
+                console.error('   CRITICAL: Payment received but user not found!', {
+                    sessionId: session.id,
+                    metadata: session.metadata,
+                    customerEmail,
+                    customerId
+                });
             }
         }
         
@@ -391,6 +452,34 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
     } catch (error) {
         console.error('Webhook error:', error);
         res.status(400).json({ error: 'Webhook error' });
+    }
+});
+
+// Debug endpoint to check user's payment status
+router.get('/debug-status/:email', async (req, res) => {
+    try {
+        const { email } = req.params;
+        const user = await User.findOne({ email: email.toLowerCase() });
+        
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        res.json({
+            email: user.email,
+            isPremium: user.isPremium,
+            stripeCustomerId: user.stripeCustomerId,
+            stripeSessionId: user.stripeSessionId,
+            stripeSubscriptionId: user.stripeSubscriptionId,
+            subscriptionType: user.subscriptionType,
+            subscriptionDate: user.subscriptionDate,
+            dailySearches: user.dailySearches,
+            createdAt: user.createdAt,
+            lastLogin: user.lastLogin
+        });
+    } catch (error) {
+        console.error('Debug status error:', error);
+        res.status(500).json({ error: 'Failed to get user status' });
     }
 });
 

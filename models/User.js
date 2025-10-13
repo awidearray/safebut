@@ -50,7 +50,11 @@ const userSchema = new mongoose.Schema({
     isPremium: { type: Boolean, default: false },
     stripeCustomerId: String,
     stripePaymentIntentId: String,
+    stripeSessionId: String,
+    stripeSubscriptionId: String,
+    subscriptionType: String, // 'monthly', 'annual', 'lifetime'
     subscriptionDate: Date,
+    subscriptionEndDate: Date,
     
     // Search history
     searchHistory: [{
@@ -73,10 +77,6 @@ const userSchema = new mongoose.Schema({
 
 // Reset daily search count if it's a new day
 userSchema.methods.checkDailyLimit = function() {
-    // TEMPORARILY DISABLED - All users have unlimited searches
-    return true;
-    
-    /* ORIGINAL CODE - TO BE RESTORED LATER
     const today = new Date().setHours(0, 0, 0, 0);
     const lastSearchDate = new Date(this.dailySearches.date).setHours(0, 0, 0, 0);
     
@@ -90,7 +90,6 @@ userSchema.methods.checkDailyLimit = function() {
     
     // Free users get 1 search per day
     return this.dailySearches.count < 1;
-    */
 };
 
 // Increment search count
