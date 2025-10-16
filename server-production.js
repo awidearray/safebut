@@ -151,6 +151,18 @@ app.get('/upgrade', async (req, res) => {
     res.sendFile(path.join(__dirname, 'upgrade.html'));
 });
 
+app.get('/terms', (req, res) => {
+    res.sendFile(path.join(__dirname, 'terms.html'));
+});
+
+app.get('/policy', (req, res) => {
+    res.sendFile(path.join(__dirname, 'policy.html'));
+});
+
+app.get('/delete-my-data', (req, res) => {
+    res.sendFile(path.join(__dirname, 'delete-my-data.html'));
+});
+
 // Serve static files explicitly for Vercel
 app.get('/styles.css', (req, res) => {
     res.setHeader('Content-Type', 'text/css');

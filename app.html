@@ -163,6 +163,17 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Theme Selection -->
+                    <div class="theme-selection">
+                        <h3>🎨 Baby Theme</h3>
+                        <p style="color: #666; margin-bottom: 15px;">Choose a theme based on your baby's gender:</p>
+                        <div class="theme-switcher" style="max-width: 400px;">
+                            <button class="theme-btn" data-theme="neutral">👶 Neutral</button>
+                            <button class="theme-btn" data-theme="girl">👧 Girl</button>
+                            <button class="theme-btn" data-theme="boy">👦 Boy</button>
+                        </div>
+                    </div>
                     
                     <div class="health-conditions">
                         <h3>🩺 Medical Conditions</h3>
@@ -685,6 +696,55 @@
                 // No token and not trial, redirect to login
                 window.location.href = '/login';
                 return;
+            }
+            
+            // Fetch user data and update status if authenticated
+            if (storedToken) {
+                fetch('/auth/me', {
+                    headers: {
+                        'Authorization': 'Bearer ' + storedToken
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.authenticated) {
+                        // Update user status in localStorage
+                        localStorage.setItem('isPremium', data.isPremium ? 'true' : 'false');
+                        localStorage.setItem('userEmail', data.email || '');
+                        
+                        // Update UI based on premium status
+                        if (data.isPremium) {
+                            // Hide upgrade prompts for premium users
+                            const upgradeElements = document.querySelectorAll('.upgrade-prompt');
+                            upgradeElements.forEach(el => el.style.display = 'none');
+                        }
+                        
+                        // Store user profile if available
+                        if (data.profile) {
+                            localStorage.setItem('pregnancyProfile', JSON.stringify(data.profile));
+                        }
+                        
+                        console.log('User status updated:', {
+                            isPremium: data.isPremium,
+                            email: data.email,
+                            hasProfile: !!data.profile
+                        });
+                    } else {
+                        // Token is invalid, clear it
+                        localStorage.removeItem('authToken');
+                        localStorage.removeItem('isPremium');
+                        localStorage.removeItem('userEmail');
+                        
+                        // Redirect to login if not in trial mode
+                        if (!trial) {
+                            window.location.href = '/login';
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Failed to fetch user status:', error);
+                    // Don't redirect on error, allow offline usage
+                });
             }
             
             // Upgrade functionality

@@ -77,7 +77,7 @@ main {
 
 #searchBtn {
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-    color: white;
+    color: var(--text-inverse);
     border: none;
     padding: 15px 30px;
     border-radius: 10px;
@@ -258,7 +258,7 @@ main {
 .tab-btn {
     background: rgba(255, 255, 255, 0.2);
     border: 2px solid rgba(255, 255, 255, 0.3);
-    color: white;
+    color: var(--text-inverse);
     padding: 10px 20px;
     border-radius: 25px;
     font-size: 1rem;
@@ -278,7 +278,7 @@ main {
 
 .tab-btn.logout-btn {
     background: #ef4444;
-    color: white;
+    color: var(--text-inverse);
     margin-left: auto;
     border-color: #ef4444;
 }
@@ -313,7 +313,7 @@ main {
     line-height: 1.6;
 }
 
-.basic-info, .health-conditions {
+.basic-info, .health-conditions, .theme-selection {
     margin-bottom: 30px;
 }
 
@@ -396,7 +396,7 @@ main {
 
 .save-profile-btn {
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-    color: white;
+    color: var(--text-inverse);
     border: none;
     padding: 15px 40px;
     border-radius: 25px;
@@ -729,7 +729,7 @@ footer {
 
 .camera-btn {
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-    color: white;
+    color: var(--text-inverse);
     border: none;
     padding: 15px 20px;
     border-radius: 10px;
@@ -767,7 +767,7 @@ footer {
     top: 10px;
     right: 10px;
     background: rgba(255, 0, 0, 0.8);
-    color: white;
+    color: var(--text-inverse);
     border: none;
     border-radius: 50%;
     width: 30px;
@@ -1952,7 +1952,7 @@ footer {
 
 .get-details-btn {
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-    color: white;
+    color: var(--text-inverse);
     border: none;
     padding: 12px 24px;
     border-radius: 10px;

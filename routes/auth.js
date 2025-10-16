@@ -510,18 +510,22 @@ router.get('/me', async (req, res) => {
         // Check daily limit for free users
         const hasFreebies = await user.checkDailyLimit();
         
+        // Get decrypted profile data
+        const profile = user.getProfile();
+        
         res.json({
             authenticated: true,
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                profilePicture: user.profilePicture,
-                isPremium: user.isPremium,
-                provider: user.provider,
-                dailySearchesRemaining: user.isPremium ? 'unlimited' : (1 - user.dailySearches.count),
-                canSearch: user.isPremium || hasFreebies
-            }
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            profilePicture: user.profilePicture,
+            isPremium: user.isPremium,
+            provider: user.provider,
+            dailySearchesRemaining: user.isPremium ? 'unlimited' : (1 - user.dailySearches.count),
+            canSearch: user.isPremium || hasFreebies,
+            profile: profile,
+            affiliateCode: user.affiliateCode,
+            affiliatePoints: user.affiliatePoints
         });
     } catch (error) {
         res.status(401).json({ authenticated: false });

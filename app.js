@@ -9,12 +9,59 @@ class PregnancySafetyChecker {
         this.logEntries = [];
         this.currentSearchItem = null;
         this.currentSearchType = null; // 'text' or 'image'
+        this.fetchUserStatus(); // Fetch user status on initialization
         this.initializeTabs();
         this.initializeEventListeners();
         this.initializeProfile();
         this.initializeLog();
         this.initializeAffiliate();
         this.displayHistory();
+    }
+    
+    async fetchUserStatus() {
+        const authToken = localStorage.getItem('authToken');
+        if (!authToken) return;
+        
+        try {
+            const response = await fetch('/auth/me', {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.authenticated) {
+                // Update user status in localStorage
+                localStorage.setItem('isPremium', data.isPremium ? 'true' : 'false');
+                localStorage.setItem('userEmail', data.email || '');
+                
+                // Store user profile if available
+                if (data.profile) {
+                    localStorage.setItem('pregnancyProfile', JSON.stringify(data.profile));
+                }
+                
+                // Update UI for premium users
+                if (data.isPremium) {
+                    document.querySelectorAll('.upgrade-prompt').forEach(el => {
+                        el.style.display = 'none';
+                    });
+                }
+                
+                console.log('User status fetched:', {
+                    isPremium: data.isPremium,
+                    email: data.email,
+                    hasProfile: !!data.profile
+                });
+            } else {
+                // Token is invalid, clear it
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('isPremium');
+                localStorage.removeItem('userEmail');
+            }
+        } catch (error) {
+            console.error('Failed to fetch user status:', error);
+        }
     }
 
     initializeTabs() {
