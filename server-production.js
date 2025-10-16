@@ -535,107 +535,89 @@ app.post('/api/check-image-safety', verifyToken, requirePremium, async (req, res
 
         const apiUrl = 'https://api.venice.ai/api/v1/chat/completions';
 
-        try {
-            // Primary: vision model
-            const requestBody = {
-                model: 'llama-3.2-90b-vision',
-                messages: [
-                    {
-                        role: 'system',
-                        content: 'You are a medical expert analyzing images for pregnancy safety. Provide accurate, evidence-based assessments.'
-                    },
-                    {
-                        role: 'user',
-                        content: [
-                            {
-                                type: 'text',
-                                text: `Analyze this image and determine if what's shown is safe during pregnancy. Provide:
-RISK_SCORE: [1-10, where 1 is safest and 10 is most dangerous]
-SAFETY: [Safe/Caution/Avoid]
-WHY: [1 sentence explanation of what you see and why it's safe or not]
-TIPS: [2-3 short practical tips based on what's in the image]`
-                            },
-                            {
-                                type: 'image_url',
-                                image_url: { url: image }
-                            }
-                        ]
-                    }
-                ],
-                temperature: 0.3,
-                max_tokens: 200
-            };
+        // Try multiple vision models in order of preference
+        const visionModels = [
+            'pixtral-large-latest',
+            'llama-3.2-90b-vision-instruct',
+            'llama-3.2-11b-vision-instruct'
+        ];
 
-            const response = await axios.post(apiUrl, requestBody, {
-                headers: {
-                    'Authorization': `Bearer ${process.env.VENICE_API_KEY}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            const aiResponse = response.data.choices[0].message.content;
-            const riskScoreMatch = aiResponse.match(/RISK_SCORE:\s*(\d+)/);
-            const riskScore = riskScoreMatch ? parseInt(riskScoreMatch[1]) : 5;
-
-            // Track usage/history for authenticated user
-            if (req.user) {
-                await req.user.incrementSearchCount();
-                await req.user.addToHistory('Image Analysis', riskScore, true);
-            }
-
-            const references = [
-                { title: 'Mayo Clinic - Pregnancy Week by Week', url: 'https://www.mayoclinic.org/healthy-lifestyle/pregnancy-week-by-week/basics/pregnancy-week-by-week/hlv-20049471' },
-                { title: 'American Pregnancy Association', url: 'https://americanpregnancy.org/healthy-pregnancy/' },
-                { title: 'CDC - Pregnancy Safety', url: 'https://www.cdc.gov/pregnancy/index.html' }
-            ];
-
-            return res.json({ result: aiResponse, riskScore, references });
-        } catch (visionError) {
-            // Fallback: text-only response if vision fails
+        let lastError = null;
+        
+        for (const modelName of visionModels) {
             try {
-                const fallbackRequestBody = {
-                    model: 'llama-3.3-70b',
+                console.log(`🔍 Attempting image analysis with model: ${modelName}`);
+                
+                const requestBody = {
+                    model: modelName,
                     messages: [
                         {
                             role: 'system',
-                            content: 'Medical expert. Answer pregnancy safety questions about items shown in images. Brief, factual only.'
+                            content: 'You are a medical expert analyzing images for pregnancy safety. Look at the image carefully, identify what you see, and provide a specific safety assessment based on the actual content shown in the image.'
                         },
                         {
                             role: 'user',
-                            content: `An image was uploaded for pregnancy safety analysis. Since I cannot see the image, please provide general guidance:
-RISK_SCORE: 5
-SAFETY: Caution
-WHY: Unable to analyze image directly - please describe what you want to check for specific guidance
-TIPS: Take a clear photo in good lighting, or type what you want to check instead of uploading an image`
+                            content: [
+                                {
+                                    type: 'text',
+                                    text: `Look at this image carefully. Identify what item, food, product, or activity is shown. Then assess its safety during pregnancy.
+
+Respond in this exact format:
+RISK_SCORE: [1-10]
+SAFETY: [Safe/Caution/Avoid]
+WHY: [Brief description of what you see in the image and specific explanation of why it's safe/caution/avoid for pregnancy]
+TIPS:
+- [Specific practical tip 1 based on what's in the image]
+- [Specific practical tip 2 based on what's in the image]`
+                                },
+                                {
+                                    type: 'image_url',
+                                    image_url: { url: image }
+                                }
+                            ]
                         }
                     ],
-                    temperature: 0.1,
-                    max_tokens: 150
+                    temperature: 0.3,
+                    max_tokens: 300
                 };
 
-                const fallbackResponse = await axios.post(apiUrl, fallbackRequestBody, {
+                const response = await axios.post(apiUrl, requestBody, {
                     headers: {
                         'Authorization': `Bearer ${process.env.VENICE_API_KEY}`,
                         'Content-Type': 'application/json'
-                    }
+                    },
+                    timeout: 30000
                 });
 
-                const aiResponse = fallbackResponse.data.choices[0].message.content;
+                console.log(`✅ Image analysis successful with model: ${modelName}`);
+                
+                const aiResponse = response.data.choices[0].message.content;
+                const riskScoreMatch = aiResponse.match(/RISK_SCORE:\s*(\d+)/);
+                const riskScore = riskScoreMatch ? parseInt(riskScoreMatch[1]) : 5;
+
+                // Track usage/history for authenticated user
+                if (req.user) {
+                    await req.user.incrementSearchCount();
+                    await req.user.addToHistory('Image Analysis', riskScore, true);
+                }
+
                 const references = [
                     { title: 'Mayo Clinic - Pregnancy Week by Week', url: 'https://www.mayoclinic.org/healthy-lifestyle/pregnancy-week-by-week/basics/pregnancy-week-by-week/hlv-20049471' },
                     { title: 'American Pregnancy Association', url: 'https://americanpregnancy.org/healthy-pregnancy/' },
                     { title: 'CDC - Pregnancy Safety', url: 'https://www.cdc.gov/pregnancy/index.html' }
                 ];
 
-                return res.json({ result: aiResponse, riskScore: 5, references });
-            } catch (fallbackError) {
-                console.error('Fallback image analysis failed:', fallbackError.response?.data || fallbackError.message);
-                return res.status(500).json({ 
-                    error: 'Failed to analyze image. Please try again later.',
-                    details: fallbackError.response?.data?.error || fallbackError.message 
-                });
+                return res.json({ result: aiResponse, riskScore, references });
+            } catch (modelError) {
+                console.error(`❌ Model ${modelName} failed:`, modelError.response?.data || modelError.message);
+                lastError = modelError;
+                // Continue to next model
             }
         }
+        
+        // All vision models failed
+        console.error('❌ All vision models failed. Last error:', lastError?.response?.data || lastError?.message);
+        throw lastError || new Error('All vision models failed');
     } catch (error) {
         console.error('Image analysis error:', error.response?.data || error.message);
         res.status(500).json({ 
@@ -845,58 +827,103 @@ app.post('/api/detailed-image-safety', async (req, res) => {
         }
         
         const apiUrl = 'https://api.venice.ai/api/v1/chat/completions';
-        const requestBody = {
-            model: 'mistral-31-24b',  // Vision-capable model
-            messages: [
-                {
-                    role: 'system',
-                    content: 'You are a comprehensive medical expert analyzing images for detailed pregnancy safety assessment. Provide thorough, evidence-based analysis with specific guidance.'
-                },
-                {
-                    role: 'user',
-                    content: [
+        
+        // Try multiple vision models in order of preference
+        const visionModels = [
+            'pixtral-large-latest',
+            'llama-3.2-90b-vision-instruct',
+            'llama-3.2-11b-vision-instruct'
+        ];
+
+        let lastError = null;
+        
+        for (const modelName of visionModels) {
+            try {
+                console.log(`🔍 Attempting detailed image analysis with model: ${modelName}`);
+                
+                const requestBody = {
+                    model: modelName,
+                    messages: [
                         {
-                            type: 'text',
-                            text: `Provide a comprehensive analysis of what's shown in this image regarding pregnancy safety. ${contextInfo}
-
-Please include:
-
-1. **Item Identification**: What you see in the image
-2. **Detailed Safety Assessment**: Comprehensive safety evaluation
-3. **Specific Risks/Benefits**: Detailed explanation of any risks or benefits
-4. **Trimester Considerations**: How recommendations might vary by pregnancy stage
-5. **Usage Guidelines**: Specific recommendations for safe use if applicable
-6. **Alternatives**: Safer alternatives if the item should be avoided
-7. **Medical Considerations**: How this relates to pregnancy health
-8. **When to Consult**: Specific situations requiring medical consultation
-
-Be thorough and evidence-based in your analysis.`
+                            role: 'system',
+                            content: 'You are a comprehensive medical expert analyzing images for detailed pregnancy safety assessment. First identify what you see in the image, then provide thorough, evidence-based analysis with specific guidance. Format your response using HTML tags only (h3, p, ul, li, strong) - do NOT use markdown (no *, #, or ** symbols).'
                         },
                         {
-                            type: 'image_url',
-                            image_url: {
-                                url: image
-                            }
-                        }
-                    ]
-                }
-            ],
-            temperature: 0.2,
-            max_tokens: 600
-        };
-        
-        const response = await axios.post(apiUrl, requestBody, {
-            headers: {
-                'Authorization': `Bearer ${process.env.VENICE_API_KEY}`,
-                'Content-Type': 'application/json'
-            }
-        });
+                            role: 'user',
+                            content: [
+                                {
+                                    type: 'text',
+                                    text: `Look at this image carefully and identify what is shown. Then provide a comprehensive analysis regarding pregnancy safety. ${contextInfo}
 
-        const aiResponse = response.data.choices[0].message.content;
+Format your response using HTML tags. Include these sections:
+
+<h3>Item Identification</h3>
+<p>What you see in the image</p>
+
+<h3>Detailed Safety Assessment</h3>
+<p>Comprehensive safety evaluation</p>
+
+<h3>Specific Risks/Benefits</h3>
+<p>Detailed explanation of any risks or benefits</p>
+
+<h3>Trimester Considerations</h3>
+<p>How recommendations might vary by pregnancy stage</p>
+
+<h3>Usage Guidelines</h3>
+<ul>
+<li>Specific recommendations for safe use if applicable</li>
+</ul>
+
+<h3>Alternatives</h3>
+<p>Safer alternatives if the item should be avoided</p>
+
+<h3>Medical Considerations</h3>
+<p>How this relates to pregnancy health</p>
+
+<h3>When to Consult a Doctor</h3>
+<ul>
+<li>Specific situations requiring medical consultation</li>
+</ul>
+
+Be thorough and evidence-based. Use ONLY HTML tags (h3, p, ul, li, strong). Do NOT use markdown symbols like *, **, or #.`
+                                },
+                                {
+                                    type: 'image_url',
+                                    image_url: {
+                                        url: image
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    temperature: 0.2,
+                    max_tokens: 800
+                };
+                
+                const response = await axios.post(apiUrl, requestBody, {
+                    headers: {
+                        'Authorization': `Bearer ${process.env.VENICE_API_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    timeout: 30000
+                });
+
+                console.log(`✅ Detailed image analysis successful with model: ${modelName}`);
+                const aiResponse = response.data.choices[0].message.content;
+                
+                return res.json({ 
+                    result: aiResponse
+                });
+            } catch (modelError) {
+                console.error(`❌ Detailed model ${modelName} failed:`, modelError.response?.data || modelError.message);
+                lastError = modelError;
+                // Continue to next model
+            }
+        }
         
-        res.json({ 
-            result: aiResponse
-        });
+        // All vision models failed
+        console.error('❌ All detailed vision models failed. Last error:', lastError?.response?.data || lastError?.message);
+        throw lastError || new Error('All vision models failed');
     } catch (error) {
         console.error('Detailed image analysis error:', error.response?.data || error.message);
         res.status(500).json({ 
