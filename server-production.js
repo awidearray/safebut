@@ -167,6 +167,38 @@ app.get('/delete-my-data', (req, res) => {
     res.sendFile(path.join(__dirname, 'delete-my-data.html'));
 });
 
+// Additional page routes
+app.get('/guide', (req, res) => {
+    res.sendFile(path.join(__dirname, 'guide.html'));
+});
+
+app.get('/faq', (req, res) => {
+    res.sendFile(path.join(__dirname, 'faq.html'));
+});
+
+app.get('/medical', (req, res) => {
+    res.sendFile(path.join(__dirname, 'medical.html'));
+});
+
+app.get('/privacy-policy', (req, res) => {
+    res.sendFile(path.join(__dirname, 'privacy-policy.html'));
+});
+
+app.get('/terms-of-service', (req, res) => {
+    res.sendFile(path.join(__dirname, 'terms-of-service.html'));
+});
+
+// Debug/test pages (optional - can be removed in production)
+if (process.env.NODE_ENV !== 'production') {
+    app.get('/test-app', (req, res) => {
+        res.sendFile(path.join(__dirname, 'test-app.html'));
+    });
+    
+    app.get('/app-debug', (req, res) => {
+        res.sendFile(path.join(__dirname, 'app-debug.html'));
+    });
+}
+
 app.get('/logo.png', (req, res) => {
     res.setHeader('Content-Type', 'image/png');
     res.sendFile(path.join(__dirname, 'logo.png'));
@@ -184,10 +216,33 @@ app.get('/styles.css', (req, res) => {
     res.sendFile(path.join(__dirname, 'styles.css'));
 });
 
+app.get('/globals.css', (req, res) => {
+    res.setHeader('Content-Type', 'text/css');
+    res.sendFile(path.join(__dirname, 'globals.css'));
+});
+
 app.get('/app.js', (req, res) => {
     res.setHeader('Content-Type', 'application/javascript');
     res.sendFile(path.join(__dirname, 'app.js'));
 });
+
+app.get('/theme-switcher.js', (req, res) => {
+    res.setHeader('Content-Type', 'application/javascript');
+    res.sendFile(path.join(__dirname, 'theme-switcher.js'));
+});
+
+app.get('/app-premium.js', (req, res) => {
+    res.setHeader('Content-Type', 'application/javascript');
+    res.sendFile(path.join(__dirname, 'app-premium.js'));
+});
+
+// Debug JS files
+if (process.env.NODE_ENV !== 'production') {
+    app.get('/app-debug.js', (req, res) => {
+        res.setHeader('Content-Type', 'application/javascript');
+        res.sendFile(path.join(__dirname, 'app-debug.js'));
+    });
+}
 
 // API endpoints for profile management
 app.get('/api/profile', verifyToken, async (req, res) => {
