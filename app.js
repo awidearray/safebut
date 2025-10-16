@@ -852,9 +852,14 @@ class PregnancySafetyChecker {
         const loader = document.querySelector('.loader');
         const searchBtn = document.getElementById('searchBtn');
 
+        if (!btnText || !loader || !searchBtn) {
+            console.error('Button elements not found');
+            return;
+        }
+
         if (show) {
             btnText.style.display = 'none';
-            loader.style.display = 'block';
+            loader.style.display = 'inline-block';
             searchBtn.disabled = true;
         } else {
             btnText.style.display = 'inline';

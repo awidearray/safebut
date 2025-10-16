@@ -100,13 +100,13 @@ main {
 }
 
 .loader {
+    display: none;
     border: 3px solid rgba(255, 255, 255, 0.3);
     border-radius: 50%;
     border-top-color: white;
     width: 20px;
     height: 20px;
     animation: spin 1s linear infinite;
-    display: none;
 }
 
 @keyframes spin {

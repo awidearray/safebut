@@ -347,10 +347,10 @@ app.post('/api/check-image-safety', async (req, res) => {
         const apiUrl = 'https://api.venice.ai/api/v1/chat/completions';
         
         // Try multiple vision models in order of preference
+        // Note: Venice AI may not support dedicated vision models, using GPT-4o which can handle images
         const visionModels = [
-            'pixtral-large-latest',
-            'llama-3.2-90b-vision-instruct',
-            'llama-3.2-11b-vision-instruct'
+            'gpt-4o',
+            'gpt-4o-mini'
         ];
 
         let lastError = null;
@@ -423,9 +423,32 @@ TIPS: [2-3 short practical tips based on what's in the image]`
             }
         }
         
-        // If all vision models failed, try fallback to text-only analysis
+        // If all vision models failed, provide a helpful response
         if (lastError) {
-            console.log('All vision models failed, attempting text fallback...');
+            console.log('Vision analysis not available, providing helpful guidance...');
+            
+            // Return a helpful message for the user
+            const helpfulResponse = `RISK_SCORE: 5
+SAFETY: Unable to analyze
+WHY: Image analysis is temporarily unavailable. Please describe what you want to check instead.
+TIPS:
+- Type the name of the item, food, or medication you want to check
+- Be specific (e.g., "tylenol", "sushi", "hair dye")
+- You can also search for activities like "hot yoga" or "flying"`;
+            
+            return res.json({ 
+                result: helpfulResponse,
+                riskScore: 5,
+                references: [
+                    { title: 'Mayo Clinic - Pregnancy Week by Week', url: 'https://www.mayoclinic.org/healthy-lifestyle/pregnancy-week-by-week/basics/pregnancy-week-by-week/hlv-20049471' },
+                    { title: 'American Pregnancy Association', url: 'https://americanpregnancy.org/healthy-pregnancy/' },
+                    { title: 'CDC - Pregnancy Safety', url: 'https://www.cdc.gov/pregnancy/index.html' }
+                ],
+                imageAnalysisUnavailable: true
+            });
+            
+            // Skip the text fallback API call since it won't help
+            /*
             try {
                 const fallbackRequestBody = {
                     model: 'llama-3.3-70b',
@@ -446,39 +469,7 @@ TIPS: Take a clear photo in good lighting, or type what you want to check instea
                     temperature: 0.1,
                     max_tokens: 150
                 };
-                
-                const fallbackResponse = await axios.post(apiUrl, fallbackRequestBody, {
-                    headers: {
-                        'Authorization': `Bearer ${process.env.VENICE_API_KEY}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                const aiResponse = fallbackResponse.data.choices[0].message.content;
-                
-                return res.json({ 
-                    result: aiResponse,
-                    riskScore: 5,
-                    references: [
-                        { title: 'Mayo Clinic - Pregnancy Week by Week', url: 'https://www.mayoclinic.org/healthy-lifestyle/pregnancy-week-by-week/basics/pregnancy-week-by-week/hlv-20049471' },
-                        { title: 'American Pregnancy Association', url: 'https://americanpregnancy.org/healthy-pregnancy/' },
-                        { title: 'CDC - Pregnancy Safety', url: 'https://www.cdc.gov/pregnancy/index.html' }
-                    ]
-                });
-            } catch (fallbackError) {
-                console.error('Fallback also failed:', fallbackError.response?.data || fallbackError.message);
-                // Final graceful fallback without external API
-                const generic = `RISK_SCORE: 5\nSAFETY: Caution\nWHY: Unable to analyze the image right now.\nTIPS: Try again with a clearer photo, Good lighting helps, You can also type what you want to check`;
-                return res.json({
-                    result: generic,
-                    riskScore: 5,
-                    references: [
-                        { title: 'Mayo Clinic - Pregnancy Week by Week', url: 'https://www.mayoclinic.org/healthy-lifestyle/pregnancy-week-by-week/basics/pregnancy-week-by-week/hlv-20049471' },
-                        { title: 'American Pregnancy Association', url: 'https://americanpregnancy.org/healthy-pregnancy/' },
-                        { title: 'CDC - Pregnancy Safety', url: 'https://www.cdc.gov/pregnancy/index.html' }
-                    ]
-                });
-            }
+            */
         }
     } catch (error) {
         console.error('Image analysis setup error:', error.message);

@@ -377,20 +377,39 @@ app.post('/api/check-image-safety', async (req, res) => {
 
         const { image } = req.body;
         
+        if (!image) {
+            return res.status(400).json({ error: 'No image provided' });
+        }
+        
         const apiUrl = 'https://api.venice.ai/api/v1/chat/completions';
-        const requestBody = {
-            model: 'mistral-31-24b',  // Vision-capable model
-            messages: [
-                {
-                    role: 'system',
-                    content: 'You are a medical expert analyzing images for pregnancy safety. Provide accurate, evidence-based assessments.'
-                },
-                {
-                    role: 'user',
-                    content: [
+        
+        // Try multiple vision models in order of preference
+        // Note: Venice AI may not support dedicated vision models, using GPT-4o which can handle images
+        const visionModels = [
+            'gpt-4o',
+            'gpt-4o-mini'
+        ];
+
+        let lastError = null;
+        let aiResponse = null;
+        
+        for (const modelName of visionModels) {
+            try {
+                console.log(`🔍 Attempting image analysis with model: ${modelName}`);
+                
+                const requestBody = {
+                    model: modelName,
+                    messages: [
                         {
-                            type: 'text',
-                            text: `Analyze this image and determine if what's shown is safe during pregnancy and breastfeeding. Provide:
+                            role: 'system',
+                            content: 'You are a medical expert analyzing images for pregnancy safety. Provide accurate, evidence-based assessments.'
+                        },
+                        {
+                            role: 'user',
+                            content: [
+                                {
+                                    type: 'text',
+                                    text: `Analyze this image and determine if what's shown is safe during pregnancy and breastfeeding. Provide:
 
 PREGNANCY:
 RISK_SCORE: [1-10, where 1 is safest and 10 is most dangerous]
@@ -403,28 +422,47 @@ RISK_SCORE: [1-10, where 1 is safest and 10 is most dangerous]
 SAFETY: [Safe/Caution/Avoid]
 WHY: [1 sentence explanation for breastfeeding mothers]
 TIPS: [2-3 short practical tips for breastfeeding mothers]`
-                        },
-                        {
-                            type: 'image_url',
-                            image_url: {
-                                url: image
-                            }
+                                },
+                                {
+                                    type: 'image_url',
+                                    image_url: {
+                                        url: image
+                                    }
+                                }
+                            ]
                         }
-                    ]
-                }
-            ],
-            temperature: 0.3,
-            max_tokens: 200
-        };
-        
-        const response = await axios.post(apiUrl, requestBody, {
-            headers: {
-                'Authorization': `Bearer ${process.env.VENICE_API_KEY}`,
-                'Content-Type': 'application/json'
-            }
-        });
+                    ],
+                    temperature: 0.3,
+                    max_tokens: 300,
+                    timeout: 30000
+                };
+                
+                const response = await axios.post(apiUrl, requestBody, {
+                    headers: {
+                        'Authorization': `Bearer ${process.env.VENICE_API_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    timeout: 30000
+                });
 
-        const aiResponse = response.data.choices[0].message.content;
+                console.log(`✅ Image analysis successful with model: ${modelName}`);
+                aiResponse = response.data.choices[0].message.content;
+                break; // Success, exit the loop
+                
+            } catch (visionError) {
+                lastError = visionError;
+                console.error(`❌ Model ${modelName} failed:`, visionError.response?.data || visionError.message);
+            }
+        }
+        
+        // If no model succeeded, return error
+        if (!aiResponse) {
+            console.error('All vision models failed');
+            return res.status(500).json({ 
+                error: 'Failed to analyze image. Please try again later.',
+                details: lastError?.message || 'Unknown error'
+            });
+        }
         
         // Parse pregnancy risk score (default section)
         const pregnancyRiskMatch = aiResponse.match(/PREGNANCY:[\s\S]*?RISK_SCORE:\s*(\d+)/);
