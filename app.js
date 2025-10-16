@@ -1223,6 +1223,27 @@ class PregnancySafetyChecker {
     
     async connectGoogleCalendar() {
         try {
+            // First fetch the Google Calendar config from server
+            const configResponse = await fetch('/auth/google-calendar-config', {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                }
+            });
+            
+            if (!configResponse.ok) {
+                throw new Error('Failed to fetch Google Calendar configuration');
+            }
+            
+            const config = await configResponse.json();
+            
+            if (!config.configured) {
+                alert('Google Calendar integration is not configured. Please contact support.');
+                return;
+            }
+            
+            // Store config for later use
+            this.googleCalendarConfig = config;
+            
             // Load Google Calendar API
             const script = document.createElement('script');
             script.src = 'https://apis.google.com/js/api.js';
@@ -1238,8 +1259,8 @@ class PregnancySafetyChecker {
         gapi.load('client:auth2', async () => {
             try {
                 await gapi.client.init({
-                    apiKey: 'AIzaSyBXGGkp8X1YKsQyBrV9tQfXVGbQR_kR5zs', // You'll need to add your Google API key
-                    clientId: 'YOUR_CLIENT_ID.apps.googleusercontent.com', // You'll need to add your client ID
+                    apiKey: this.googleCalendarConfig.apiKey,
+                    clientId: this.googleCalendarConfig.clientId,
                     discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'],
                     scope: 'https://www.googleapis.com/auth/calendar.events'
                 });

@@ -532,4 +532,18 @@ router.get('/me', async (req, res) => {
     }
 });
 
+// Get Google Calendar API configuration
+router.get('/google-calendar-config', (req, res) => {
+    // Only provide config to authenticated premium users
+    if (!req.session?.userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
+    
+    res.json({
+        apiKey: process.env.GOOGLE_CALENDAR_API_KEY || '',
+        clientId: process.env.GOOGLE_CALENDAR_CLIENT_ID || '',
+        configured: !!(process.env.GOOGLE_CALENDAR_API_KEY && process.env.GOOGLE_CALENDAR_CLIENT_ID)
+    });
+});
+
 module.exports = router;
