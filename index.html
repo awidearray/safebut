@@ -256,6 +256,123 @@
             border-color: var(--primary-color);
         }
 
+        .demo-preview {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            min-height: 250px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        .demo-preview-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 210px;
+        }
+
+        .demo-result-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+
+        .demo-result-badge.safe {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .demo-result-badge.caution {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .demo-result-badge.avoid {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .demo-risk-bar {
+            width: 100%;
+            height: 30px;
+            background: linear-gradient(to right, #4ade80, #fbbf24, #f87171);
+            border-radius: 15px;
+            position: relative;
+            margin: 15px 0;
+        }
+
+        .demo-risk-indicator {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: white;
+            border: 3px solid #333;
+            border-radius: 50%;
+            top: -5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.85rem;
+            transition: left 0.3s ease;
+        }
+
+        .demo-why-section {
+            text-align: left;
+            margin: 15px 0;
+        }
+
+        .demo-why-section h4 {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .demo-why-section p {
+            color: #333;
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        .demo-tips {
+            text-align: left;
+            margin-top: 15px;
+        }
+
+        .demo-tips h4 {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .demo-tips ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .demo-tips li {
+            padding: 6px 0;
+            color: #333;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .demo-tips li:before {
+            content: "✓ ";
+            color: var(--primary-color);
+            font-weight: bold;
+            margin-right: 6px;
+        }
+
         /* Features Section */
         .features {
             padding: 80px 20px;
@@ -591,7 +708,7 @@
         <div class="hero-container">
             <div class="hero-content">
                 <h1>Is It Safe?</h1>
-                <p class="subtitle">Get instant, reliable answers about foods, medications, and activities during pregnancy. Trusted by thousands of expecting mothers.</p>
+                <p class="subtitle">Get instant, reliable answers about foods, medications, and activities during pregnancy and breastfeeding. Trusted by thousands of expecting mothers.</p>
                 <div class="hero-buttons">
                     <a href="/app" class="btn-primary">Start Checking Now</a>
                     <a href="#how-it-works" class="btn-secondary">Learn More</a>
@@ -615,18 +732,22 @@
                 <div class="hero-image-wrapper">
                     <div class="demo-search">
                         <div class="demo-search-bar">
-                            <input type="text" class="demo-input" placeholder="Try: 'Can I eat sushi?'" disabled>
+                            <input type="text" class="demo-input" placeholder="Try: 'sushi'" disabled>
                             <button class="demo-btn">Check Safety</button>
                         </div>
                         <div class="quick-searches">
-                            <span class="quick-search-tag">Coffee ☕</span>
-                            <span class="quick-search-tag">Sushi 🍣</span>
-                            <span class="quick-search-tag">Yoga 🧘</span>
-                            <span class="quick-search-tag">Flying ✈️</span>
-                            <span class="quick-search-tag">Hair Dye 💇</span>
+                            <span class="quick-search-tag" data-item="coffee">Coffee ☕</span>
+                            <span class="quick-search-tag" data-item="sushi">Sushi 🍣</span>
+                            <span class="quick-search-tag" data-item="yoga">Yoga 🧘</span>
+                            <span class="quick-search-tag" data-item="flying">Flying ✈️</span>
+                            <span class="quick-search-tag" data-item="hairdye">Hair Dye 💇</span>
                         </div>
                     </div>
-                    <img src="data:image/svg+xml,%3Csvg width='300' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='300' height='200' fill='%23f0f0f0'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='16' fill='%23999' text-anchor='middle' dominant-baseline='middle'%3ESafety Results Preview%3C/text%3E%3C/svg%3E" alt="Safety check preview" style="width: 100%; border-radius: 10px;">
+                    <div class="demo-preview" id="demoPreview">
+                        <div class="demo-preview-placeholder">
+                            <div style="color: #999; font-size: 1rem;">👆 Click any item above to see a preview</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -805,9 +926,113 @@
         });
 
         // Demo quick search tags
+        const previewData = {
+            sushi: {
+                name: 'Sushi',
+                risk: 6,
+                safety: 'Caution',
+                why: 'Raw fish may contain parasites and bacteria harmful during pregnancy. Mercury in certain fish can affect fetal development.',
+                tips: [
+                    'Choose cooked sushi rolls (California roll, shrimp tempura)',
+                    'Avoid high-mercury fish like tuna, mackerel, and swordfish',
+                    'Ensure sushi is from reputable restaurants with good food safety'
+                ]
+            },
+            coffee: {
+                name: 'Coffee',
+                risk: 4,
+                safety: 'Caution',
+                why: 'Moderate caffeine intake is generally safe, but excessive consumption may increase miscarriage risk and affect fetal growth.',
+                tips: [
+                    'Limit to 200mg caffeine per day (about 1-2 cups)',
+                    'Consider switching to decaf or half-caf options',
+                    'Account for other caffeine sources (tea, chocolate, soda)'
+                ]
+            },
+            yoga: {
+                name: 'Yoga',
+                risk: 2,
+                safety: 'Safe',
+                why: 'Prenatal yoga is generally safe and beneficial for flexibility, stress relief, and preparing for labor when done correctly.',
+                tips: [
+                    'Join prenatal yoga classes designed for pregnant women',
+                    'Avoid hot yoga, deep twists, and lying flat on your back after first trimester',
+                    'Listen to your body and modify poses as needed'
+                ]
+            },
+            flying: {
+                name: 'Flying',
+                risk: 4,
+                safety: 'Caution',
+                why: 'Flying is generally safe until 36 weeks, but comes with increased DVT risk, radiation exposure, and potential complications away from your doctor.',
+                tips: [
+                    'Best time to fly is second trimester (14-27 weeks)',
+                    'Walk frequently, stay hydrated, and wear compression socks',
+                    'Carry medical records and check airline policies on pregnant travelers'
+                ]
+            },
+            hairdye: {
+                name: 'Hair Dye',
+                risk: 3,
+                safety: 'Safe',
+                why: 'Modern hair dyes are generally considered safe after first trimester as absorption through scalp is minimal, though some prefer natural alternatives.',
+                tips: [
+                    'Wait until after first trimester if concerned',
+                    'Choose ammonia-free or vegetable-based dyes',
+                    'Ensure good ventilation and consider highlights over full dye'
+                ]
+            }
+        };
+
         document.querySelectorAll('.quick-search-tag').forEach(tag => {
             tag.addEventListener('click', function() {
-                window.location.href = '/app';
+                const item = this.dataset.item;
+                const data = previewData[item];
+                
+                if (!data) return;
+
+                // Calculate position for risk indicator (0-100%)
+                const position = ((data.risk - 1) / 9) * 100;
+                
+                // Determine badge class
+                let badgeClass = 'safe';
+                if (data.risk >= 7) badgeClass = 'avoid';
+                else if (data.risk >= 4) badgeClass = 'caution';
+
+                const previewHTML = `
+                    <div style="text-align: center;">
+                        <h3 style="margin-bottom: 10px; color: #333;">${data.name}</h3>
+                        <span class="demo-result-badge ${badgeClass}">${data.safety.toUpperCase()}</span>
+                    </div>
+                    
+                    <div class="demo-risk-bar">
+                        <div class="demo-risk-indicator" style="left: calc(${position}% - 20px);">
+                            ${data.risk}
+                        </div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #999; margin-top: 5px;">
+                        <span>1 (Safest)</span>
+                        <span>10 (Most Risky)</span>
+                    </div>
+                    
+                    <div class="demo-why-section">
+                        <h4>Why?</h4>
+                        <p>${data.why}</p>
+                    </div>
+                    
+                    <div class="demo-tips">
+                        <h4>Tips</h4>
+                        <ul>
+                            ${data.tips.map(tip => `<li>${tip}</li>`).join('')}
+                        </ul>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 20px;">
+                        <a href="/app" style="display: inline-block; background: var(--primary-color); color: white; padding: 10px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.9rem;">Get Started Free</a>
+                    </div>
+                `;
+
+                document.getElementById('demoPreview').innerHTML = previewHTML;
             });
         });
 
