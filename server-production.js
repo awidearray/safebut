@@ -630,9 +630,23 @@ TIPS:
             }
         }
         
-        // All vision models failed
-        console.error('❌ All vision models failed. Last error:', lastError?.response?.data || lastError?.message);
-        throw lastError || new Error('All vision models failed');
+        // All vision models failed — return a graceful fallback instead of 500
+        console.error('❌ All vision models failed. Returning graceful fallback. Last error:', lastError?.response?.data || lastError?.message);
+        const helpfulResponse = `RISK_SCORE: 5
+SAFETY: Caution
+WHY: We couldn't analyze this image right now. Please try another photo or type what you want to check.
+TIPS:
+- Use a clear, well-lit photo focusing on one item
+- Or type the name of the item (e.g., "coffee", "sushi", "ibuprofen")
+- Include brand/type when relevant`;
+
+        const references = [
+            { title: 'Mayo Clinic - Pregnancy Week by Week', url: 'https://www.mayoclinic.org/healthy-lifestyle/pregnancy-week-by-week/basics/pregnancy-week-by-week/hlv-20049471' },
+            { title: 'American Pregnancy Association', url: 'https://americanpregnancy.org/healthy-pregnancy/' },
+            { title: 'CDC - Pregnancy Safety', url: 'https://www.cdc.gov/pregnancy/index.html' }
+        ];
+
+        return res.json({ result: helpfulResponse, riskScore: 5, references });
     } catch (error) {
         console.error('Image analysis error:', error.response?.data || error.message);
         res.status(500).json({ 

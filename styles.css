@@ -1528,6 +1528,7 @@ footer {
         max-height: none;
         height: auto;
         min-height: 100vh;
+        overflow: visible; /* allow full page scroll on mobile */
     }
 }
 
@@ -1570,11 +1571,13 @@ footer {
     
     .container {
         border-radius: 0;
-        height: 100vh;
-        max-height: 100vh;
+        /* use natural height so content can extend and page can scroll */
+        height: auto;
+        max-height: none;
         max-width: 100%;
         display: flex;
         flex-direction: column;
+        overflow: visible;
     }
     
     body {
@@ -1583,13 +1586,16 @@ footer {
         height: -webkit-fill-available;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
+        display: block; /* avoid flex centering limiting scroll */
     }
     
     .container {
         border-radius: 0;
         max-height: none;
+        height: auto; /* override earlier height if any */
         min-height: 100vh;
         min-height: -webkit-fill-available;
+        overflow: visible;
     }
     
     main {
