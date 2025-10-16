@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAQ - Safe Maternity | Frequently Asked Questions</title>
+    <meta name="description" content="Frequently asked questions about Safe Maternity - your trusted pregnancy safety guide for foods, medications, and activities.">
+    <meta name="theme-color" content="#b8956a">
+    <link rel="stylesheet" href="globals.css">
+    <script src="theme-switcher.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background: var(--background-primary);
+        }
+
+        /* Navigation */
+        nav {
+            background: var(--background-primary);
+            box-shadow: var(--shadow-sm);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 70px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            font-size: 1.8rem;
+            margin-right: 10px;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 35px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary-color);
+        }
+
+        .nav-cta {
+            background: var(--primary-color);
+            color: var(--text-inverse);
+            padding: 10px 24px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .nav-cta:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-primary);
+        }
+
+        /* Hero Section */
+        .page-hero {
+            background: linear-gradient(135deg, var(--primary-lightest) 0%, var(--background-gradient-end) 100%);
+            padding: 80px 20px 60px;
+            text-align: center;
+        }
+
+        .page-hero h1 {
+            font-size: 3rem;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+        }
+
+        .page-hero p {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* FAQ Container */
+        .faq-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 60px 20px;
+        }
+
+        /* Search Box */
+        .faq-search {
+            margin-bottom: 40px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 16px 24px;
+            font-size: 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 30px;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .search-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(214, 51, 132, 0.1);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        /* Category Tabs */
+        .faq-categories {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 40px;
+            justify-content: center;
+        }
+
+        .category-tab {
+            padding: 10px 24px;
+            border-radius: 25px;
+            background: var(--background-primary);
+            border: 2px solid var(--border-color);
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .category-tab:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .category-tab.active {
+            background: var(--primary-color);
+            color: var(--text-inverse);
+            border-color: var(--primary-color);
+        }
+
+        /* FAQ Items */
+        .faq-section {
+            margin-bottom: 50px;
+        }
+
+        .faq-section-title {
+            font-size: 1.8rem;
+            color: var(--text-primary);
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid var(--primary-color);
+        }
+
+        .faq-item {
+            background: var(--background-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            margin-bottom: 15px;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .faq-item:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .faq-question {
+            padding: 20px 24px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            user-select: none;
+        }
+
+        .faq-question:hover {
+            color: var(--primary-color);
+        }
+
+        .faq-icon {
+            font-size: 1.2rem;
+            transition: transform 0.3s;
+            color: var(--primary-color);
+        }
+
+        .faq-item.active .faq-icon {
+            transform: rotate(180deg);
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .faq-answer-content {
+            padding: 0 24px 24px;
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+
+        .faq-answer-content p {
+            margin-bottom: 12px;
+        }
+
+        .faq-answer-content ul, .faq-answer-content ol {
+            margin-left: 20px;
+            margin-bottom: 12px;
+        }
+
+        .faq-answer-content li {
+            margin-bottom: 8px;
+        }
+
+        .faq-answer-content strong {
+            color: var(--text-primary);
+        }
+
+        .faq-answer-content a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .faq-answer-content a:hover {
+            text-decoration: underline;
+        }
+
+        .faq-item.active .faq-answer {
+            max-height: 1000px;
+        }
+
+        /* Highlight Box */
+        .highlight-box {
+            background: linear-gradient(135deg, var(--primary-lightest) 0%, var(--background-gradient-end) 100%);
+            border-left: 4px solid var(--primary-color);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        /* Still Have Questions CTA */
+        .cta-section {
+            background: linear-gradient(135deg, var(--primary-lightest) 0%, var(--background-gradient-end) 100%);
+            padding: 60px 20px;
+            text-align: center;
+            margin-top: 60px;
+        }
+
+        .cta-content {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .cta-content h2 {
+            font-size: 2.2rem;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+        }
+
+        .cta-content p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 25px;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: var(--text-inverse);
+            padding: 15px 35px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-size: 1.1rem;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: inline-block;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(214, 51, 132, 0.3);
+        }
+
+        /* Footer */
+        footer {
+            background: var(--text-primary);
+            color: var(--text-inverse);
+            padding: 60px 20px 30px;
+        }
+
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .footer-section h4 {
+            margin-bottom: 20px;
+            color: #fff;
+        }
+
+        .footer-section ul {
+            list-style: none;
+        }
+
+        .footer-section ul li {
+            margin-bottom: 12px;
+        }
+
+        .footer-section a {
+            color: #b8c5d6;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-section a:hover {
+            color: var(--text-inverse);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 30px;
+            border-top: 1px solid #3d5068;
+            color: #b8c5d6;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .social-link {
+            width: 40px;
+            height: 40px;
+            background: #3d5068;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-inverse);
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+
+        .social-link:hover {
+            background: var(--primary-color);
+        }
+
+        /* Hidden class for filtering */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            .page-hero h1 {
+                font-size: 2rem;
+            }
+
+            .faq-categories {
+                gap: 8px;
+            }
+
+            .category-tab {
+                padding: 8px 16px;
+                font-size: 0.85rem;
+            }
+
+            .faq-question {
+                font-size: 1rem;
+                padding: 16px 20px;
+            }
+
+            .footer-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <a href="/" class="logo">
+                <span class="logo-icon">🤰</span>
+                Safe Maternity
+            </a>
+            <ul class="nav-links">
+                <li><a href="/#features">Features</a></li>
+                <li><a href="/#how-it-works">How It Works</a></li>
+                <li><a href="/faq">FAQ</a></li>
+                <li><a href="/app">Sign In</a></li>
+                <li><a href="/app" class="nav-cta">Get Started Free</a></li>
+            </ul>
+            <button class="mobile-menu-btn">☰</button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="page-hero">
+        <h1>Frequently Asked Questions</h1>
+        <p>Everything you need to know about Safe Maternity and how it helps you during your pregnancy journey</p>
+    </section>
+
+    <!-- FAQ Container -->
+    <div class="faq-container">
+        <!-- Search Box -->
+        <div class="faq-search">
+            <input type="text" class="search-input" id="faqSearch" placeholder="Search for answers... (e.g., 'pricing', 'accuracy', 'photo')">
+        </div>
+
+        <!-- Category Tabs -->
+        <div class="faq-categories">
+            <button class="category-tab active" data-category="all">All Questions</button>
+            <button class="category-tab" data-category="general">General</button>
+            <button class="category-tab" data-category="features">Features</button>
+            <button class="category-tab" data-category="safety">Safety & Accuracy</button>
+            <button class="category-tab" data-category="pricing">Pricing</button>
+            <button class="category-tab" data-category="technical">Technical</button>
+        </div>
+
+        <!-- General Questions -->
+        <div class="faq-section" data-category="general">
+            <h2 class="faq-section-title">🌟 General Questions</h2>
+            
+            <div class="faq-item" data-keywords="what is safe maternity about app purpose">
+                <div class="faq-question">
+                    What is Safe Maternity?
+                    <span class="faq-icon">▼</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <p>Safe Maternity is a comprehensive pregnancy safety guide that helps expecting and nursing mothers make informed decisions about foods, medications, activities, and products during pregnancy and breastfeeding.</p>
+                        <p>Our AI-powered platform analyzes current medical guidelines, research papers, and trusted health sources to provide instant, evidence-based safety information. We help you answer questions like "Can I eat sushi while pregnant?" or "Is this medication safe for my baby?"</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item" data-keywords="who should use app target audience pregnant breastfeeding">
+                <div class="faq-question">
+                    Who should use Safe Maternity?
+                    <span class="faq-icon">▼</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <p>Safe Maternity is designed for:</p>
+                        <ul>
+                            <li><strong>Pregnant women</strong> at any stage of pregnancy</li>
+                            <li><strong>Breastfeeding mothers</strong> (Premium feature)</li>
+                            <li><strong>Partners and family members</strong> supporting pregnant women</li>
+                            <li><strong>Healthcare professionals</strong> seeking quick reference information</li>
+                            <li><strong>Women planning to conceive</strong> who want to prepare in advance</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item" data-keywords="how does work ai technology process">
+                <div class="faq-question">
+                    How does Safe Maternity work?
+                    <span class="faq-icon">▼</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <p>Safe Maternity uses advanced AI technology to provide instant safety information:</p>
+                        <ol>
+                            <li><strong>You ask a question</strong> - Type or photograph any item you want to check</li>
+                            <li><strong>AI analyzes</strong> - Our system searches through thousands of medical sources, guidelines, and research papers</li>
+                            <li><strong>Get clear answers</strong> - Receive a comprehensive safety assessment with:
+                                <ul>
+                                    <li>Clear safety rating (1-10 scale)</li>
+                                    <li>Detailed explanation of risks and benefits</li>
+                                    <li>Practical tips and recommendations</li>
+                                    <li>Safer alternatives when applicable</li>
+                                </ul>
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item" data-keywords="replace doctor medical advice healthcare provider">
+                <div class="faq-question">
+                    Does Safe Maternity replace my doctor?
+                    <span class="faq-icon">▼</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <div class="highlight-box">
+                            <p><strong>No, Safe Maternity does not replace professional medical advice.</strong></p>
+                        </div>
+                        <p>While we provide evidence-based information from trusted medical sources, every pregnancy is unique. Safe Maternity is designed to:</p>
+                        <ul>
+                            <li>✓ Give you quick, reliable information for everyday questions</li>
+                            <li>✓ Help you make informed decisions</li>
+                            <li>✓ Prepare better questions for your healthcare provider</li>
+                            <li>✓ Provide general guidance based on medical consensus</li>
+                        </ul>
+                        <p>Always consult with your healthcare provider for personalized medical advice, especially for:</p>
+                        <ul>
+                            <li>Prescription medications</li>
+                            <li>High-risk pregnancies</li>
+                            <li>Pre-existing medical conditions</li>
+                            <li>Any concerning symptoms</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Questions -->
+        <div class="faq-section" data-category="features">
+            <h2 class="faq-section-title">✨ Features</h2>
+            
+            <div class="faq-item" data-keywords="what check foods medications activities products items">
+                <div class="faq-question">
+                    What can I check with Safe Maternity?
+                    <span class="faq-icon">▼</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <p>You can check the safety of virtually anything during pregnancy and breastfeeding:</p>
+                        <ul>
+                            <li><strong>Foods & Beverages:</strong> Sushi, coffee, soft cheese, deli meat, herbal teas, etc.</li>
+                            <li><strong>Medications:</strong> Over-the-counter drugs, prescriptions, supplements, vitamins</li>
+                            <li><strong>Activities:</strong> Exercise, yoga, flying, hot tubs, dyeing hair</li>
+                            <li><strong>Beauty Products:</strong> Skincare, cosmetics, nail polish, hair treatments</li>
+                            <li><strong>Household Products:</strong> Cleaning supplies, paint, pesticides</li>
+                            <li><strong>Workplace Exposures:</strong> Chemicals, radiation, physical demands</li>
+                        </ul>
+                        <p>If you can think of it, you can check it!</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item" data-keywords="photo analysis image recognition camera scan barcode">
+                <div class="faq-question">
+                    How does the photo analysis feature work?
+                    <span class="faq-icon">▼</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <p>Our photo analysis feature uses advanced AI to identify products and provide safety information:</p>
+                        <ol>
+                            <li>Take a clear photo of the product label, food item, or packaging</li>
+                            <li>Upload it to Safe Maternity</li>
+                            <li>Our AI identifies the item and ingredients</li>
+                            <li>Get instant safety assessment</li>
+                        </ol>
+                        <p><strong>Perfect for:</strong></p>
+                        <ul>
+                            <li>Grocery shopping - quickly check products</li>
+                            <li>Dining out - photograph menu items</li>
+                            <li>Reading ingredient labels</li>
+                            <li>Checking medications or supplements</li>
+                        </ul>
+                        <p><em>Note: Photo analysis is available for Premium users.</em></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item" data-keywords="risk score safety rating 1-10 scale meaning">
+                <div class="faq-question">
+                    What do the risk scores mean?
+                    <span class="faq-icon">▼</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <p>Safe Maternity uses a clear 1-10 risk scale:</p>
+                        <ul>
+                            <li><strong>1-3 (Safe):</strong> Generally safe with little to no known risks. Green indicator.</li>
+                            <li><strong>4-6 (Caution):</strong> May be safe with limitations or precautions. Consider alternatives or moderate use. Yellow indicator.</li>
+                            <li><strong>7-10 (Avoid):</strong> Known risks to pregnancy/baby. Avoid or consult your healthcare provider immediately. Red indicator.</li>
+                        </ul>
+                        <p>Each score comes with detailed explanations, research backing, and practical recommendations.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item" data-keywords="breastfeeding nursing lactation support">
+                <div class="faq-question">
+                    Does Safe Maternity cover breastfeeding safety?
+                    <span class="faq-icon">▼</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <p>Yes! Premium users get dual safety assessments for both pregnancy and breastfeeding.</p>
+                        <p>When you check an item, you'll receive:</p>
+                        <ul>
+                            <li>Separate safety ratings for pregnancy and breastfeeding</li>
+                            <li>Specific considerations for each period</li>
+                            <li>Information about transfer to breast milk</li>
+                            <li>Timing recommendations (e.g., best time to take medication)</li>
+                        </ul>
+                        <p>This ensures you have comprehensive guidance throughout your entire motherhood journey.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item" data-keywords="pregnancy diary log journal tracking symptoms">
+                <div class="faq-question">
+                    What is the Personal Pregnancy Log?
+                    <span class="faq-icon">▼</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <p>The Personal Pregnancy Log is a premium feature that helps you track your pregnancy journey:</p>
+                        <ul>
+                            <li><strong>Daily Journaling:</strong> Record your thoughts, symptoms, and experiences</li>
+                            <li><strong>Symptom Tracking:</strong> Log physical and emotional changes</li>
+                            <li><strong>Question Bank:</strong> Save questions to ask your doctor</li>
+                            <li><strong>AI Insights:</strong> Get intelligent analysis of your entries</li>
+                            <li><strong>Privacy First:</strong> Your log is completely private and encrypted</li>
+                        </ul>
+                        <p>It's like having a pregnancy diary with a smart assistant that can spot patterns and provide helpful insights.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item" data-keywords="search history saved queries recent checks">
+                <div class="faq-question">
+                    Can I access my previous searches?
+                    <span class="faq-icon">▼</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <p>Yes! When you create a free account, all your safety checks are automatically saved.</p>
+                        <p><strong>Benefits:</strong></p>
+                        <ul>
+                            <li>Access your search history anytime</li>
+                            <li>Quickly re-check items</li>
+                            <li>Track your most common questions</li>
+                            <li>Sync across all your devices</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Safety & Accuracy Questions -->
+        <div class="faq-section" data-category="safety">
+            <h2 class="faq-section-title">🔒 Safety & Accuracy</h2>
+            
+            <div class="faq-item" data-keywords="sources references medical research data accuracy">
+                <div class="faq-question">
+                    Where does Safe Maternity get its information?
+                    <span class="faq-icon">▼</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <p>Our information comes from the most trusted medical sources:</p>
+                        <ul>
+                            <li><strong>Medical Organizations:</strong> American College of Obstetricians and Gynecologists (ACOG), American Pregnancy Association, CDC</li>
+                            <li><strong>Research Databases:</strong> PubMed, medical journals, peer-reviewed studies</li>
+                            <li><strong>Healthcare Institutions:</strong> Mayo Clinic, Cleveland Clinic, Johns Hopkins</li>
+                            <li><strong>Government Resources:</strong> FDA, NIH, WHO guidelines</li>
+                            <li><strong>Specialty Databases:</strong> LactMed (for breastfeeding), MotherToBaby</li>
+                        </ul>
+                        <p>Our AI is trained on current medical literature and updated regularly as new research emerges.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item" data-keywords="accurate reliable trust confidence">
+                <div class="faq-question">
+                    How accurate is the information?
+                    <span class="faq-icon">▼</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <p>Safe Maternity strives for the highest accuracy by:</p>
+                        <ul>
+                            <li>Using only evidence-based medical sources</li>
+                            <li>Regular updates as new research is published</li>
+                            <li>Cross-referencing multiple authoritative sources</li>
+                            <li>Clear indication when evidence is limited or conflicting</li>
+                            <li>Doctor review of common queries and high-risk items</li>
+                        </ul>
+                        <p>However, medical science is constantly evolving, and individual circumstances vary. This is why we always recommend consulting your healthcare provider for personalized advice.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item" data-keywords="update frequency new research current guidelines">
+                <div class="faq-question">
+                    How often is the information updated?
+                    <span class="faq-icon">▼</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <p>We take data freshness seriously:</p>
+                        <ul>
+                            <li><strong>Daily:</strong> Our AI model is updated with new medical publications</li>
+                            <li><strong>Weekly:</strong> Review of major medical guideline changes</li>
+                            <li><strong>Monthly:</strong> Comprehensive database refresh</li>
+                            <li><strong>Immediate:</strong> Critical safety alerts and FDA warnings</li>
+                        </ul>
+                        <p>This ensures you always have access to the latest pregnancy safety information.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item" data-keywords="privacy security data protection personal information">
+                <div class="faq-question">
+                    Is my data private and secure?
+                    <span class="faq-icon">▼</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <p>Absolutely. Your privacy is our top priority:</p>
+                        <ul>
+                            <li><strong>Encrypted Data:</strong> All information is encrypted in transit and at rest</li>
+                            <li><strong>No Selling:</strong> We never sell your data to third parties</li>
+                            <li><strong>HIPAA Compliant:</strong> We follow healthcare data protection standards</li>
+                            <li><strong>Anonymous Searches:</strong> You can use Safe Maternity without an account</li>
+                            <li><strong>Data Deletion:</strong> Easy account and data deletion at any time</li>
+                            <li><strong>Limited Access:</strong> Only you can see your search history and pregnancy log</li>
+                        </ul>
+                        <p>Read our full <a href="/policy">Privacy Policy</a> for more details.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item" data-keywords="wrong information incorrect error dispute">
+                <div class="faq-question">
+                    What if I think the information is wrong?
+                    <span class="faq-icon">▼</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <p>We take accuracy seriously and welcome feedback:</p>
+                        <ol>
+                            <li>Use the "Report Issue" button on any safety check result</li>
+                            <li>Provide details about what you believe is incorrect</li>
+                            <li>Include sources if you have them</li>
+                            <li>Our medical team will review your feedback within 24-48 hours</li>
+                        </ol>
+                        <p>If confirmed, we'll update the information immediately and notify affected users. Your feedback helps improve Safe Maternity for everyone.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pricing Questions -->
+        <div class="faq-section" data-category="pricing">
+            <h2 class="faq-section-title">💳 Pricing & Plans</h2>
+            
+            <div class="faq-item" data-keywords="free cost price basic version account">
+                <div class="faq-question">
+                    Is Safe Maternity free?
+                    <span class="faq-icon">▼</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <p>Yes! Safe Maternity offers a generous free tier that includes:</p>
+                        <ul>
+                            <li>✓ Up to 10 safety checks per day</li>
+                            <li>✓ Basic safety ratings and explanations</li>
+                            <li>✓ Search history (with free account)</li>
+                            <li>✓ Access to common safety queries</li>
+                        </ul>
+                        <p>This is perfect for occasional questions and trying out the platform.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item" data-keywords="premium features paid subscription benefits upgrade">
+                <div class="faq-question">
+                    What's included in Premium?
+                    <span class="faq-icon">▼</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <p>Premium unlocks the full Safe Maternity experience:</p>
+                        <ul>
+                            <li>✓ <strong>Unlimited safety checks</strong> - no daily limits</li>
+                            <li>✓ <strong>Photo analysis</strong> - scan product labels and foods</li>
+                            <li>✓ <strong>Breastfeeding safety</strong> - dual assessments for nursing</li>
+                            <li>✓ <strong>Personal pregnancy log</strong> - track your journey with AI insights</li>
+                            <li>✓ <strong>Detailed medical references</strong> - see specific sources</li>
+                            <li>✓ <strong>Priority support</strong> - faster response times</li>
+                            <li>✓ <strong>Advanced tips</strong> - personalized recommendations</li>
+                            <li>✓ <strong>Export & share</strong> - save safety reports as PDF</li>
+                        </ul>
+                        <p>Premium costs just $9.99/month or $69.99/year (save 42%).</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item" data-keywords="trial test free premium try before buy">
+                <div class="faq-question">
+                    Can I try Premium before buying?
+                    <span class="faq-icon">▼</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <p>Yes! We offer a 7-day free trial of Premium with no credit card required.</p>
+                        <p>During your trial, you'll have full access to all Premium features. If you love it, simply upgrade. If not, your account automatically returns to the free tier with no charges.</p>
+                        <p><a href="/app?trial=true">Start your free trial →</a></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item" data-keywords="cancel subscription refund money back guarantee">
+                <div class="faq-question">
+                    Can I cancel my Premium subscription?
+                    <span class="faq-icon">▼</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <p>Yes, you can cancel anytime with no penalties:</p>
+                        <ul>
+                            <li>Cancel instantly from your account settings</li>
+                            <li>Keep Premium features until the end of your billing period</li>
+                            <li>No questions asked</li>
+                            <li>Easy to reactivate if you change your mind</li>
+                        </ul>
+                        <p><strong>30-Day Money-Back Guarantee:</strong> If you're not satisfied within the first 30 days, contact us for a full refund.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item" data-keywords="payment methods credit card paypal stripe secure">
+                <div class="faq-question">
+                    What payment methods do you accept?
+                    <span class="faq-icon">▼</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <p>We accept all major payment methods through our secure payment processor:</p>
+                        <ul>
+                            <li>Credit Cards (Visa, Mastercard, American Express, Discover)</li>
+                            <li>Debit Cards</li>
+                            <li>PayPal</li>
+                            <li>Apple Pay</li>
+                            <li>Google Pay</li>
+                        </ul>
+                        <p>All payments are processed securely through Stripe. We never store your payment information on our servers.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item" data-keywords="student discount healthcare worker medical professional">
+                <div class="faq-question">
+                    Do you offer discounts?
+                    <span class="faq-icon">▼</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <p>Yes! We offer special pricing for:</p>
+                        <ul>
+                            <li><strong>Annual Subscriptions:</strong> Save 42% with yearly billing</li>
+                            <li><strong>Healthcare Workers:</strong> 20% off with verification</li>
+                            <li><strong>Students:</strong> 15% off with valid student ID</li>
+                            <li><strong>Military & First Responders:</strong> 20% discount</li>
+                        </ul>
+                        <p>Contact our support team to verify eligibility and receive your discount code.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Technical Questions -->
+        <div class="faq-section" data-category="technical">
+            <h2 class="faq-section-title">🔧 Technical</h2>
+            
+            <div class="faq-item" data-keywords="devices platform mobile app ios android desktop">
+                <div class="faq-question">
+                    What devices can I use Safe Maternity on?
+                    <span class="faq-icon">▼</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <p>Safe Maternity works everywhere:</p>
+                        <ul>
+                            <li><strong>Web Browser:</strong> Works on any modern browser (Chrome, Safari, Firefox, Edge)</li>
+                            <li><strong>Mobile:</strong> Fully responsive mobile website for iOS and Android</li>
+                            <li><strong>Desktop:</strong> Mac, Windows, Linux</li>
+                            <li><strong>Tablet:</strong> iPad, Android tablets</li>
+                        </ul>
+                        <p>Your account syncs across all devices, so you can start a search on your phone and finish on your computer.</p>
+                        <p><em>Native iOS and Android apps coming soon!</em></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item" data-keywords="offline work internet connection no wifi">
+                <div class="faq-question">
+                    Does Safe Maternity work offline?
+                    <span class="faq-icon">▼</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <p>Currently, Safe Maternity requires an internet connection to provide the most up-to-date safety information.</p>
+                        <p>However, Premium users can:</p>
+                        <ul>
+                            <li>Save safety reports as PDFs for offline viewing</li>
+                            <li>Access their search history (previously loaded results)</li>
+                            <li>Export information before traveling to areas with limited connectivity</li>
+                        </ul>
+                        <p>Offline mode is on our roadmap for future updates!</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item" data-keywords="slow loading performance issues speed">
+                <div class="faq-question">
+                    Why is my search taking so long?
+                    <span class="faq-icon">▼</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <p>Most searches complete in 2-5 seconds. If you're experiencing delays:</p>
+                        <ul>
+                            <li>Check your internet connection</li>
+                            <li>Try refreshing the page</li>
+                            <li>Clear your browser cache</li>
+                            <li>For photo analysis, ensure images are under 10MB</li>
+                        </ul>
+                        <p>Complex queries or high traffic periods may take slightly longer. If problems persist, please contact support.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item" data-keywords="browser support compatibility requirements">
+                <div class="faq-question">
+                    Which browsers are supported?
+                    <span class="faq-icon">▼</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <p>Safe Maternity works best on modern browsers:</p>
+                        <ul>
+                            <li><strong>Recommended:</strong> Chrome (latest), Safari (latest), Edge (latest)</li>
+                            <li><strong>Supported:</strong> Firefox (latest), Opera</li>
+                            <li><strong>Mobile:</strong> iOS Safari, Chrome Mobile, Samsung Internet</li>
+                        </ul>
+                        <p>We recommend keeping your browser updated for the best experience and security.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item" data-keywords="delete account data remove information gdpr">
+                <div class="faq-question">
+                    How do I delete my account?
+                    <span class="faq-icon">▼</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <p>You can delete your account at any time:</p>
+                        <ol>
+                            <li>Go to Account Settings</li>
+                            <li>Scroll to "Delete Account" section</li>
+                            <li>Click "Delete My Account"</li>
+                            <li>Confirm deletion</li>
+                        </ol>
+                        <p>Alternatively, use our <a href="/delete-my-data">Data Deletion page</a>.</p>
+                        <p>When you delete your account:</p>
+                        <ul>
+                            <li>All personal data is permanently removed within 30 days</li>
+                            <li>Search history and pregnancy logs are deleted</li>
+                            <li>Active subscriptions are cancelled</li>
+                            <li>This action cannot be undone</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item" data-keywords="api access developer integration third-party">
+                <div class="faq-question">
+                    Is there an API for developers?
+                    <span class="faq-icon">▼</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <p>We're currently developing an API for healthcare providers, pregnancy apps, and health tech companies.</p>
+                        <p>Interested in integrating Safe Maternity into your application? Contact our partnerships team: <a href="mailto:api@safematernity.com">api@safematernity.com</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="cta-content">
+            <h2>Still Have Questions?</h2>
+            <p>We're here to help! Get started with Safe Maternity or reach out to our support team.</p>
+            <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin-top: 20px;">
+                <a href="/app" class="btn-primary">Get Started Free</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-container">
+            <div class="footer-section">
+                <h4>Safe Maternity</h4>
+                <p style="color: #b8c5d6; margin-bottom: 20px;">Your trusted companion for a safe and healthy pregnancy journey.</p>
+                <div class="social-links">
+                    <a href="#" class="social-link">f</a>
+                    <a href="#" class="social-link">t</a>
+                    <a href="#" class="social-link">i</a>
+                </div>
+            </div>
+            <div class="footer-section">
+                <h4>Quick Links</h4>
+                <ul>
+                    <li><a href="/app">Get Started</a></li>
+                    <li><a href="/#features">Features</a></li>
+                    <li><a href="/#how-it-works">How It Works</a></li>
+                    <li><a href="/app?trial=true">Free Trial</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Resources</h4>
+                <ul>
+                    <li><a href="#">Pregnancy Guide</a></li>
+                    <li><a href="#">Safety Database</a></li>
+                    <li><a href="#">Medical References</a></li>
+                    <li><a href="/faq">FAQ</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Legal</h4>
+                <ul>
+                    <li><a href="/policy">Privacy Policy</a></li>
+                    <li><a href="/terms">Terms of Service</a></li>
+                    <li><a href="/delete-my-data">Delete My Data</a></li>
+                    <li><a href="#">Contact Us</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 HEIR PTE LTD. All rights reserved. Made with ❤️ by and for expecting parents.</p>
+        </div>
+    </footer>
+
+    <script>
+        // FAQ Accordion functionality
+        document.querySelectorAll('.faq-item').forEach(item => {
+            const question = item.querySelector('.faq-question');
+            question.addEventListener('click', () => {
+                item.classList.toggle('active');
+            });
+        });
+
+        // Category filtering
+        const categoryTabs = document.querySelectorAll('.category-tab');
+        const faqSections = document.querySelectorAll('.faq-section');
+        
+        categoryTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const category = tab.dataset.category;
+                
+                // Update active tab
+                categoryTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                // Filter sections
+                if (category === 'all') {
+                    faqSections.forEach(section => section.classList.remove('hidden'));
+                } else {
+                    faqSections.forEach(section => {
+                        if (section.dataset.category === category) {
+                            section.classList.remove('hidden');
+                        } else {
+                            section.classList.add('hidden');
+                        }
+                    });
+                }
+                
+                // Reset search
+                document.getElementById('faqSearch').value = '';
+            });
+        });
+
+        // Search functionality
+        const searchInput = document.getElementById('faqSearch');
+        const faqItems = document.querySelectorAll('.faq-item');
+        
+        searchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            
+            // Reset category filter when searching
+            if (searchTerm) {
+                categoryTabs.forEach(t => t.classList.remove('active'));
+                categoryTabs[0].classList.add('active');
+                faqSections.forEach(section => section.classList.remove('hidden'));
+            }
+            
+            let hasVisibleItems = false;
+            
+            faqItems.forEach(item => {
+                const question = item.querySelector('.faq-question').textContent.toLowerCase();
+                const answer = item.querySelector('.faq-answer-content').textContent.toLowerCase();
+                const keywords = item.dataset.keywords || '';
+                
+                if (question.includes(searchTerm) || answer.includes(searchTerm) || keywords.includes(searchTerm)) {
+                    item.classList.remove('hidden');
+                    hasVisibleItems = true;
+                    
+                    // Highlight matching text (optional enhancement)
+                    if (searchTerm && searchTerm.length > 2) {
+                        item.style.background = 'rgba(214, 51, 132, 0.05)';
+                    } else {
+                        item.style.background = '';
+                    }
+                } else {
+                    item.classList.add('hidden');
+                }
+            });
+            
+            // Hide empty sections
+            faqSections.forEach(section => {
+                const visibleItems = section.querySelectorAll('.faq-item:not(.hidden)');
+                if (visibleItems.length === 0) {
+                    section.classList.add('hidden');
+                } else {
+                    section.classList.remove('hidden');
+                }
+            });
+        });
+
+        // Mobile menu toggle
+        const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+        const navLinks = document.querySelector('.nav-links');
+        
+        mobileMenuBtn?.addEventListener('click', function() {
+            if (navLinks.style.display === 'flex') {
+                navLinks.style.display = 'none';
+            } else {
+                navLinks.style.display = 'flex';
+                navLinks.style.position = 'absolute';
+                navLinks.style.top = '70px';
+                navLinks.style.left = '0';
+                navLinks.style.right = '0';
+                navLinks.style.background = 'var(--background-primary)';
+                navLinks.style.flexDirection = 'column';
+                navLinks.style.padding = '20px';
+                navLinks.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
+            }
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+

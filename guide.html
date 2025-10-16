@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pregnancy Resources Guide - Safe Maternity</title>
+    <meta name="description" content="Comprehensive guide to trusted pregnancy resources, websites, and information for expecting mothers.">
+    <meta name="theme-color" content="#b8956a">
+    <link rel="stylesheet" href="globals.css">
+    <script src="theme-switcher.js"></script>
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🤰</text></svg>">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background: var(--background-primary);
+        }
+
+        /* Navigation */
+        nav {
+            background: var(--background-primary);
+            box-shadow: var(--shadow-sm);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 70px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            font-size: 1.8rem;
+            margin-right: 10px;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 35px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary-color);
+        }
+
+        .nav-cta {
+            background: var(--primary-color);
+            color: var(--text-inverse);
+            padding: 10px 24px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .nav-cta:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, var(--primary-lightest) 0%, var(--background-gradient-end) 100%);
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 2.5rem;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* Main Content */
+        .guide-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 60px 20px;
+        }
+
+        /* Category Sections */
+        .category-section {
+            margin-bottom: 60px;
+        }
+
+        .category-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .category-icon {
+            font-size: 2rem;
+        }
+
+        .category-title {
+            font-size: 1.8rem;
+            color: var(--text-primary);
+        }
+
+        .resources-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+        }
+
+        .resource-card {
+            background: var(--background-primary);
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .resource-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-color);
+        }
+
+        .resource-header {
+            display: flex;
+            align-items: start;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .resource-logo {
+            width: 50px;
+            height: 50px;
+            background: var(--primary-lightest);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .resource-info {
+            flex: 1;
+        }
+
+        .resource-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+        }
+
+        .resource-url {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .resource-url:hover {
+            text-decoration: underline;
+        }
+
+        .resource-description {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .resource-features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .feature-tag {
+            background: var(--background-secondary);
+            color: var(--text-secondary);
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+        }
+
+        /* Quick Links Bar */
+        .quick-links {
+            background: var(--background-secondary);
+            padding: 30px 20px;
+            margin-bottom: 60px;
+        }
+
+        .quick-links-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .quick-links h2 {
+            text-align: center;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+        }
+
+        .links-row {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .quick-link-btn {
+            background: var(--background-primary);
+            color: var(--text-primary);
+            padding: 10px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 500;
+            border: 2px solid var(--border-color);
+            transition: all 0.3s;
+        }
+
+        .quick-link-btn:hover {
+            background: var(--primary-color);
+            color: var(--text-inverse);
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        /* Disclaimer */
+        .disclaimer {
+            background: #fff8e1;
+            padding: 20px;
+            margin: 40px auto;
+            max-width: 1200px;
+            border-radius: 10px;
+            border-left: 4px solid #ffc107;
+        }
+
+        .disclaimer-content {
+            display: flex;
+            align-items: start;
+            gap: 15px;
+        }
+
+        .disclaimer-icon {
+            font-size: 1.5rem;
+            color: #ffc107;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--text-primary);
+            color: var(--text-inverse);
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        footer a {
+            color: #b8c5d6;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            color: var(--text-inverse);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .resources-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .category-title {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <a href="/" class="logo">
+                <span class="logo-icon">🤰</span>
+                Safe Maternity
+            </a>
+            <ul class="nav-links">
+                <li><a href="/">Home</a></li>
+                <li><a href="/guide">Resources</a></li>
+                <li><a href="/app">Safety Checker</a></li>
+                <li><a href="/app" class="nav-cta">Get Started</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <h1>📚 Pregnancy Resources Guide</h1>
+        <p>Your comprehensive directory of trusted pregnancy websites, apps, and resources from leading health organizations and communities.</p>
+    </section>
+
+    <!-- Quick Links -->
+    <section class="quick-links">
+        <div class="quick-links-container">
+            <h2>Quick Navigation</h2>
+            <div class="links-row">
+                <a href="#official" class="quick-link-btn">🏥 Official Health Sites</a>
+                <a href="#tracking" class="quick-link-btn">📱 Pregnancy Trackers</a>
+                <a href="#community" class="quick-link-btn">👥 Community Forums</a>
+                <a href="#education" class="quick-link-btn">📖 Education & Courses</a>
+                <a href="#shopping" class="quick-link-btn">🛍️ Baby Shopping</a>
+                <a href="#wellness" class="quick-link-btn">🧘 Wellness & Fitness</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <div class="guide-container">
+        
+        <!-- Official Health Organizations -->
+        <section class="category-section" id="official">
+            <div class="category-header">
+                <span class="category-icon">🏥</span>
+                <h2 class="category-title">Official Health Organizations</h2>
+            </div>
+            <div class="resources-grid">
+                <div class="resource-card">
+                    <div class="resource-header">
+                        <div class="resource-logo">🩺</div>
+                        <div class="resource-info">
+                            <h3 class="resource-name">Mayo Clinic</h3>
+                            <a href="https://www.mayoclinic.org/healthy-lifestyle/pregnancy-week-by-week" class="resource-url" target="_blank">
+                                mayoclinic.org ↗
+                            </a>
+                        </div>
+                    </div>
+                    <p class="resource-description">
+                        Comprehensive medical information from one of the world's leading hospitals. Features week-by-week pregnancy guide, symptom checker, and evidence-based health advice reviewed by medical professionals.
+                    </p>
+                    <div class="resource-features">
+                        <span class="feature-tag">Medical Expertise</span>
+                        <span class="feature-tag">Week-by-Week Guide</span>
+                        <span class="feature-tag">Symptom Checker</span>
+                    </div>
+                </div>
+
+                <div class="resource-card">
+                    <div class="resource-header">
+                        <div class="resource-logo">🏛️</div>
+                        <div class="resource-info">
+                            <h3 class="resource-name">CDC Pregnancy</h3>
+                            <a href="https://www.cdc.gov/pregnancy/" class="resource-url" target="_blank">
+                                cdc.gov/pregnancy ↗
+                            </a>
+                        </div>
+                    </div>
+                    <p class="resource-description">
+                        Official U.S. government resource for pregnancy health information. Provides guidelines on vaccinations, prenatal care, birth defects prevention, and public health recommendations for expecting mothers.
+                    </p>
+                    <div class="resource-features">
+                        <span class="feature-tag">Government Official</span>
+                        <span class="feature-tag">Vaccination Info</span>
+                        <span class="feature-tag">Safety Guidelines</span>
+                    </div>
+                </div>
+
+                <div class="resource-card">
+                    <div class="resource-header">
+                        <div class="resource-logo">👶</div>
+                        <div class="resource-info">
+                            <h3 class="resource-name">ACOG</h3>
+                            <a href="https://www.acog.org/womens-health/pregnancy" class="resource-url" target="_blank">
+                                acog.org ↗
+                            </a>
+                        </div>
+                    </div>
+                    <p class="resource-description">
+                        American College of Obstetricians and Gynecologists official patient resources. Expert guidance on prenatal care, labor and delivery, and postpartum recovery from OB-GYN specialists.
+                    </p>
+                    <div class="resource-features">
+                        <span class="feature-tag">OB-GYN Expertise</span>
+                        <span class="feature-tag">Clinical Guidelines</span>
+                        <span class="feature-tag">Patient Education</span>
+                    </div>
+                </div>
+
+                <div class="resource-card">
+                    <div class="resource-header">
+                        <div class="resource-logo">🌍</div>
+                        <div class="resource-info">
+                            <h3 class="resource-name">WHO Pregnancy</h3>
+                            <a href="https://www.who.int/health-topics/maternal-health" class="resource-url" target="_blank">
+                                who.int ↗
+                            </a>
+                        </div>
+                    </div>
+                    <p class="resource-description">
+                        World Health Organization's maternal health resources. Global perspectives on pregnancy care, international guidelines, and resources for pregnancy in different healthcare systems worldwide.
+                    </p>
+                    <div class="resource-features">
+                        <span class="feature-tag">Global Health</span>
+                        <span class="feature-tag">Research Data</span>
+                        <span class="feature-tag">International Guidelines</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pregnancy Tracking Apps & Websites -->
+        <section class="category-section" id="tracking">
+            <div class="category-header">
+                <span class="category-icon">📱</span>
+                <h2 class="category-title">Pregnancy Tracking Apps & Websites</h2>
+            </div>
+            <div class="resources-grid">
+                <div class="resource-card">
+                    <div class="resource-header">
+                        <div class="resource-logo">🤱</div>
+                        <div class="resource-info">
+                            <h3 class="resource-name">What to Expect</h3>
+                            <a href="https://www.whattoexpect.com" class="resource-url" target="_blank">
+                                whattoexpect.com ↗
+                            </a>
+                        </div>
+                    </div>
+                    <p class="resource-description">
+                        Based on the bestselling pregnancy book series. Features daily pregnancy calendar, baby name finder, due date calculator, and active community forums with millions of parents.
+                    </p>
+                    <div class="resource-features">
+                        <span class="feature-tag">Daily Updates</span>
+                        <span class="feature-tag">Community Forums</span>
+                        <span class="feature-tag">Mobile App</span>
+                    </div>
+                </div>
+
+                <div class="resource-card">
+                    <div class="resource-header">
+                        <div class="resource-logo">🍼</div>
+                        <div class="resource-info">
+                            <h3 class="resource-name">BabyCenter</h3>
+                            <a href="https://www.babycenter.com" class="resource-url" target="_blank">
+                                babycenter.com ↗
+                            </a>
+                        </div>
+                    </div>
+                    <p class="resource-description">
+                        Comprehensive pregnancy and parenting resource with expert-reviewed content. Offers week-by-week pregnancy updates, baby development videos, and birth club communities for due date groups.
+                    </p>
+                    <div class="resource-features">
+                        <span class="feature-tag">Birth Clubs</span>
+                        <span class="feature-tag">3D Videos</span>
+                        <span class="feature-tag">Expert Advice</span>
+                    </div>
+                </div>
+
+                <div class="resource-card">
+                    <div class="resource-header">
+                        <div class="resource-logo">📊</div>
+                        <div class="resource-info">
+                            <h3 class="resource-name">The Bump</h3>
+                            <a href="https://www.thebump.com" class="resource-url" target="_blank">
+                                thebump.com ↗
+                            </a>
+                        </div>
+                    </div>
+                    <p class="resource-description">
+                        Modern pregnancy tracking with stylish visual content. Features 3D baby development images, registry guides, real answers from real moms, and trendy nursery inspiration.
+                    </p>
+                    <div class="resource-features">
+                        <span class="feature-tag">Visual Content</span>
+                        <span class="feature-tag">Registry Guides</span>
+                        <span class="feature-tag">Style Focus</span>
+                    </div>
+                </div>
+
+                <div class="resource-card">
+                    <div class="resource-header">
+                        <div class="resource-logo">🌸</div>
+                        <div class="resource-info">
+                            <h3 class="resource-name">Ovia Pregnancy</h3>
+                            <a href="https://www.oviahealth.com" class="resource-url" target="_blank">
+                                oviahealth.com ↗
+                            </a>
+                        </div>
+                    </div>
+                    <p class="resource-description">
+                        Data-driven pregnancy tracking app with personalized daily updates. Includes health tracking tools, kick counter, contraction timer, and anonymous health data insights from millions of pregnancies.
+                    </p>
+                    <div class="resource-features">
+                        <span class="feature-tag">Data Analytics</span>
+                        <span class="feature-tag">Health Tracking</span>
+                        <span class="feature-tag">Personalized</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Community & Forums -->
+        <section class="category-section" id="community">
+            <div class="category-header">
+                <span class="category-icon">👥</span>
+                <h2 class="category-title">Community Forums & Support</h2>
+            </div>
+            <div class="resources-grid">
+                <div class="resource-card">
+                    <div class="resource-header">
+                        <div class="resource-logo">💬</div>
+                        <div class="resource-info">
+                            <h3 class="resource-name">Reddit Pregnancy</h3>
+                            <a href="https://www.reddit.com/r/pregnant/" class="resource-url" target="_blank">
+                                reddit.com/r/pregnant ↗
+                            </a>
+                        </div>
+                    </div>
+                    <p class="resource-description">
+                        Active Reddit community with 500k+ members sharing experiences, asking questions, and providing support throughout pregnancy journey. Anonymous discussions and real-time advice.
+                    </p>
+                    <div class="resource-features">
+                        <span class="feature-tag">Large Community</span>
+                        <span class="feature-tag">Anonymous</span>
+                        <span class="feature-tag">24/7 Active</span>
+                    </div>
+                </div>
+
+                <div class="resource-card">
+                    <div class="resource-header">
+                        <div class="resource-logo">🤝</div>
+                        <div class="resource-info">
+                            <h3 class="resource-name">Peanut App</h3>
+                            <a href="https://www.peanut-app.io" class="resource-url" target="_blank">
+                                peanut-app.io ↗
+                            </a>
+                        </div>
+                    </div>
+                    <p class="resource-description">
+                        Social networking app for mothers and mothers-to-be. Connect with local moms, join groups by interest or life stage, and find your mom tribe for friendship and support.
+                    </p>
+                    <div class="resource-features">
+                        <span class="feature-tag">Local Connections</span>
+                        <span class="feature-tag">Mom Friends</span>
+                        <span class="feature-tag">Groups</span>
+                    </div>
+                </div>
+
+                <div class="resource-card">
+                    <div class="resource-header">
+                        <div class="resource-logo">👨‍👩‍👧</div>
+                        <div class="resource-info">
+                            <h3 class="resource-name">Mumsnet</h3>
+                            <a href="https://www.mumsnet.com" class="resource-url" target="_blank">
+                                mumsnet.com ↗
+                            </a>
+                        </div>
+                    </div>
+                    <p class="resource-description">
+                        UK's largest parenting community with extensive pregnancy forums. Known for honest, no-nonsense advice and discussions on everything from conception to teenage years.
+                    </p>
+                    <div class="resource-features">
+                        <span class="feature-tag">UK Focus</span>
+                        <span class="feature-tag">Honest Advice</span>
+                        <span class="feature-tag">Established Community</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Educational Resources -->
+        <section class="category-section" id="education">
+            <div class="category-header">
+                <span class="category-icon">📖</span>
+                <h2 class="category-title">Education & Online Courses</h2>
+            </div>
+            <div class="resources-grid">
+                <div class="resource-card">
+                    <div class="resource-header">
+                        <div class="resource-logo">🎓</div>
+                        <div class="resource-info">
+                            <h3 class="resource-name">Lamaze International</h3>
+                            <a href="https://www.lamaze.org" class="resource-url" target="_blank">
+                                lamaze.org ↗
+                            </a>
+                        </div>
+                    </div>
+                    <p class="resource-description">
+                        Evidence-based childbirth education and resources. Find certified Lamaze classes, learn about healthy birth practices, and access free educational content on labor and delivery.
+                    </p>
+                    <div class="resource-features">
+                        <span class="feature-tag">Birth Classes</span>
+                        <span class="feature-tag">Evidence-Based</span>
+                        <span class="feature-tag">Certified Instructors</span>
+                    </div>
+                </div>
+
+                <div class="resource-card">
+                    <div class="resource-header">
+                        <div class="resource-logo">🍎</div>
+                        <div class="resource-info">
+                            <h3 class="resource-name">Expecting and Empowered</h3>
+                            <a href="https://www.expectingandempowered.com" class="resource-url" target="_blank">
+                                expectingandempowered.com ↗
+                            </a>
+                        </div>
+                    </div>
+                    <p class="resource-description">
+                        Pregnancy and postpartum fitness guides created by nurses and moms. Safe exercise programs for each trimester, pelvic floor education, and postpartum recovery resources.
+                    </p>
+                    <div class="resource-features">
+                        <span class="feature-tag">Fitness Programs</span>
+                        <span class="feature-tag">Nurse-Created</span>
+                        <span class="feature-tag">Pelvic Floor</span>
+                    </div>
+                </div>
+
+                <div class="resource-card">
+                    <div class="resource-header">
+                        <div class="resource-logo">📚</div>
+                        <div class="resource-info">
+                            <h3 class="resource-name">Evidence Based Birth</h3>
+                            <a href="https://evidencebasedbirth.com" class="resource-url" target="_blank">
+                                evidencebasedbirth.com ↗
+                            </a>
+                        </div>
+                    </div>
+                    <p class="resource-description">
+                        Research-based childbirth education with focus on informed decision making. Offers online classes, signature articles on birth practices, and professional training for doulas and educators.
+                    </p>
+                    <div class="resource-features">
+                        <span class="feature-tag">Research-Based</span>
+                        <span class="feature-tag">Online Classes</span>
+                        <span class="feature-tag">Professional Training</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Baby Shopping & Registry -->
+        <section class="category-section" id="shopping">
+            <div class="category-header">
+                <span class="category-icon">🛍️</span>
+                <h2 class="category-title">Baby Shopping & Registry</h2>
+            </div>
+            <div class="resources-grid">
+                <div class="resource-card">
+                    <div class="resource-header">
+                        <div class="resource-logo">🎁</div>
+                        <div class="resource-info">
+                            <h3 class="resource-name">Babylist</h3>
+                            <a href="https://www.babylist.com" class="resource-url" target="_blank">
+                                babylist.com ↗
+                            </a>
+                        </div>
+                    </div>
+                    <p class="resource-description">
+                        Universal baby registry allowing items from any store. Features expert-curated guides, price comparisons, and group gifting options. Includes helpful sample registries for different budgets.
+                    </p>
+                    <div class="resource-features">
+                        <span class="feature-tag">Universal Registry</span>
+                        <span class="feature-tag">Price Compare</span>
+                        <span class="feature-tag">Expert Guides</span>
+                    </div>
+                </div>
+
+                <div class="resource-card">
+                    <div class="resource-header">
+                        <div class="resource-logo">📝</div>
+                        <div class="resource-info">
+                            <h3 class="resource-name">Lucie's List</h3>
+                            <a href="https://www.lucieslist.com" class="resource-url" target="_blank">
+                                lucieslist.com ↗
+                            </a>
+                        </div>
+                    </div>
+                    <p class="resource-description">
+                        In-depth baby gear reviews and buying guides. Known for comprehensive research, unbiased recommendations, and detailed comparisons of strollers, car seats, and nursery essentials.
+                    </p>
+                    <div class="resource-features">
+                        <span class="feature-tag">Gear Reviews</span>
+                        <span class="feature-tag">Buying Guides</span>
+                        <span class="feature-tag">Unbiased</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Wellness & Mental Health -->
+        <section class="category-section" id="wellness">
+            <div class="category-header">
+                <span class="category-icon">🧘</span>
+                <h2 class="category-title">Wellness & Mental Health</h2>
+            </div>
+            <div class="resources-grid">
+                <div class="resource-card">
+                    <div class="resource-header">
+                        <div class="resource-logo">🧠</div>
+                        <div class="resource-info">
+                            <h3 class="resource-name">Postpartum Support Int'l</h3>
+                            <a href="https://www.postpartum.net" class="resource-url" target="_blank">
+                                postpartum.net ↗
+                            </a>
+                        </div>
+                    </div>
+                    <p class="resource-description">
+                        Leading organization for perinatal mental health support. Offers helpline, support groups, provider directory, and resources for postpartum depression, anxiety, and other mood disorders.
+                    </p>
+                    <div class="resource-features">
+                        <span class="feature-tag">Mental Health</span>
+                        <span class="feature-tag">Support Groups</span>
+                        <span class="feature-tag">Helpline</span>
+                    </div>
+                </div>
+
+                <div class="resource-card">
+                    <div class="resource-header">
+                        <div class="resource-logo">🧘‍♀️</div>
+                        <div class="resource-info">
+                            <h3 class="resource-name">Prenatal Yoga Center</h3>
+                            <a href="https://www.prenatalyogacenter.com" class="resource-url" target="_blank">
+                                prenatalyogacenter.com ↗
+                            </a>
+                        </div>
+                    </div>
+                    <p class="resource-description">
+                        NYC's premier prenatal wellness center offering online classes. Yoga, childbirth education, massage therapy, and holistic pregnancy support from certified prenatal specialists.
+                    </p>
+                    <div class="resource-features">
+                        <span class="feature-tag">Prenatal Yoga</span>
+                        <span class="feature-tag">Online Classes</span>
+                        <span class="feature-tag">Holistic Care</span>
+                    </div>
+                </div>
+
+                <div class="resource-card">
+                    <div class="resource-header">
+                        <div class="resource-logo">💆‍♀️</div>
+                        <div class="resource-info">
+                            <h3 class="resource-name">Expectful</h3>
+                            <a href="https://www.expectful.com" class="resource-url" target="_blank">
+                                expectful.com ↗
+                            </a>
+                        </div>
+                    </div>
+                    <p class="resource-description">
+                        Meditation and mindfulness app designed for fertility, pregnancy, and motherhood. Guided meditations, sleep stories, and movement videos tailored to each stage of your journey.
+                    </p>
+                    <div class="resource-features">
+                        <span class="feature-tag">Meditation</span>
+                        <span class="feature-tag">Sleep Support</span>
+                        <span class="feature-tag">Stage-Specific</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Disclaimer -->
+    <div class="disclaimer">
+        <div class="disclaimer-content">
+            <span class="disclaimer-icon">⚠️</span>
+            <div>
+                <strong>Important Note:</strong> These resources are provided for informational purposes. Always consult with your healthcare provider for medical advice specific to your pregnancy. Safe Maternity is not affiliated with these external websites.
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2025 Safe Maternity. All rights reserved.</p>
+        <p style="margin-top: 10px;">
+            <a href="/">Home</a> | 
+            <a href="/app">Safety Checker</a> | 
+            <a href="/policy">Privacy Policy</a> | 
+            <a href="/terms">Terms of Service</a>
+        </p>
+    </footer>
+
+    <script>
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add hover effect for resource cards
+        document.querySelectorAll('.resource-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-3px)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        });
+    </script>
+</body>
+</html>
