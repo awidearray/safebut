@@ -18,7 +18,7 @@ const User = require('./models/User');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Connect to MongoDB
+// Connect to MongoDB (support lowercase env var via database.js)
 connectDB();
 
 // Simple in-memory cache
@@ -31,7 +31,7 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
-        mongoUrl: process.env.MONGODB_URI,
+        mongoUrl: process.env.MONGODB_URI || process.env.mongodb_uri,
         ttl: 14 * 24 * 60 * 60 // 14 days
     }),
     cookie: {

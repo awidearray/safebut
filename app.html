@@ -741,8 +741,8 @@
                             upgradeElements.forEach(el => el.style.display = 'none');
                         }
                         
-                        // Store user profile if available
-                        if (data.profile) {
+                        // Store user profile only if non-empty to avoid overwriting local
+                        if (data.profile && Object.keys(data.profile || {}).length > 0) {
                             localStorage.setItem('pregnancyProfile', JSON.stringify(data.profile));
                         }
                         

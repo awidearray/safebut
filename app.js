@@ -36,8 +36,8 @@ class PregnancySafetyChecker {
                 localStorage.setItem('isPremium', data.isPremium ? 'true' : 'false');
                 localStorage.setItem('userEmail', data.email || '');
                 
-                // Store user profile if available
-                if (data.profile) {
+                // Store user profile if non-empty to avoid overwriting local data
+                if (data.profile && Object.keys(data.profile || {}).length > 0) {
                     localStorage.setItem('pregnancyProfile', JSON.stringify(data.profile));
                 }
                 
@@ -146,6 +146,23 @@ class PregnancySafetyChecker {
         });
         
         localStorage.setItem('pregnancyProfile', JSON.stringify(profile));
+        
+        // Also attempt to persist to backend if authenticated (best-effort)
+        try {
+            const authToken = localStorage.getItem('authToken');
+            if (authToken) {
+                fetch('/api/profile', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(profile)
+                }).catch(() => {});
+            }
+        } catch (_) {
+            // Ignore network errors; local save already succeeded
+        }
         
         // Show success message
         const saveBtn = document.getElementById('saveProfile');

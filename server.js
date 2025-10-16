@@ -13,8 +13,8 @@ const PORT = process.env.PORT || 3000;
 // Behind a proxy (e.g., Vercel/Heroku), trust proxy to get correct protocol/host
 app.set('trust proxy', true);
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/safematernity');
+// Connect to MongoDB (support lowercase env var too)
+mongoose.connect(process.env.MONGODB_URI || process.env.mongodb_uri || 'mongodb://localhost:27017/safematernity');
 
 mongoose.connection.on('connected', () => {
     console.log('Connected to MongoDB');
@@ -38,7 +38,7 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
-        mongoUrl: process.env.MONGODB_URI || 'mongodb://localhost:27017/safematernity',
+        mongoUrl: process.env.MONGODB_URI || process.env.mongodb_uri || 'mongodb://localhost:27017/safematernity',
         touchAfter: 24 * 3600 // Lazy session update (once per 24 hours unless session data changes)
     }),
     cookie: { 
@@ -325,9 +325,21 @@ TIPS: [2-3 short practical tips]`;
         console.error('Venice AI API error:', error.response?.data || error.message);
         console.error('Status:', error.response?.status);
         console.error('Headers:', error.response?.headers);
-        res.status(500).json({ 
-            error: 'Failed to check safety. Please try again later.',
-            details: error.response?.data?.error || error.message 
+        
+        // Return a graceful fallback response instead of an error
+        const fallbackResponse = `RISK_SCORE: 5
+SAFETY: Caution  
+WHY: Unable to analyze "${item}" right now due to a temporary service issue.
+TIPS: Please try again in a moment, Consult your healthcare provider for specific guidance, Err on the side of caution`;
+        
+        return res.json({ 
+            result: fallbackResponse,
+            riskScore: 5,
+            references: [
+                { title: 'Mayo Clinic - Pregnancy Week by Week', url: 'https://www.mayoclinic.org/healthy-lifestyle/pregnancy-week-by-week/basics/pregnancy-week-by-week/hlv-20049471' },
+                { title: 'American Pregnancy Association', url: 'https://americanpregnancy.org/healthy-pregnancy/' },
+                { title: 'CDC - Pregnancy Safety', url: 'https://www.cdc.gov/pregnancy/index.html' }
+            ]
         });
     }
 });

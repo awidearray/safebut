@@ -25,7 +25,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // Connect to MongoDB (gracefully skip if not configured to avoid serverless crash)
-if (process.env.MONGODB_URI) {
+if (process.env.MONGODB_URI || process.env.mongodb_uri) {
     connectDB();
 } else {
     console.warn('MONGODB_URI is not set. Running without database connection.');

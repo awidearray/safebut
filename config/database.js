@@ -2,8 +2,9 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
     try {
-        // Check if MongoDB URI is provided
-        if (!process.env.MONGODB_URI) {
+        // Check if MongoDB URI is provided (support lowercase fallback)
+        const mongoUri = process.env.MONGODB_URI || process.env.mongodb_uri;
+        if (!mongoUri) {
             console.error('MONGODB_URI is not defined in environment variables');
             throw new Error('Database configuration missing');
         }
@@ -14,7 +15,7 @@ const connectDB = async () => {
             return mongoose.connection;
         }
 
-        const conn = await mongoose.connect(process.env.MONGODB_URI, {
+        const conn = await mongoose.connect(mongoUri, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
             bufferCommands: false,
