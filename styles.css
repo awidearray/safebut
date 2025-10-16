@@ -1347,6 +1347,83 @@ footer {
     margin-top: 20px;
 }
 
+/* Calendar Sync Styles */
+.calendar-sync-section {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 25px;
+}
+
+.calendar-sync-section h3 {
+    color: #333;
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+}
+
+.calendar-sync-options {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.calendar-sync-btn {
+    display: flex;
+    align-items: center;
+    background: white;
+    color: #333;
+    border: 2px solid #e0e0e0;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: 500;
+}
+
+.calendar-sync-btn:hover {
+    border-color: #667eea;
+    background: #f8f9ff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.calendar-sync-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 15px;
+    background: #e8f5e9;
+    border-radius: 8px;
+    flex-grow: 1;
+}
+
+.sync-indicator {
+    font-size: 1.2rem;
+}
+
+#syncStatusText {
+    flex-grow: 1;
+    color: #2e7d32;
+    font-weight: 500;
+}
+
+.disconnect-btn {
+    background: #ff5252;
+    color: white;
+    border: none;
+    padding: 5px 15px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.disconnect-btn:hover {
+    background: #ff1744;
+}
+
 .ai-analysis h4 {
     color: var(--success-color);
     margin-bottom: 15px;

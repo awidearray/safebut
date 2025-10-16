@@ -921,6 +921,9 @@ class PregnancySafetyChecker {
         // Initialize calendar
         this.initializeCalendar();
         
+        // Initialize calendar sync
+        this.initializeCalendarSync();
+        
         // Initialize voice recording
         this.initializeVoiceRecording();
         
@@ -1121,6 +1124,9 @@ class PregnancySafetyChecker {
                 const savedEntry = await response.json();
                 this.logEntries.push(savedEntry);
                 
+                // Add to calendar if connected
+                await this.addEventToCalendar(savedEntry);
+                
                 // Clear inputs
                 if (textInput) textInput.value = '';
                 this.currentAudioBlob = null;
@@ -1134,7 +1140,7 @@ class PregnancySafetyChecker {
                 this.generateCalendarDays();
                 this.displayRecentEntries();
                 
-                alert('Entry saved successfully!');
+                alert('Entry saved successfully!' + (this.isCalendarConnected ? ' Calendar event added.' : ''));
             }
         } catch (error) {
             console.error('Error saving log entry:', error);
@@ -1186,6 +1192,223 @@ class PregnancySafetyChecker {
                 <span class="log-entry-type ${entry.type}">${entry.type === 'voice' ? '🎤 Voice' : '📝 Text'}</span>
             </div>
         `).join('');
+    }
+    
+    // Calendar Sync Methods
+    initializeCalendarSync() {
+        this.isCalendarConnected = localStorage.getItem('calendarConnected') === 'true';
+        this.calendarType = localStorage.getItem('calendarType') || null;
+        
+        // Update sync status UI
+        this.updateCalendarSyncStatus();
+        
+        // Google Calendar button
+        const googleBtn = document.getElementById('connectGoogleCalendar');
+        if (googleBtn) {
+            googleBtn.addEventListener('click', () => this.connectGoogleCalendar());
+        }
+        
+        // Device Calendar button
+        const deviceBtn = document.getElementById('connectDeviceCalendar');
+        if (deviceBtn) {
+            deviceBtn.addEventListener('click', () => this.connectDeviceCalendar());
+        }
+        
+        // Disconnect button
+        const disconnectBtn = document.getElementById('disconnectCalendar');
+        if (disconnectBtn) {
+            disconnectBtn.addEventListener('click', () => this.disconnectCalendar());
+        }
+    }
+    
+    async connectGoogleCalendar() {
+        try {
+            // Load Google Calendar API
+            const script = document.createElement('script');
+            script.src = 'https://apis.google.com/js/api.js';
+            script.onload = () => this.initGoogleCalendarAPI();
+            document.head.appendChild(script);
+        } catch (error) {
+            console.error('Failed to connect Google Calendar:', error);
+            alert('Failed to connect to Google Calendar. Please try again.');
+        }
+    }
+    
+    initGoogleCalendarAPI() {
+        gapi.load('client:auth2', async () => {
+            try {
+                await gapi.client.init({
+                    apiKey: 'AIzaSyBXGGkp8X1YKsQyBrV9tQfXVGbQR_kR5zs', // You'll need to add your Google API key
+                    clientId: 'YOUR_CLIENT_ID.apps.googleusercontent.com', // You'll need to add your client ID
+                    discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'],
+                    scope: 'https://www.googleapis.com/auth/calendar.events'
+                });
+                
+                // Sign in
+                const authInstance = gapi.auth2.getAuthInstance();
+                if (!authInstance.isSignedIn.get()) {
+                    await authInstance.signIn();
+                }
+                
+                // Connected successfully
+                localStorage.setItem('calendarConnected', 'true');
+                localStorage.setItem('calendarType', 'google');
+                this.isCalendarConnected = true;
+                this.calendarType = 'google';
+                this.updateCalendarSyncStatus();
+                
+                alert('Successfully connected to Google Calendar!');
+            } catch (error) {
+                console.error('Google Calendar auth error:', error);
+                alert('Failed to authenticate with Google Calendar.');
+            }
+        });
+    }
+    
+    async connectDeviceCalendar() {
+        try {
+            // Check if the browser supports the experimental Calendar API or use ICS file generation
+            if ('calendar' in navigator && 'requestPermission' in navigator.calendar) {
+                // Future Web Calendar API (not yet widely supported)
+                const permission = await navigator.calendar.requestPermission();
+                if (permission === 'granted') {
+                    localStorage.setItem('calendarConnected', 'true');
+                    localStorage.setItem('calendarType', 'device');
+                    this.isCalendarConnected = true;
+                    this.calendarType = 'device';
+                    this.updateCalendarSyncStatus();
+                    alert('Successfully connected to device calendar!');
+                }
+            } else {
+                // Fallback: Generate ICS file for manual import
+                const confirmDownload = confirm(
+                    'Direct calendar sync is not supported in your browser.\n\n' +
+                    'Would you like to download calendar entries as .ics files that you can import to your calendar app?'
+                );
+                
+                if (confirmDownload) {
+                    localStorage.setItem('calendarConnected', 'true');
+                    localStorage.setItem('calendarType', 'ics');
+                    this.isCalendarConnected = true;
+                    this.calendarType = 'ics';
+                    this.updateCalendarSyncStatus();
+                }
+            }
+        } catch (error) {
+            console.error('Device calendar connection error:', error);
+            alert('Failed to connect to device calendar. Your browser may not support this feature.');
+        }
+    }
+    
+    disconnectCalendar() {
+        localStorage.removeItem('calendarConnected');
+        localStorage.removeItem('calendarType');
+        this.isCalendarConnected = false;
+        this.calendarType = null;
+        this.updateCalendarSyncStatus();
+        
+        // Sign out from Google if connected
+        if (typeof gapi !== 'undefined' && gapi.auth2) {
+            const authInstance = gapi.auth2.getAuthInstance();
+            if (authInstance && authInstance.isSignedIn.get()) {
+                authInstance.signOut();
+            }
+        }
+    }
+    
+    updateCalendarSyncStatus() {
+        const statusDiv = document.getElementById('calendarSyncStatus');
+        const syncButtons = document.querySelectorAll('.calendar-sync-btn');
+        const statusText = document.getElementById('syncStatusText');
+        
+        if (this.isCalendarConnected && statusDiv) {
+            statusDiv.style.display = 'flex';
+            syncButtons.forEach(btn => btn.style.display = 'none');
+            
+            if (statusText) {
+                if (this.calendarType === 'google') {
+                    statusText.textContent = 'Connected to Google Calendar';
+                } else if (this.calendarType === 'device') {
+                    statusText.textContent = 'Connected to Device Calendar';
+                } else if (this.calendarType === 'ics') {
+                    statusText.textContent = 'Calendar export enabled (.ics files)';
+                }
+            }
+        } else if (statusDiv) {
+            statusDiv.style.display = 'none';
+            syncButtons.forEach(btn => btn.style.display = 'flex');
+        }
+    }
+    
+    async addEventToCalendar(entry) {
+        if (!this.isCalendarConnected) return;
+        
+        const eventTitle = `Pregnancy Log: ${entry.text ? entry.text.substring(0, 50) + '...' : 'Voice Note'}`;
+        const eventDate = new Date(entry.date);
+        
+        if (this.calendarType === 'google' && typeof gapi !== 'undefined') {
+            try {
+                const event = {
+                    summary: eventTitle,
+                    description: entry.text || 'Voice note recorded',
+                    start: {
+                        dateTime: eventDate.toISOString(),
+                        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+                    },
+                    end: {
+                        dateTime: new Date(eventDate.getTime() + 30 * 60000).toISOString(), // 30 minutes later
+                        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+                    },
+                    reminders: {
+                        useDefault: false
+                    }
+                };
+                
+                await gapi.client.calendar.events.insert({
+                    calendarId: 'primary',
+                    resource: event
+                });
+                
+                console.log('Event added to Google Calendar');
+            } catch (error) {
+                console.error('Failed to add event to Google Calendar:', error);
+            }
+        } else if (this.calendarType === 'ics') {
+            // Generate and download ICS file
+            this.downloadICSFile(entry);
+        }
+    }
+    
+    downloadICSFile(entry) {
+        const eventDate = new Date(entry.date);
+        const endDate = new Date(eventDate.getTime() + 30 * 60000);
+        
+        const icsContent = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Safe Maternity//Pregnancy Log//EN
+BEGIN:VEVENT
+UID:${entry.id}@safe-maternity.com
+DTSTAMP:${this.formatICSDate(new Date())}
+DTSTART:${this.formatICSDate(eventDate)}
+DTEND:${this.formatICSDate(endDate)}
+SUMMARY:Pregnancy Log: ${entry.text ? entry.text.substring(0, 50) : 'Voice Note'}
+DESCRIPTION:${entry.text || 'Voice note recorded'}
+END:VEVENT
+END:VCALENDAR`;
+        
+        const blob = new Blob([icsContent], { type: 'text/calendar' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `pregnancy-log-${entry.id}.ics`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+    
+    formatICSDate(date) {
+        return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
     }
     
     showDayEntries(dateStr) {
