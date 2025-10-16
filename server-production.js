@@ -167,6 +167,12 @@ app.get('/delete-my-data', (req, res) => {
     res.sendFile(path.join(__dirname, 'delete-my-data.html'));
 });
 
+app.get('/logo.png', (req, res) => {
+    res.setHeader('Content-Type', 'image/png');
+    res.sendFile(path.join(__dirname, 'logo.png'));
+});
+
+// Keep SVG route for backward compatibility
 app.get('/logo.svg', (req, res) => {
     res.setHeader('Content-Type', 'image/svg+xml');
     res.sendFile(path.join(__dirname, 'logo.svg'));

@@ -127,6 +127,12 @@ app.get('/app.js', (req, res) => {
     res.sendFile(path.join(__dirname, 'app.js'));
 });
 
+app.get('/logo.png', (req, res) => {
+    res.setHeader('Content-Type', 'image/png');
+    res.sendFile(path.join(__dirname, 'logo.png'));
+});
+
+// Keep SVG route for backward compatibility
 app.get('/logo.svg', (req, res) => {
     res.setHeader('Content-Type', 'image/svg+xml');
     res.sendFile(path.join(__dirname, 'logo.svg'));
@@ -338,71 +344,88 @@ app.post('/api/check-image-safety', async (req, res) => {
             return res.status(400).json({ error: 'No image provided' });
         }
         
-        // Try vision model first, fallback to text analysis if vision fails
         const apiUrl = 'https://api.venice.ai/api/v1/chat/completions';
         
-        try {
-            // Try with vision model
-            const visionRequestBody = {
-                model: 'llama-3.2-90b-vision',  // Vision-capable model
-                messages: [
-                    {
-                        role: 'system',
-                        content: 'You are a medical expert analyzing images for pregnancy safety. Provide accurate, evidence-based assessments.'
-                    },
-                    {
-                        role: 'user',
-                        content: [
-                            {
-                                type: 'text',
-                                text: `Analyze this image and determine if what's shown is safe during pregnancy. Provide:
+        // Try multiple vision models in order of preference
+        const visionModels = [
+            'pixtral-large-latest',
+            'llama-3.2-90b-vision-instruct',
+            'llama-3.2-11b-vision-instruct'
+        ];
+
+        let lastError = null;
+        
+        for (const modelName of visionModels) {
+            try {
+                console.log(`🔍 Attempting image analysis with model: ${modelName}`);
+                
+                const visionRequestBody = {
+                    model: modelName,
+                    messages: [
+                        {
+                            role: 'system',
+                            content: 'You are a medical expert analyzing images for pregnancy safety. Provide accurate, evidence-based assessments.'
+                        },
+                        {
+                            role: 'user',
+                            content: [
+                                {
+                                    type: 'text',
+                                    text: `Analyze this image and determine if what's shown is safe during pregnancy. Provide:
 RISK_SCORE: [1-10, where 1 is safest and 10 is most dangerous]
 SAFETY: [Safe/Caution/Avoid]
 WHY: [1 sentence explanation of what you see and why it's safe or not]
 TIPS: [2-3 short practical tips based on what's in the image]`
-                            },
-                            {
-                                type: 'image_url',
-                                image_url: {
-                                    url: image  // The base64 image data from client
+                                },
+                                {
+                                    type: 'image_url',
+                                    image_url: {
+                                        url: image  // The base64 image data from client
+                                    }
                                 }
-                            }
-                        ]
-                    }
-                ],
-                temperature: 0.3,
-                max_tokens: 200
-            };
+                            ]
+                        }
+                    ],
+                    temperature: 0.3,
+                    max_tokens: 200,
+                    timeout: 30000
+                };
+                
+                const response = await axios.post(apiUrl, visionRequestBody, {
+                    headers: {
+                        'Authorization': `Bearer ${process.env.VENICE_API_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    timeout: 30000
+                });
 
-            console.log('Analyzing image with vision model...');
-            
-            const response = await axios.post(apiUrl, visionRequestBody, {
-                headers: {
-                    'Authorization': `Bearer ${process.env.VENICE_API_KEY}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            const aiResponse = response.data.choices[0].message.content;
-            const riskScoreMatch = aiResponse.match(/RISK_SCORE:\s*(\d+)/);
-            const riskScore = riskScoreMatch ? parseInt(riskScoreMatch[1]) : 5;
-            
-            const references = [
-                { title: 'Mayo Clinic - Pregnancy Week by Week', url: 'https://www.mayoclinic.org/healthy-lifestyle/pregnancy-week-by-week/basics/pregnancy-week-by-week/hlv-20049471' },
-                { title: 'American Pregnancy Association', url: 'https://americanpregnancy.org/healthy-pregnancy/' },
-                { title: 'CDC - Pregnancy Safety', url: 'https://www.cdc.gov/pregnancy/index.html' }
-            ];
-            
-            return res.json({ 
-                result: aiResponse,
-                riskScore: riskScore,
-                references: references
-            });
-            
-        } catch (visionError) {
-            console.error('Vision model error, trying text fallback:', visionError.response?.data || visionError.message);
-            
-            // Fallback to text-only analysis
+                console.log(`✅ Image analysis successful with model: ${modelName}`);
+                
+                const aiResponse = response.data.choices[0].message.content;
+                const riskScoreMatch = aiResponse.match(/RISK_SCORE:\s*(\d+)/);
+                const riskScore = riskScoreMatch ? parseInt(riskScoreMatch[1]) : 5;
+                
+                const references = [
+                    { title: 'Mayo Clinic - Pregnancy Week by Week', url: 'https://www.mayoclinic.org/healthy-lifestyle/pregnancy-week-by-week/basics/pregnancy-week-by-week/hlv-20049471' },
+                    { title: 'American Pregnancy Association', url: 'https://americanpregnancy.org/healthy-pregnancy/' },
+                    { title: 'CDC - Pregnancy Safety', url: 'https://www.cdc.gov/pregnancy/index.html' }
+                ];
+                
+                return res.json({ 
+                    result: aiResponse,
+                    riskScore: riskScore,
+                    references: references
+                });
+                
+            } catch (visionError) {
+                lastError = visionError;
+                console.error(`❌ Model ${modelName} failed:`, visionError.response?.data || visionError.message);
+            }
+        }
+        
+        // If all vision models failed, try fallback to text-only analysis
+        if (lastError) {
+            console.log('All vision models failed, attempting text fallback...');
             try {
                 const fallbackRequestBody = {
                     model: 'llama-3.3-70b',
