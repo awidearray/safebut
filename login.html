@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Safebut?</title>
+    <title>Sign Up - Safe Maternity</title>
+    <meta name="theme-color" content="#b8956a">
+    <link rel="stylesheet" href="globals.css">
+    <script src="theme-switcher.js"></script>
     
     <style>
         * {
@@ -14,7 +17,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--background-secondary);
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -23,147 +26,209 @@
         }
 
         .login-container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            background: var(--background-primary);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             max-width: 400px;
             width: 100%;
-            padding: 40px;
-            text-align: center;
+            padding: 40px 30px;
         }
 
         .logo {
-            font-size: 4rem;
-            margin-bottom: 20px;
-        }
-
-        h1 {
-            color: #333;
+            font-size: 3rem;
             margin-bottom: 10px;
-            font-size: 2rem;
-        }
-
-        .subtitle {
-            color: #666;
-            margin-bottom: 30px;
-            line-height: 1.5;
-        }
-
-        .benefits {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 30px;
-            text-align: left;
-        }
-
-        .benefits h3 {
-            color: #667eea;
-            margin-bottom: 15px;
             text-align: center;
         }
 
-        .benefit-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 12px;
-            color: #555;
+        h1 {
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            font-size: 1.75rem;
+            text-align: center;
         }
 
-        .benefit-item span {
-            margin-right: 10px;
-            color: #4CAF50;
+        .subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 0.95rem;
         }
 
-        .login-buttons {
-            margin-bottom: 25px;
-        }
-
-        .social-login-btn {
+        .free-badge {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+            margin: 0 auto 25px;
+            text-align: center;
+            width: fit-content;
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 100%;
-            padding: 15px 20px;
-            margin-bottom: 15px;
-            border: none;
-            border-radius: 10px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            text-decoration: none;
-            color: white;
+            margin-left: auto;
+            margin-right: auto;
         }
 
-        .email-login-button {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 10px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            margin: 20px 0;
-            transition: all 0.3s;
+        .free-badge svg {
+            width: 16px;
+            height: 16px;
+            margin-right: 6px;
         }
 
-        .email-login-button:hover {
-            background: #5a67d8;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
-        }
-
-        .email-login-button svg {
-            width: 24px;
-            height: 24px;
-            margin-right: 10px;
-        }
-
-        .social-icon {
-            width: 24px;
-            height: 24px;
-            margin-right: 10px;
-        }
-
-        .pricing {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 10px;
-            padding: 20px;
+        .email-input-group {
             margin-bottom: 20px;
         }
 
-        .price {
-            font-size: 2.5rem;
-            font-weight: bold;
-            margin: 10px 0;
-        }
-
-        .price-label {
+        .email-input-group label {
+            display: block;
+            color: var(--text-secondary);
             font-size: 0.9rem;
-            opacity: 0.9;
+            margin-bottom: 8px;
+            font-weight: 500;
         }
 
-        .features {
-            margin-top: 15px;
+        .email-input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .email-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .signup-button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .signup-button:hover:not(:disabled) {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .signup-button:disabled {
+            background: #a0a0a0;
+            cursor: not-allowed;
+        }
+
+        .divider {
+            text-align: center;
+            margin: 25px 0;
+            position: relative;
+            color: #999;
             font-size: 0.85rem;
-            line-height: 1.8;
         }
 
-        .skip-link {
-            color: #666;
+        .divider::before,
+        .divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: calc(50% - 30px);
+            height: 1px;
+            background: #e0e0e0;
+        }
+
+        .divider::before {
+            left: 0;
+        }
+
+        .divider::after {
+            right: 0;
+        }
+
+        .premium-info {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .premium-info h3 {
+            color: #764ba2;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .premium-price {
+            color: var(--text-primary);
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .premium-price small {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-weight: normal;
+        }
+
+        .premium-features {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 10px;
+        }
+
+        .terms-checkbox {
+            margin-bottom: 20px;
+        }
+
+        .terms-checkbox label {
+            display: flex;
+            align-items: flex-start;
+            cursor: pointer;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .terms-checkbox input {
+            margin-right: 8px;
+            margin-top: 3px;
+            cursor: pointer;
+        }
+
+        .terms-checkbox a {
+            color: var(--primary-color);
             text-decoration: none;
+        }
+
+        .terms-checkbox a:hover {
+            text-decoration: underline;
+        }
+
+        .already-account {
+            text-align: center;
+            color: var(--text-secondary);
             font-size: 0.9rem;
         }
 
-        .skip-link:hover {
-            color: #667eea;
+        .already-account a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .already-account a:hover {
             text-decoration: underline;
         }
 
@@ -173,6 +238,28 @@
             padding: 10px;
             border-radius: 5px;
             margin-bottom: 20px;
+            display: none;
+            font-size: 0.9rem;
+        }
+
+        .benefits {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: left;
+            display: none;
+        }
+
+        .pricing {
+            display: none;
+        }
+
+        .email-login-button {
+            display: none;
+        }
+
+        .skip-link {
             display: none;
         }
 
@@ -190,62 +277,86 @@
 <body>
     <div class="login-container">
         <div class="logo">🤰</div>
-        <h1>Welcome to Safebut?</h1>
-        <p class="subtitle">Sign in to unlock unlimited pregnancy safety checks</p>
+        <h1>Create Your Account</h1>
+        <p class="subtitle">Join Safe Maternity for pregnancy safety guidance</p>
+
+        <div class="free-badge">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+            </svg>
+            FREE to sign up
+        </div>
 
         <div id="errorMessage" class="error-message"></div>
 
-        <div class="benefits">
-            <h3>✨ Premium Benefits</h3>
-            <div class="benefit-item">
-                <span>✓</span> Unlimited safety checks (vs 1/day free)
+        <div class="email-input-group">
+            <label for="email-input">Email Address</label>
+            <input type="email" id="email-input" class="email-input" placeholder="you@example.com" autocomplete="email">
+        </div>
+
+        <div class="terms-checkbox">
+            <label>
+                <input type="checkbox" id="terms-checkbox">
+                <span>I accept the <a href="/terms" target="_blank">Terms of Service</a> and <a href="/policy" target="_blank">Privacy Policy</a></span>
+            </label>
+        </div>
+
+        <button onclick="signUpWithEmail()" class="signup-button">
+            Create Free Account
+        </button>
+
+        <div class="divider">or</div>
+
+        <div class="premium-info">
+            <h3>🌟 Go Premium</h3>
+            <div class="premium-price">
+                $0.99 <small>/month</small>
             </div>
-            <div class="benefit-item">
-                <span>✓</span> 📸 Camera & image analysis
-            </div>
-            <div class="benefit-item">
-                <span>✓</span> 🔬 Detailed medical reports
-            </div>
-            <div class="benefit-item">
-                <span>✓</span> 📄 Export history as PDF
+            <div class="premium-features">
+                Unlimited checks • Image analysis • Export reports
             </div>
         </div>
 
-        <div class="pricing">
-            <div class="price-label">One-time payment</div>
-            <div class="price">€24.99</div>
-            <div class="price-label">Lifetime access</div>
-            <div class="features">
-                No subscriptions • No hidden fees • Forever yours
-            </div>
+        <div class="already-account">
+            Already have an account? <a href="#" onclick="showLoginForm(); return false;">Sign in</a>
         </div>
-
-        <div class="login-buttons">
-            <!-- Email Login Form -->
-            <button onclick="showEmailLogin()" class="email-login-button">
-                <svg viewBox="0 0 24 24" fill="currentColor" style="width: 20px; height: 20px; margin-right: 8px;">
-                    <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
-                </svg>
-                Continue with Email
-            </button>
-            
-            <!-- Email Login Form (hidden by default) -->
-            <div id="email-login-form" style="display: none; margin-top: 20px;">
-                <input type="email" id="email-input" placeholder="Enter your email" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; font-size: 16px;">
-                <button onclick="loginWithEmail()" style="width: 100%; padding: 12px; background: #667eea; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">
-                    Send Magic Link
-                </button>
-            </div>
-        </div>
-
-        <a href="/app?trial=true" class="skip-link">Continue with limited free access (1 check/day)</a>
     </div>
 
     <script>
-        // Show email login form
-        function showEmailLogin() {
-            document.getElementById('email-login-form').style.display = 'block';
-            document.getElementById('email-input').focus();
+        // Sign up with email
+        function signUpWithEmail() {
+            // Check if terms are accepted
+            const termsCheckbox = document.getElementById('terms-checkbox');
+            if (!termsCheckbox.checked) {
+                showError('Please accept the Terms of Service and Privacy Policy to continue');
+                return;
+            }
+            
+            const email = document.getElementById('email-input').value;
+            
+            if (!email || !email.includes('@')) {
+                showError('Please enter a valid email address');
+                return;
+            }
+            
+            // Use the existing loginWithEmail logic
+            loginWithEmail();
+        }
+        
+        // Show login form (for existing users)
+        function showLoginForm() {
+            // For now, use the same form but change the button text
+            const title = document.querySelector('h1');
+            const subtitle = document.querySelector('.subtitle');
+            const button = document.querySelector('.signup-button');
+            const freeBadge = document.querySelector('.free-badge');
+            const alreadyAccount = document.querySelector('.already-account');
+            
+            title.textContent = 'Welcome Back';
+            subtitle.textContent = 'Sign in to your Safe Maternity account';
+            button.textContent = 'Sign In';
+            if (freeBadge) freeBadge.style.display = 'none';
+            alreadyAccount.innerHTML = 'Don\'t have an account? <a href="#" onclick="location.reload(); return false;">Sign up</a>';
         }
         
         // Email magic link function

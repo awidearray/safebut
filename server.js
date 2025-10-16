@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 3000;
 app.set('trust proxy', true);
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/safebut');
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/safematernity');
 
 mongoose.connection.on('connected', () => {
     console.log('Connected to MongoDB');
@@ -38,7 +38,7 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
-        mongoUrl: process.env.MONGODB_URI || 'mongodb://localhost:27017/safebut',
+        mongoUrl: process.env.MONGODB_URI || 'mongodb://localhost:27017/safematernity',
         touchAfter: 24 * 3600 // Lazy session update (once per 24 hours unless session data changes)
     }),
     cookie: { 
@@ -97,11 +97,11 @@ app.get('/login', (req, res) => {
 });
 
 app.get('/policy', (req, res) => {
-    res.sendFile(path.join(__dirname, 'privacy-policy.html'));
+    res.sendFile(path.join(__dirname, 'policy.html'));
 });
 
 app.get('/terms', (req, res) => {
-    res.sendFile(path.join(__dirname, 'terms-of-service.html'));
+    res.sendFile(path.join(__dirname, 'terms.html'));
 });
 
 app.get('/delete-my-data', (req, res) => {
@@ -139,8 +139,8 @@ app.post('/api/check-safety', async (req, res) => {
             return res.json(cached.data);
         }
 
-        // Get user profile for preferences (if available in development)
-        const profile = JSON.parse(localStorage?.getItem?.('pregnancyProfile') || '{}');
+        // Get user profile for preferences (server-side defaults to empty)
+        const profile = {};
         let preferenceContext = '';
         
         if (profile.preferences) {

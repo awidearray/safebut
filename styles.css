@@ -6,7 +6,7 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
     min-height: 100vh;
     display: flex;
     justify-content: center;
@@ -16,9 +16,9 @@ body {
 }
 
 .container {
-    background: white;
+    background: var(--background-primary);
     border-radius: 20px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--shadow-xl);
     max-width: 800px;
     width: 100%;
     overflow: hidden;
@@ -28,8 +28,8 @@ body {
 }
 
 header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    color: var(--text-inverse);
     padding: 40px 30px;
     text-align: center;
 }
@@ -72,11 +72,11 @@ main {
 
 #searchInput:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: var(--primary-color);
 }
 
 #searchBtn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
     color: white;
     border: none;
     padding: 15px 30px;
@@ -129,7 +129,7 @@ main {
 }
 
 .chip:hover {
-    background: #667eea;
+    background: var(--primary-color);
     color: white;
 }
 
@@ -272,7 +272,7 @@ main {
 
 .tab-btn.active {
     background: white;
-    color: #667eea;
+    color: var(--primary-color);
     border-color: white;
 }
 
@@ -347,7 +347,7 @@ main {
 .form-group input:focus,
 .form-group select:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: var(--primary-color);
 }
 
 .condition-grid {
@@ -395,7 +395,7 @@ main {
 }
 
 .save-profile-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
     color: white;
     border: none;
     padding: 15px 40px;
@@ -435,7 +435,7 @@ main {
 details summary {
     cursor: pointer;
     font-weight: 600;
-    color: #667eea;
+    color: var(--primary-color);
     padding: 10px;
     background: #f8f9fa;
     border-radius: 8px;
@@ -464,11 +464,11 @@ details summary:hover {
 
 .api-key-content input:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: var(--primary-color);
 }
 
 #saveApiKey {
-    background: #667eea;
+    background: var(--primary-color);
     color: white;
     border: none;
     padding: 10px 20px;
@@ -489,7 +489,7 @@ details summary:hover {
 }
 
 .api-help a {
-    color: #667eea;
+    color: var(--primary-color);
     text-decoration: none;
 }
 
@@ -613,7 +613,7 @@ footer {
 }
 
 .pregnancy-section {
-    border-left: 4px solid #667eea;
+    border-left: 4px solid var(--primary-color);
 }
 
 .breastfeeding-section {
@@ -651,7 +651,7 @@ footer {
 
 .reference-link {
     display: block;
-    color: #667eea;
+    color: var(--primary-color);
     text-decoration: none;
     padding: 5px 0;
     font-size: 0.9rem;
@@ -728,7 +728,7 @@ footer {
 }
 
 .camera-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
     color: white;
     border: none;
     padding: 15px 20px;
@@ -912,7 +912,7 @@ footer {
 }
 
 .upgrade-benefits h3 {
-    color: #667eea;
+    color: var(--primary-color);
     margin-bottom: 15px;
     text-align: center;
 }
@@ -928,7 +928,7 @@ footer {
 }
 
 .upgrade-btn {
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     color: white;
     border: none;
     padding: 15px 40px;
@@ -960,7 +960,7 @@ footer {
 
 #submit-payment {
     width: 100%;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     color: white;
     border: none;
     padding: 15px;
@@ -1019,7 +1019,7 @@ footer {
 
 .log-text-input:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: var(--primary-color);
 }
 
 .voice-controls {
@@ -1030,7 +1030,7 @@ footer {
 }
 
 .voice-record-btn {
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     color: white;
     border: none;
     padding: 15px 30px;
@@ -1070,7 +1070,7 @@ footer {
 }
 
 .save-log-btn {
-    background: #4CAF50;
+    background: var(--success-color);
     color: white;
     border: none;
     padding: 15px 30px;
@@ -1176,7 +1176,7 @@ footer {
     position: absolute;
     bottom: 5px;
     right: 5px;
-    color: #4CAF50;
+    color: var(--success-color);
     font-size: 20px;
 }
 
@@ -1224,7 +1224,7 @@ footer {
     padding: 20px;
     cursor: pointer;
     transition: all 0.3s;
-    border-left: 4px solid #667eea;
+    border-left: 4px solid var(--primary-color);
 }
 
 .log-entry-item:hover {
@@ -1348,7 +1348,7 @@ footer {
 }
 
 .ai-analysis h4 {
-    color: #4CAF50;
+    color: var(--success-color);
     margin-bottom: 15px;
     display: flex;
     align-items: center;
@@ -1361,7 +1361,7 @@ footer {
 }
 
 .ai-analysis-content h5 {
-    color: #667eea;
+    color: var(--primary-color);
     margin: 15px 0 10px;
     font-size: 1.1rem;
 }
@@ -1386,7 +1386,7 @@ footer {
     width: 40px;
     height: 40px;
     border: 4px solid #f3f3f3;
-    border-top: 4px solid #667eea;
+    border-top: 4px solid var(--primary-color);
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin-bottom: 15px;
@@ -1412,7 +1412,7 @@ footer {
     position: fixed;
     top: 20px;
     right: 20px;
-    background: #4CAF50;
+    background: var(--success-color);
     color: white;
     padding: 15px 25px;
     border-radius: 10px;
@@ -1616,7 +1616,7 @@ footer {
 }
 
 .upgrade-benefits h3 {
-    color: #667eea;
+    color: var(--primary-color);
     margin-bottom: 20px;
     text-align: center;
     font-size: 1.3rem;
@@ -1632,7 +1632,7 @@ footer {
 
 .benefit-item span {
     margin-right: 12px;
-    color: #4CAF50;
+    color: var(--success-color);
     font-weight: bold;
     font-size: 1.1rem;
 }
@@ -1665,7 +1665,7 @@ footer {
 }
 
 .price-card.featured {
-    border-color: #667eea;
+    border-color: var(--primary-color);
     box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
     transform: scale(1.05);
 }
@@ -1675,7 +1675,7 @@ footer {
     top: -10px;
     left: 50%;
     transform: translateX(-50%);
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
     color: white;
     padding: 5px 15px;
     border-radius: 15px;
@@ -1684,7 +1684,7 @@ footer {
 }
 
 .price-card .upgrade-pay-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
     color: white;
     border: none;
     padding: 12px 24px;
@@ -1698,7 +1698,7 @@ footer {
 }
 
 .price-card.featured .upgrade-pay-btn {
-    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    background: linear-gradient(135deg, var(--secondary-color) 0%, var(--primary-color) 100%);
 }
 
 .price-card .upgrade-pay-btn:hover {
@@ -1734,7 +1734,7 @@ footer {
 }
 
 .upgrade-pay-btn {
-    background: #667eea;
+    background: var(--primary-color);
     color: white;
     border: none;
     padding: 15px 40px;
@@ -1763,7 +1763,7 @@ footer {
 }
 
 .upgrade-loading {
-    color: #667eea;
+    color: var(--primary-color);
     font-size: 1rem;
     margin: 15px 0;
     font-weight: 500;
@@ -1809,7 +1809,7 @@ footer {
 }
 
 .preferences-section h3 {
-    color: #667eea;
+    color: var(--primary-color);
     margin-bottom: 15px;
     font-size: 1.4rem;
     text-align: center;
@@ -1832,7 +1832,7 @@ footer {
 }
 
 .preference-group:hover {
-    border-color: #667eea;
+    border-color: var(--primary-color);
     box-shadow: 0 2px 10px rgba(102, 126, 234, 0.1);
 }
 
@@ -1865,25 +1865,25 @@ footer {
 
 .preference-group .radio-option:hover {
     background: #e3f2fd;
-    border-color: #667eea;
+    border-color: var(--primary-color);
 }
 
 .preference-group .radio-option input[type="radio"] {
     margin-right: 12px;
     width: 18px;
     height: 18px;
-    accent-color: #667eea;
+    accent-color: var(--primary-color);
     cursor: pointer;
 }
 
 .preference-group .radio-option input[type="radio"]:checked + .radio-label {
-    color: #667eea;
+    color: var(--primary-color);
     font-weight: 600;
 }
 
 .preference-group .radio-option:has(input[type="radio"]:checked) {
     background: linear-gradient(135deg, #f0f4ff, #e8f0ff);
-    border-color: #667eea;
+    border-color: var(--primary-color);
     box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
 }
 
@@ -1951,7 +1951,7 @@ footer {
 }
 
 .get-details-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
     color: white;
     border: none;
     padding: 12px 24px;
@@ -1999,7 +1999,7 @@ footer {
     border-radius: 12px;
     padding: 20px;
     margin-top: 15px;
-    border-left: 4px solid #667eea;
+    border-left: 4px solid var(--primary-color);
     animation: slideDown 0.3s ease-out;
 }
 
@@ -2068,15 +2068,15 @@ footer {
 
 /* Affiliate Section */
 .affiliate-section {
-    background: linear-gradient(135deg, #667eea22 0%, #764ba244 100%);
+    background: linear-gradient(135deg, var(--primary-color)22 0%, var(--secondary-color)44 100%);
     border-radius: 15px;
     padding: 25px;
     margin-bottom: 30px;
-    border: 2px solid #667eea33;
+    border: 2px solid var(--primary-color)33;
 }
 
 .affiliate-section h3 {
-    color: #667eea;
+    color: var(--primary-color);
     margin-bottom: 15px;
     font-size: 1.4rem;
     text-align: center;
@@ -2108,7 +2108,7 @@ footer {
     display: block;
     font-size: 1.8rem;
     font-weight: bold;
-    color: #667eea;
+    color: var(--primary-color);
     margin-bottom: 5px;
 }
 
@@ -2137,14 +2137,14 @@ footer {
 .link-input-group input {
     flex: 1;
     padding: 12px;
-    border: 2px solid #667eea33;
+    border: 2px solid var(--primary-color)33;
     border-radius: 8px;
     background: white;
     font-size: 0.9rem;
 }
 
 .copy-btn {
-    background: #667eea;
+    background: var(--primary-color);
     color: white;
     border: none;
     border-radius: 8px;
@@ -2166,7 +2166,7 @@ footer {
     background: white;
     padding: 12px;
     border-radius: 8px;
-    border-left: 4px solid #667eea;
+    border-left: 4px solid var(--primary-color);
 }
 
 .referral-history h4 {
@@ -2213,7 +2213,7 @@ footer {
 }
 
 .referral-points {
-    background: #4CAF50;
+    background: var(--success-color);
     color: white;
     padding: 4px 8px;
     border-radius: 12px;
@@ -2229,7 +2229,7 @@ footer {
 }
 
 .leaderboard-section h2 {
-    color: #667eea;
+    color: var(--primary-color);
     margin-bottom: 10px;
     text-align: center;
     font-size: 1.8rem;
@@ -2252,8 +2252,8 @@ footer {
 
 .filter-btn {
     background: white;
-    border: 2px solid #667eea33;
-    color: #667eea;
+    border: 2px solid var(--primary-color)33;
+    color: var(--primary-color);
     padding: 8px 16px;
     border-radius: 8px;
     cursor: pointer;
@@ -2262,17 +2262,17 @@ footer {
 }
 
 .filter-btn.active {
-    background: #667eea;
+    background: var(--primary-color);
     color: white;
-    border-color: #667eea;
+    border-color: var(--primary-color);
 }
 
 .filter-btn:hover {
-    background: #667eea22;
+    background: var(--primary-color)22;
 }
 
 .refresh-btn {
-    background: #4CAF50;
+    background: var(--success-color);
     color: white;
     border: none;
     padding: 8px 16px;
@@ -2298,7 +2298,7 @@ footer {
 .table-header {
     display: grid;
     grid-template-columns: 60px 1fr 100px 100px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     color: white;
     padding: 15px;
     font-weight: 600;
@@ -2329,7 +2329,7 @@ footer {
 
 .rank-col {
     font-weight: bold;
-    color: #667eea;
+    color: var(--primary-color);
     text-align: center;
 }
 
@@ -2340,7 +2340,7 @@ footer {
 .points-col {
     text-align: center;
     font-weight: 600;
-    color: #4CAF50;
+    color: var(--success-color);
 }
 
 .referrals-col {
@@ -2360,10 +2360,10 @@ footer {
 }
 
 .leaderboard-note {
-    background: linear-gradient(135deg, #667eea11, #764ba222);
+    background: linear-gradient(135deg, var(--primary-color)11, var(--secondary-color)22);
     border-radius: 10px;
     padding: 20px;
-    border-left: 4px solid #667eea;
+    border-left: 4px solid var(--primary-color);
 }
 
 .leaderboard-note p {

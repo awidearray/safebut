@@ -3,14 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Safebut? - Pregnancy Safety Checker</title>
+    <title>Safe Maternity - Pregnancy Safety Checker</title>
+    <meta name="theme-color" content="#b8956a">
+    <link rel="stylesheet" href="globals.css">
     <link rel="stylesheet" href="styles.css">
+    <script src="theme-switcher.js"></script>
     <script src="https://js.stripe.com/v3/"></script>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🤰Safebut?</h1>
+            <h1>🤰Safe Maternity</h1>
             <p class="subtitle">Check the safety of anything during pregnancy</p>
             
             <!-- Tab Navigation -->
@@ -388,7 +391,7 @@
                     <!-- Affiliate Section (Premium Only) -->
                     <div id="affiliateSection" class="affiliate-section" style="display: none;">
                         <h3>🎯 Refer Friends & Earn Points</h3>
-                        <p class="affiliate-intro">Share Safebut with friends and earn points for future rewards!</p>
+                        <p class="affiliate-intro">Share Safe Maternity with friends and earn points for future rewards!</p>
                         
                         <div class="affiliate-stats">
                             <div class="stat-item">
@@ -908,7 +911,7 @@
                 if (isPremium) {
                     const header = document.querySelector('header h1');
                     if (header && !header.textContent.includes('⭐')) {
-                        header.textContent = '🤰Safebut? ⭐';
+                        header.textContent = '🤰Safe Maternity ⭐';
                     }
                 }
                 // Handle all upgrade buttons

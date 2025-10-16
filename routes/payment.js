@@ -25,7 +25,7 @@ router.post('/create-checkout-session', verifyToken, async (req, res) => {
         // Define pricing options
         const pricingOptions = {
             monthly: {
-                name: 'Safebut Premium - Monthly',
+                name: 'Safe Maternity Premium - Monthly',
                 description: 'Monthly subscription to pregnancy safety checks',
                 unit_amount: 2499, // €24.99 in cents
                 mode: 'subscription',
@@ -35,7 +35,7 @@ router.post('/create-checkout-session', verifyToken, async (req, res) => {
                 productType: 'monthly_subscription'
             },
             annual: {
-                name: 'Safebut Premium - Annual',
+                name: 'Safe Maternity Premium - Annual',
                 description: 'Annual subscription to pregnancy safety checks (Save 17%)',
                 unit_amount: 9999, // €99.99 in cents
                 mode: 'subscription',
@@ -45,7 +45,7 @@ router.post('/create-checkout-session', verifyToken, async (req, res) => {
                 productType: 'annual_subscription'
             },
             lifetime: {
-                name: 'Safebut Premium - Lifetime',
+                name: 'Safe Maternity Premium - Lifetime',
                 description: 'Lifetime access to all premium features',
                 unit_amount: 2499, // €24.99 in cents
                 mode: 'payment',
@@ -160,7 +160,7 @@ router.post('/create-payment-intent', verifyToken, async (req, res) => {
                 userId: req.user._id.toString(),
                 productType: 'lifetime_premium'
             },
-            description: 'Safebut? Lifetime Premium Access'
+            description: 'Safe Maternity? Lifetime Premium Access'
         });
 
         res.json({

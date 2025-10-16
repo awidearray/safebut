@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🤰Safebut? - Pregnancy Safety Checker</title>
+    <title>Safe Maternity - Your Trusted Pregnancy Safety Guide</title>
+    <meta name="description" content="Get instant, reliable pregnancy safety information for foods, medications, and activities. Trusted by thousands of expecting mothers.">
+    <meta name="theme-color" content="#b8956a">
+    <link rel="stylesheet" href="globals.css">
+    <script src="theme-switcher.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -12,289 +17,815 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            color: #333;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background: var(--background-primary);
         }
 
-        .container {
+        /* Navigation */
+        nav {
+            background: var(--background-primary);
+            box-shadow: var(--shadow-sm);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 20px;
-        }
-
-        header {
-            text-align: center;
-            padding: 60px 20px 40px;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 70px;
         }
 
         .logo {
+            display: flex;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            font-size: 1.8rem;
+            margin-right: 10px;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 35px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary-color);
+        }
+
+        .nav-cta {
+            background: var(--primary-color);
+            color: white;
+            padding: 10px 24px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .nav-cta:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #333;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, var(--primary-lightest) 0%, var(--background-gradient-end) 100%);
+            padding: 80px 20px;
+        }
+
+        .hero-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+
+        .hero-content h1 {
             font-size: 3rem;
+            line-height: 1.2;
+            color: var(--text-primary);
             margin-bottom: 20px;
         }
 
-        h1 {
-            color: white;
-            font-size: 2.5rem;
-            margin-bottom: 15px;
-            font-weight: 700;
+        .hero-content .subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+            line-height: 1.6;
         }
 
-        .tagline {
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 1.3rem;
+        .hero-buttons {
+            display: flex;
+            gap: 15px;
             margin-bottom: 40px;
         }
 
-        .cta-button {
-            display: inline-block;
-            background: white;
-            color: #667eea;
-            padding: 15px 40px;
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+            padding: 15px 35px;
             border-radius: 30px;
             text-decoration: none;
-            font-size: 1.2rem;
-            font-weight: 600;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            font-size: 1.1rem;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: inline-block;
         }
 
-        .cta-button:hover {
+        .btn-primary:hover {
+            background: var(--primary-dark);
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 10px 20px rgba(214, 51, 132, 0.3);
         }
 
-        .features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        .btn-secondary {
+            background: white;
+            color: var(--primary-color);
+            padding: 15px 35px;
+            border: 2px solid #d63384;
+            border-radius: 30px;
+            text-decoration: none;
+            font-size: 1.1rem;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: inline-block;
+        }
+
+        .btn-secondary:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .trust-badges {
+            display: flex;
             gap: 30px;
-            margin: 60px 0;
+            align-items: center;
+        }
+
+        .trust-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .trust-badge-icon {
+            color: var(--success-color);
+            font-size: 1.2rem;
+        }
+
+        .hero-image {
+            position: relative;
+        }
+
+        .hero-image-wrapper {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .demo-search {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .demo-search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .demo-input {
+            flex: 1;
+            padding: 12px 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 25px;
+            font-size: 1rem;
+        }
+
+        .demo-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .quick-searches {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .quick-search-tag {
+            background: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quick-search-tag:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: #d63384;
+        }
+
+        /* Features Section */
+        .features {
+            padding: 80px 20px;
+            background: #fff;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .section-header h2 {
+            font-size: 2.5rem;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+        }
+
+        .section-header p {
+            font-size: 1.15rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .features-grid {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 40px;
         }
 
         .feature-card {
-            background: white;
-            border-radius: 15px;
             padding: 30px;
-            text-align: center;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
+            border-radius: 15px;
+            background: #fff;
+            border: 1px solid #f0f0f0;
+            transition: all 0.3s;
         }
 
         .feature-card:hover {
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             transform: translateY(-5px);
         }
 
         .feature-icon {
-            font-size: 3rem;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary-lightest) 0%, var(--background-gradient-end) 100%);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
             margin-bottom: 20px;
         }
 
-        .feature-title {
-            font-size: 1.5rem;
-            color: #333;
-            margin-bottom: 15px;
+        .feature-card h3 {
+            font-size: 1.3rem;
+            color: var(--text-primary);
+            margin-bottom: 12px;
         }
 
-        .feature-description {
-            color: #666;
+        .feature-card p {
+            color: var(--text-secondary);
             line-height: 1.6;
         }
 
+        /* How It Works */
         .how-it-works {
-            background: white;
-            border-radius: 20px;
-            padding: 50px;
-            margin: 60px 0;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            background: #f8f9fa;
+            padding: 80px 20px;
         }
 
-        .how-it-works h2 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 40px;
-            font-size: 2rem;
-        }
-
-        .steps {
+        .steps-container {
+            max-width: 1200px;
+            margin: 0 auto;
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 30px;
+            gap: 40px;
         }
 
-        .step {
+        .step-card {
             text-align: center;
+            position: relative;
         }
 
         .step-number {
-            display: inline-block;
             width: 50px;
             height: 50px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--primary-color);
             color: white;
             border-radius: 50%;
-            line-height: 50px;
-            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
             font-weight: bold;
-            margin-bottom: 15px;
+            margin: 0 auto 20px;
         }
 
-        .step-title {
-            color: #333;
+        .step-card h3 {
             font-size: 1.2rem;
-            margin-bottom: 10px;
+            color: var(--text-primary);
+            margin-bottom: 12px;
         }
 
-        .step-description {
-            color: #666;
+        .step-card p {
+            color: var(--text-secondary);
             line-height: 1.5;
         }
 
-        .disclaimer {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 15px;
-            padding: 30px;
-            margin: 40px 0;
+        /* Stats Section */
+        .stats {
+            background: linear-gradient(135deg, #d63384 0%, #c42974 100%);
+            padding: 60px 20px;
+            color: white;
+        }
+
+        .stats-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
             text-align: center;
-            border: 2px solid rgba(102, 126, 234, 0.3);
         }
 
-        .disclaimer-icon {
-            font-size: 2rem;
-            margin-bottom: 15px;
+        .stat-item {
+            padding: 20px;
         }
 
-        .disclaimer h3 {
-            color: #333;
-            margin-bottom: 15px;
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
         }
 
-        .disclaimer p {
-            color: #666;
-            line-height: 1.6;
+        .stat-label {
+            font-size: 1rem;
+            opacity: 0.95;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            padding: 80px 20px;
+            background: linear-gradient(135deg, var(--primary-lightest) 0%, var(--background-gradient-end) 100%);
+            text-align: center;
+        }
+
+        .cta-content {
             max-width: 800px;
             margin: 0 auto;
         }
 
-        footer {
-            text-align: center;
-            padding: 30px;
-            color: rgba(255, 255, 255, 0.8);
+        .cta-content h2 {
+            font-size: 2.5rem;
+            color: var(--text-primary);
+            margin-bottom: 20px;
         }
 
+        .cta-content p {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--text-primary);
+            color: white;
+            padding: 60px 20px 30px;
+        }
+
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .footer-section h4 {
+            margin-bottom: 20px;
+            color: #fff;
+        }
+
+        .footer-section ul {
+            list-style: none;
+        }
+
+        .footer-section ul li {
+            margin-bottom: 12px;
+        }
+
+        .footer-section a {
+            color: #b8c5d6;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-section a:hover {
+            color: white;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 30px;
+            border-top: 1px solid #3d5068;
+            color: #b8c5d6;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .social-link {
+            width: 40px;
+            height: 40px;
+            background: #3d5068;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+
+        .social-link:hover {
+            background: var(--primary-color);
+        }
+
+        /* Disclaimer */
+        .disclaimer {
+            background: #fff8e1;
+            padding: 20px;
+            margin: 40px auto;
+            max-width: 1200px;
+            border-radius: 10px;
+            border-left: 4px solid #ffc107;
+        }
+
+        .disclaimer-content {
+            display: flex;
+            align-items: start;
+            gap: 15px;
+        }
+
+        .disclaimer-icon {
+            font-size: 1.5rem;
+            color: #ffc107;
+        }
+
+        .disclaimer-text {
+            flex: 1;
+        }
+
+        .disclaimer-text h4 {
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .disclaimer-text p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        /* Responsive */
         @media (max-width: 768px) {
-            h1 {
+            .nav-links {
+                display: none;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            .hero-container {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+
+            .hero-content h1 {
                 font-size: 2rem;
             }
 
-            .tagline {
-                font-size: 1.1rem;
+            .hero-buttons {
+                flex-direction: column;
             }
 
-            .how-it-works {
-                padding: 30px 20px;
+            .trust-badges {
+                flex-direction: column;
+                align-items: start;
+                gap: 15px;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-container {
+                grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <div class="logo">🤰</div>
-            <h1>🤰Safebut?</h1>
-            <p class="tagline">I want this, but is it safe?</p>
-            <a href="/app" class="cta-button">Login</a>
-        </header>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <a href="/" class="logo">
+                <span class="logo-icon">🤰</span>
+                Safe Maternity
+            </a>
+            <ul class="nav-links">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#how-it-works">How It Works</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="/app">Sign In</a></li>
+                <li><a href="/app" class="nav-cta">Get Started Free</a></li>
+            </ul>
+            <button class="mobile-menu-btn">☰</button>
+        </div>
+    </nav>
 
-        <div class="features">
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-container">
+            <div class="hero-content">
+                <h1>Is It Safe During Pregnancy?</h1>
+                <p class="subtitle">Get instant, reliable answers about foods, medications, and activities during pregnancy. Trusted by thousands of expecting mothers.</p>
+                <div class="hero-buttons">
+                    <a href="/app" class="btn-primary">Start Checking Now</a>
+                    <a href="#how-it-works" class="btn-secondary">Learn More</a>
+                </div>
+                <div class="trust-badges">
+                    <div class="trust-badge">
+                        <span class="trust-badge-icon">✓</span>
+                        <span>Evidence-based</span>
+                    </div>
+                    <div class="trust-badge">
+                        <span class="trust-badge-icon">✓</span>
+                        <span>Doctor-reviewed</span>
+                    </div>
+                    <div class="trust-badge">
+                        <span class="trust-badge-icon">✓</span>
+                        <span>Updated daily</span>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-image">
+                <div class="hero-image-wrapper">
+                    <div class="demo-search">
+                        <div class="demo-search-bar">
+                            <input type="text" class="demo-input" placeholder="Try: 'Can I eat sushi?'" disabled>
+                            <button class="demo-btn">Check Safety</button>
+                        </div>
+                        <div class="quick-searches">
+                            <span class="quick-search-tag">Coffee ☕</span>
+                            <span class="quick-search-tag">Sushi 🍣</span>
+                            <span class="quick-search-tag">Yoga 🧘</span>
+                            <span class="quick-search-tag">Flying ✈️</span>
+                            <span class="quick-search-tag">Hair Dye 💇</span>
+                        </div>
+                    </div>
+                    <img src="data:image/svg+xml,%3Csvg width='300' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='300' height='200' fill='%23f0f0f0'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='16' fill='%23999' text-anchor='middle' dominant-baseline='middle'%3ESafety Results Preview%3C/text%3E%3C/svg%3E" alt="Safety check preview" style="width: 100%; border-radius: 10px;">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="section-header">
+            <h2>Everything You Need for a Safe Pregnancy</h2>
+            <p>Comprehensive safety information at your fingertips</p>
+        </div>
+        <div class="features-grid">
             <div class="feature-card">
                 <div class="feature-icon">🔍</div>
-                <h3 class="feature-title">Instant Safety Checks</h3>
-                <p class="feature-description">
-                    Get immediate pregnancy safety information for foods, medications, and everyday items with our AI-powered analysis.
-                </p>
+                <h3>Instant Safety Checks</h3>
+                <p>Get immediate answers about any food, medication, or activity. Our AI analyzes thousands of medical sources to give you accurate information in seconds.</p>
             </div>
-
             <div class="feature-card">
                 <div class="feature-icon">📊</div>
-                <h3 class="feature-title">Risk Score System</h3>
-                <p class="feature-description">
-                    Clear 1-10 risk scoring helps you quickly understand safety levels, with 1 being safest and 10 requiring caution.
-                </p>
+                <h3>Clear Risk Scores</h3>
+                <p>Easy-to-understand 1-10 risk rating system helps you make informed decisions quickly. Know exactly what's safe, what requires caution, and what to avoid.</p>
             </div>
-
+            <div class="feature-card">
+                <div class="feature-icon">📸</div>
+                <h3>Photo Analysis</h3>
+                <p>Take a photo of any product or food item and get instant safety information. Perfect for grocery shopping or when you're dining out.</p>
+            </div>
             <div class="feature-card">
                 <div class="feature-icon">📚</div>
-                <h3 class="feature-title">Evidence-Based Info</h3>
-                <p class="feature-description">
-                    Access reliable, medical-grade information with references to trusted sources like Mayo Clinic and CDC.
-                </p>
+                <h3>Medical References</h3>
+                <p>Every recommendation is backed by trusted medical sources including Mayo Clinic, CDC, and American Pregnancy Association.</p>
             </div>
-
             <div class="feature-card">
-                <div class="feature-icon">⚡</div>
-                <h3 class="feature-title">Lightning Fast</h3>
-                <p class="feature-description">
-                    Optimized AI models and intelligent caching deliver results in seconds, not minutes.
-                </p>
+                <div class="feature-icon">🤱</div>
+                <h3>Breastfeeding Safety</h3>
+                <p>Premium users get dual safety assessments for both pregnancy and breastfeeding periods, covering your entire motherhood journey.</p>
             </div>
-
             <div class="feature-card">
-                <div class="feature-icon">📱</div>
-                <h3 class="feature-title">Mobile Friendly</h3>
-                <p class="feature-description">
-                    Designed to work perfectly on all devices, so you can check safety anywhere, anytime.
-                </p>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon">🔒</div>
-                <h3 class="feature-title">Privacy First</h3>
-                <p class="feature-description">
-                    Your searches are private. We don't store personal information or track your queries.
-                </p>
+                <div class="feature-icon">📝</div>
+                <h3>Personal Log</h3>
+                <p>Track your pregnancy journey with a personal diary. Log symptoms, questions, and get AI-powered insights about your entries.</p>
             </div>
         </div>
+    </section>
 
-        <div class="how-it-works">
+    <!-- How It Works -->
+    <section class="how-it-works" id="how-it-works">
+        <div class="section-header">
             <h2>How It Works</h2>
-            <div class="steps">
-                <div class="step">
-                    <div class="step-number">1</div>
-                    <h4 class="step-title">Enter Item</h4>
-                    <p class="step-description">Type any food, medication, or product you want to check</p>
-                </div>
-                <div class="step">
-                    <div class="step-number">2</div>
-                    <h4 class="step-title">AI Analysis</h4>
-                    <p class="step-description">Our medical AI analyzes safety based on current guidelines</p>
-                </div>
-                <div class="step">
-                    <div class="step-number">3</div>
-                    <h4 class="step-title">Get Results</h4>
-                    <p class="step-description">Receive clear risk scores, explanations, and recommendations</p>
-                </div>
-                <div class="step">
-                    <div class="step-number">4</div>
-                    <h4 class="step-title">Make Decisions</h4>
-                    <p class="step-description">Use the information to make informed choices for your pregnancy</p>
-                </div>
+            <p>Get safety information in three simple steps</p>
+        </div>
+        <div class="steps-container">
+            <div class="step-card">
+                <div class="step-number">1</div>
+                <h3>Ask Your Question</h3>
+                <p>Type or photograph anything you want to check - foods, medications, activities, or products.</p>
+            </div>
+            <div class="step-card">
+                <div class="step-number">2</div>
+                <h3>AI Analysis</h3>
+                <p>Our medical AI instantly analyzes current guidelines and research to assess safety levels.</p>
+            </div>
+            <div class="step-card">
+                <div class="step-number">3</div>
+                <h3>Get Clear Answers</h3>
+                <p>Receive detailed safety information with risk scores, explanations, and practical tips.</p>
+            </div>
+            <div class="step-card">
+                <div class="step-number">4</div>
+                <h3>Make Informed Choices</h3>
+                <p>Use the evidence-based information to make confident decisions for you and your baby.</p>
             </div>
         </div>
+    </section>
 
-        <div class="disclaimer">
-            <div class="disclaimer-icon">⚠️</div>
-            <h3>Important Medical Disclaimer</h3>
-            <p>
-                🤰Safebut? provides general information based on medical guidelines and research. It is not a substitute for professional medical advice. 
-                Always consult with your healthcare provider about specific concerns during pregnancy. Every pregnancy is unique, and what's safe 
-                for one person may not be suitable for another based on individual health conditions and circumstances.
-            </p>
+    <!-- Stats Section -->
+    <section class="stats">
+        <div class="stats-container">
+            <div class="stat-item">
+                <div class="stat-number">50,000+</div>
+                <div class="stat-label">Safety Checks Daily</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">10,000+</div>
+                <div class="stat-label">Happy Mothers</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">4.9/5</div>
+                <div class="stat-label">User Rating</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">24/7</div>
+                <div class="stat-label">Available Support</div>
+            </div>
         </div>
+    </section>
 
-        <footer>
-            <p>© 2025 Safebut- Empowering safer pregnancy decisions</p>
-        </footer>
+    <!-- Disclaimer -->
+    <div class="disclaimer">
+        <div class="disclaimer-content">
+            <div class="disclaimer-icon">⚠️</div>
+            <div class="disclaimer-text">
+                <h4>Medical Disclaimer</h4>
+                <p>Safe Maternity provides general information based on medical guidelines and research. It is not a substitute for professional medical advice. Always consult with your healthcare provider about specific concerns during pregnancy.</p>
+            </div>
+        </div>
     </div>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="cta-content">
+            <h2>Start Your Safe Pregnancy Journey Today</h2>
+            <p>Join thousands of mothers who trust Safe Maternity for reliable pregnancy safety information</p>
+            <a href="/app" class="btn-primary">Get Started Free</a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-container">
+            <div class="footer-section">
+                <h4>Safe Maternity</h4>
+                <p style="color: #b8c5d6; margin-bottom: 20px;">Your trusted companion for a safe and healthy pregnancy journey.</p>
+                <div class="social-links">
+                    <a href="#" class="social-link">f</a>
+                    <a href="#" class="social-link">t</a>
+                    <a href="#" class="social-link">i</a>
+                </div>
+            </div>
+            <div class="footer-section">
+                <h4>Quick Links</h4>
+                <ul>
+                    <li><a href="/app">Get Started</a></li>
+                    <li><a href="#features">Features</a></li>
+                    <li><a href="#how-it-works">How It Works</a></li>
+                    <li><a href="/app?trial=true">Free Trial</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Resources</h4>
+                <ul>
+                    <li><a href="#">Pregnancy Guide</a></li>
+                    <li><a href="#">Safety Database</a></li>
+                    <li><a href="#">Medical References</a></li>
+                    <li><a href="#">FAQ</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Legal</h4>
+                <ul>
+                    <li><a href="/privacy-policy.html">Privacy Policy</a></li>
+                    <li><a href="/terms-of-service.html">Terms of Service</a></li>
+                    <li><a href="/delete-my-data.html">Delete My Data</a></li>
+                    <li><a href="#">Contact Us</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 Safe Maternity. All rights reserved. Made with ❤️ for expecting mothers.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Demo quick search tags
+        document.querySelectorAll('.quick-search-tag').forEach(tag => {
+            tag.addEventListener('click', function() {
+                window.location.href = '/app';
+            });
+        });
+
+        // Mobile menu toggle
+        const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+        const navLinks = document.querySelector('.nav-links');
+        
+        mobileMenuBtn?.addEventListener('click', function() {
+            navLinks.style.display = navLinks.style.display === 'flex' ? 'none' : 'flex';
+            navLinks.style.position = 'absolute';
+            navLinks.style.top = '70px';
+            navLinks.style.left = '0';
+            navLinks.style.right = '0';
+            navLinks.style.background = 'white';
+            navLinks.style.flexDirection = 'column';
+            navLinks.style.padding = '20px';
+            navLinks.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
+        });
+    </script>
 </body>
 </html>

@@ -94,7 +94,7 @@ class PregnancySafetyChecker {
         modal.className = 'auth-modal';
         modal.innerHTML = `
             <div class="auth-modal-content">
-                <h2>🤰 Welcome to Safebut?</h2>
+                <h2>🤰 Welcome to Safe Maternity</h2>
                 <p>Sign in to save your search history and get 3 free checks daily</p>
                 <div class="auth-buttons">
                     <a href="/auth/facebook" class="auth-btn facebook-btn">
