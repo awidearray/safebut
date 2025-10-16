@@ -5,15 +5,18 @@ const nodemailer = require('nodemailer');
 const User = require('../models/User');
 const router = express.Router();
 
-// Email transporter setup (configure based on your email provider)
+// Email transporter setup for Brevo (formerly Sendinblue)
 const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: process.env.SMTP_PORT || 587,
+    host: process.env.SMTP_HOST || 'smtp-relay.brevo.com',
+    port: parseInt(process.env.SMTP_PORT) || 587,
     secure: false, // true for 465, false for other ports
     auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
     },
+    tls: {
+        rejectUnauthorized: true
+    }
 });
 
 // In-memory storage for magic link tokens (in production, use Redis or database)
@@ -50,67 +53,145 @@ router.post('/request-magic-link', async (req, res) => {
         const baseUrl = process.env.BASE_URL || 'https://safe-maternity.com';
         const magicLink = `${baseUrl}/auth/verify-magic-link?token=${token}`;
         
-        // Send email (if SMTP is configured)
+        // Send email via Brevo
         if (process.env.SMTP_USER && process.env.SMTP_PASS) {
             try {
+                console.log('Attempting to send magic link email via Brevo to:', email);
+                console.log('SMTP Config:', {
+                    host: process.env.SMTP_HOST || 'smtp-relay.brevo.com',
+                    port: process.env.SMTP_PORT || 587,
+                    from: process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@safe-maternity.com',
+                    user: process.env.SMTP_USER ? 'Configured' : 'Missing',
+                    pass: process.env.SMTP_PASS ? 'Configured' : 'Missing'
+                });
+                
                 const mailOptions = {
-                    from: process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@safematernity.com',
+                    from: `"Safe Maternity" <${process.env.SMTP_FROM || 'noreply@safe-maternity.com'}>`,
                     to: email,
                     subject: '🤰 Your Safe Maternity Login Link',
                     html: `
-                        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px 10px 0 0;">
-                                <h1 style="color: white; margin: 0; text-align: center;">🤰 Safe Maternity</h1>
-                                <p style="color: white; margin: 5px 0 0; text-align: center;">Pregnancy Safety Checker</p>
-                            </div>
-                            <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
-                                <h2 style="color: #333; margin-top: 0;">Your login link is ready!</h2>
-                                <p style="color: #666; line-height: 1.6;">
-                                    Click the button below to securely log in to your Safe Maternity account. 
-                                    This link will expire in 15 minutes for your security.
-                                </p>
-                                <div style="text-align: center; margin: 30px 0;">
-                                    <a href="${magicLink}" style="
-                                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                                        color: white;
-                                        padding: 15px 30px;
-                                        text-decoration: none;
-                                        border-radius: 8px;
-                                        font-weight: bold;
-                                        display: inline-block;
-                                        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-                                    ">🚀 Log In to Safe Maternity</a>
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                            <title>Safe Maternity Login Link</title>
+                        </head>
+                        <body style="margin: 0; padding: 0; background-color: #f4f4f4;">
+                            <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                                <!-- Header with Safe Maternity branding -->
+                                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
+                                    <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 600;">
+                                        🤰 Safe Maternity
+                                    </h1>
+                                    <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;">
+                                        Your Trusted Pregnancy Safety Companion
+                                    </p>
                                 </div>
-                                <p style="color: #999; font-size: 14px; line-height: 1.5;">
-                                    If you didn't request this login link, you can safely ignore this email. 
-                                    Your account remains secure.
-                                </p>
-                                <hr style="border: 1px solid #eee; margin: 20px 0;">
-                                <p style="color: #999; font-size: 12px; text-align: center;">
-                                    This link expires in 15 minutes for your security.<br>
-                                    If the button doesn't work, copy and paste this link: ${magicLink}
-                                </p>
+                                
+                                <!-- Main Content -->
+                                <div style="padding: 40px 30px;">
+                                    <h2 style="color: #333; margin: 0 0 20px 0; font-size: 24px; font-weight: 600;">
+                                        Welcome to Safe Maternity! 👋
+                                    </h2>
+                                    
+                                    <p style="color: #555; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
+                                        Click the button below to securely access your Safe Maternity account. 
+                                        This magic link will expire in <strong>15 minutes</strong> for your security.
+                                    </p>
+                                    
+                                    <!-- CTA Button -->
+                                    <div style="text-align: center; margin: 35px 0;">
+                                        <a href="${magicLink}" style="
+                                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                            color: white;
+                                            padding: 16px 40px;
+                                            text-decoration: none;
+                                            border-radius: 50px;
+                                            font-weight: 600;
+                                            font-size: 16px;
+                                            display: inline-block;
+                                            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+                                            transition: all 0.3s ease;
+                                        ">
+                                            ✨ Access Safe Maternity Now
+                                        </a>
+                                    </div>
+                                    
+                                    <!-- Security Notice -->
+                                    <div style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; margin: 30px 0;">
+                                        <p style="color: #666; font-size: 14px; line-height: 1.5; margin: 0;">
+                                            <strong style="color: #333;">🔒 Security Notice:</strong><br>
+                                            If you didn't request this login link, you can safely ignore this email. 
+                                            Your Safe Maternity account remains secure.
+                                        </p>
+                                    </div>
+                                    
+                                    <!-- Alternative Link -->
+                                    <div style="border-top: 1px solid #e0e0e0; padding-top: 20px; margin-top: 30px;">
+                                        <p style="color: #888; font-size: 13px; text-align: center; line-height: 1.5;">
+                                            Having trouble with the button? Copy and paste this link into your browser:<br>
+                                            <a href="${magicLink}" style="color: #667eea; word-break: break-all;">
+                                                ${magicLink}
+                                            </a>
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Footer -->
+                                <div style="background-color: #f8f9fa; padding: 20px; text-align: center; border-top: 1px solid #e0e0e0;">
+                                    <p style="color: #888; font-size: 12px; margin: 0;">
+                                        © 2024 Safe Maternity - Your pregnancy safety companion<br>
+                                        <a href="https://safe-maternity.com" style="color: #667eea; text-decoration: none;">
+                                            www.safe-maternity.com
+                                        </a>
+                                    </p>
+                                </div>
                             </div>
-                        </div>
-                    `
+                        </body>
+                        </html>
+                    `,
+                    text: `
+Safe Maternity - Login Link
+
+Welcome to Safe Maternity!
+
+Click this link to log in to your account:
+${magicLink}
+
+This link will expire in 15 minutes for your security.
+
+If you didn't request this login link, you can safely ignore this email.
+
+© 2024 Safe Maternity
+www.safe-maternity.com
+                    `.trim()
                 };
                 
                 const info = await transporter.sendMail(mailOptions);
-                console.log('Magic link sent to:', email);
-                console.log('Email send info:', info);
+                console.log('✅ Magic link email sent successfully via Brevo!');
+                console.log('Email info:', {
+                    messageId: info.messageId,
+                    accepted: info.accepted,
+                    response: info.response,
+                    to: email
+                });
             } catch (emailError) {
-                console.error('Failed to send email:', emailError);
-                console.error('SMTP Config:', {
-                    host: process.env.SMTP_HOST,
-                    port: process.env.SMTP_PORT,
+                console.error('❌ Failed to send email via Brevo:', emailError.message);
+                console.error('Full error:', emailError);
+                console.error('Current SMTP Config:', {
+                    host: process.env.SMTP_HOST || 'Not set',
+                    port: process.env.SMTP_PORT || 'Not set', 
+                    from: process.env.SMTP_FROM || 'Not set',
                     user: process.env.SMTP_USER ? 'Set' : 'Not set',
                     pass: process.env.SMTP_PASS ? 'Set' : 'Not set'
                 });
-                // Don't fail the request if email fails - for development
+                // Still return success but log the error for debugging
             }
         } else {
-            // In development, log the magic link
-            console.log('Magic link for', email, ':', magicLink);
+            // No SMTP credentials configured
+            console.log('⚠️ SMTP credentials not configured. Magic link:', magicLink);
+            console.log('To enable email sending, configure SMTP_USER and SMTP_PASS environment variables');
         }
         
         return res.json({
@@ -314,6 +395,86 @@ router.post('/ton-wallet', async (req, res) => {
     } catch (error) {
         console.error('TON wallet auth error:', error);
         res.status(500).json({ success: false, error: 'Authentication failed' });
+    }
+});
+
+// Test email configuration (development only)
+router.post('/test-email', async (req, res) => {
+    try {
+        // Only allow in development or with admin token
+        if (process.env.NODE_ENV === 'production' && req.body.adminToken !== process.env.ADMIN_TOKEN) {
+            return res.status(403).json({ error: 'Not authorized' });
+        }
+        
+        const testEmail = req.body.email || process.env.TEST_EMAIL;
+        
+        if (!testEmail) {
+            return res.status(400).json({ error: 'Test email address required' });
+        }
+        
+        console.log('Testing Brevo email configuration...');
+        
+        // Verify transporter configuration
+        try {
+            await transporter.verify();
+            console.log('✅ Brevo SMTP connection verified successfully');
+        } catch (verifyError) {
+            console.error('❌ Brevo SMTP verification failed:', verifyError);
+            return res.status(500).json({ 
+                error: 'SMTP verification failed', 
+                details: verifyError.message,
+                config: {
+                    host: process.env.SMTP_HOST || 'Not set',
+                    port: process.env.SMTP_PORT || 'Not set',
+                    from: process.env.SMTP_FROM || 'Not set',
+                    userConfigured: !!process.env.SMTP_USER,
+                    passConfigured: !!process.env.SMTP_PASS
+                }
+            });
+        }
+        
+        // Send test email
+        const testMailOptions = {
+            from: `"Safe Maternity Test" <${process.env.SMTP_FROM || 'noreply@safe-maternity.com'}>`,
+            to: testEmail,
+            subject: '✅ Safe Maternity Email Test',
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <h2 style="color: #667eea;">Safe Maternity Email Test</h2>
+                    <p>This is a test email to verify that your Brevo email configuration is working correctly.</p>
+                    <p><strong>Configuration Details:</strong></p>
+                    <ul>
+                        <li>SMTP Host: ${process.env.SMTP_HOST || 'Not configured'}</li>
+                        <li>SMTP Port: ${process.env.SMTP_PORT || 'Not configured'}</li>
+                        <li>From Address: ${process.env.SMTP_FROM || 'Not configured'}</li>
+                        <li>Timestamp: ${new Date().toISOString()}</li>
+                    </ul>
+                    <p style="color: #666; margin-top: 20px;">If you received this email, your Brevo configuration is working! 🎉</p>
+                </div>
+            `,
+            text: `Safe Maternity Email Test\n\nThis is a test email to verify that your Brevo email configuration is working correctly.\n\nIf you received this email, your configuration is working!`
+        };
+        
+        const info = await transporter.sendMail(testMailOptions);
+        
+        console.log('✅ Test email sent successfully:', info);
+        
+        res.json({
+            success: true,
+            message: `Test email sent to ${testEmail}`,
+            info: {
+                messageId: info.messageId,
+                accepted: info.accepted,
+                response: info.response
+            }
+        });
+        
+    } catch (error) {
+        console.error('Test email error:', error);
+        res.status(500).json({ 
+            error: 'Failed to send test email',
+            details: error.message
+        });
     }
 });
 

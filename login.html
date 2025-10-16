@@ -301,7 +301,7 @@
             </label>
         </div>
 
-        <button onclick="signUpWithEmail()" class="signup-button">
+        <button onclick="signUpWithEmail()" class="signup-button" id="signup-button">
             Create Free Account
         </button>
 
@@ -362,7 +362,7 @@
         // Email magic link function
         function loginWithEmail() {
             const email = document.getElementById('email-input').value;
-            const button = document.querySelector('#email-login-form button');
+            const button = document.getElementById('signup-button');
             
             if (!email || !email.includes('@')) {
                 showError('Please enter a valid email address');
@@ -374,9 +374,11 @@
             const referralCode = urlParams.get('ref');
             
             // Show loading state
-            const originalText = button.textContent;
-            button.textContent = 'Sending magic link...';
-            button.disabled = true;
+            if (button) {
+                const originalText = button.textContent;
+                button.textContent = 'Sending magic link...';
+                button.disabled = true;
+            }
             
             // Request magic link - using the correct endpoint
             fetch('/auth/request-magic-link', {
@@ -401,15 +403,19 @@
                     }
                 } else {
                     showError(data.error || 'Failed to send magic link');
-                    button.textContent = originalText;
-                    button.disabled = false;
+                    if (button) {
+                        button.textContent = 'Create Free Account';
+                        button.disabled = false;
+                    }
                 }
             })
             .catch(error => {
                 console.error('Magic link error:', error);
                 showError('Failed to send magic link. Please try again.');
-                button.textContent = originalText;
-                button.disabled = false;
+                if (button) {
+                    button.textContent = 'Create Free Account';
+                    button.disabled = false;
+                }
             });
         }
         
