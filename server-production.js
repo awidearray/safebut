@@ -155,6 +155,10 @@ app.get('/terms', (req, res) => {
     res.sendFile(path.join(__dirname, 'terms.html'));
 });
 
+app.get('/safety', (req, res) => {
+    res.sendFile(path.join(__dirname, 'safety.html'));
+});
+
 app.get('/policy', (req, res) => {
     res.sendFile(path.join(__dirname, 'policy.html'));
 });

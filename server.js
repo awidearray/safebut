@@ -104,8 +104,16 @@ app.get('/terms', (req, res) => {
     res.sendFile(path.join(__dirname, 'terms.html'));
 });
 
+app.get('/safety', (req, res) => {
+    res.sendFile(path.join(__dirname, 'safety.html'));
+});
+
 app.get('/delete-my-data', (req, res) => {
     res.sendFile(path.join(__dirname, 'delete-my-data.html'));
+});
+
+app.get('/guide', (req, res) => {
+    res.sendFile(path.join(__dirname, 'guide.html'));
 });
 
 // Serve static files explicitly for Vercel
