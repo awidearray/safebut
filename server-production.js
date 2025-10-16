@@ -167,6 +167,11 @@ app.get('/delete-my-data', (req, res) => {
     res.sendFile(path.join(__dirname, 'delete-my-data.html'));
 });
 
+app.get('/logo.svg', (req, res) => {
+    res.setHeader('Content-Type', 'image/svg+xml');
+    res.sendFile(path.join(__dirname, 'logo.svg'));
+});
+
 // Serve static files explicitly for Vercel
 app.get('/styles.css', (req, res) => {
     res.setHeader('Content-Type', 'text/css');

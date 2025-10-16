@@ -127,6 +127,11 @@ app.get('/app.js', (req, res) => {
     res.sendFile(path.join(__dirname, 'app.js'));
 });
 
+app.get('/logo.svg', (req, res) => {
+    res.setHeader('Content-Type', 'image/svg+xml');
+    res.sendFile(path.join(__dirname, 'logo.svg'));
+});
+
 app.post('/api/check-safety', async (req, res) => {
     try {
         if (!process.env.VENICE_API_KEY) {
