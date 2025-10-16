@@ -46,31 +46,27 @@ router.post('/request-magic-link', async (req, res) => {
         });
         
         // Create magic link with correct base URL (production-safe)
-        const forwardedProto = req.headers['x-forwarded-proto'];
-        const forwardedHost = req.headers['x-forwarded-host'];
-        const effectiveProto = forwardedProto || req.protocol;
-        const effectiveHost = forwardedHost || req.get('host');
-        const computedBaseUrl = `${effectiveProto}://${effectiveHost}`;
-        const baseUrl = process.env.BASE_URL || computedBaseUrl;
+        // Always use https://safe-maternity.com for production magic links
+        const baseUrl = process.env.BASE_URL || 'https://safe-maternity.com';
         const magicLink = `${baseUrl}/auth/verify-magic-link?token=${token}`;
         
         // Send email (if SMTP is configured)
         if (process.env.SMTP_USER && process.env.SMTP_PASS) {
             try {
                 const mailOptions = {
-                    from: process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@safebut.com',
+                    from: process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@safematernity.com',
                     to: email,
-                    subject: '🤰 Your Safebut Login Link',
+                    subject: '🤰 Your Safe Maternity Login Link',
                     html: `
                         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                             <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px 10px 0 0;">
-                                <h1 style="color: white; margin: 0; text-align: center;">🤰 Safebut</h1>
+                                <h1 style="color: white; margin: 0; text-align: center;">🤰 Safe Maternity</h1>
                                 <p style="color: white; margin: 5px 0 0; text-align: center;">Pregnancy Safety Checker</p>
                             </div>
                             <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
                                 <h2 style="color: #333; margin-top: 0;">Your login link is ready!</h2>
                                 <p style="color: #666; line-height: 1.6;">
-                                    Click the button below to securely log in to your Safebut account. 
+                                    Click the button below to securely log in to your Safe Maternity account. 
                                     This link will expire in 15 minutes for your security.
                                 </p>
                                 <div style="text-align: center; margin: 30px 0;">
@@ -83,7 +79,7 @@ router.post('/request-magic-link', async (req, res) => {
                                         font-weight: bold;
                                         display: inline-block;
                                         box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-                                    ">🚀 Log In to Safebut</a>
+                                    ">🚀 Log In to Safe Maternity</a>
                                 </div>
                                 <p style="color: #999; font-size: 14px; line-height: 1.5;">
                                     If you didn't request this login link, you can safely ignore this email. 
