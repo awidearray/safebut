@@ -346,11 +346,9 @@ app.post('/api/check-image-safety', async (req, res) => {
         
         const apiUrl = 'https://api.venice.ai/api/v1/chat/completions';
         
-        // Try multiple vision models in order of preference
-        // Note: Venice AI may not support dedicated vision models, using GPT-4o which can handle images
+        // Use Venice vision-capable models (validated via /models)
         const visionModels = [
-            'gpt-4o',
-            'gpt-4o-mini'
+            'mistral-31-24b'
         ];
 
         let lastError = null;
@@ -387,16 +385,14 @@ TIPS: [2-3 short practical tips based on what's in the image]`
                         }
                     ],
                     temperature: 0.3,
-                    max_tokens: 200,
-                    timeout: 30000
+                    max_tokens: 200
                 };
                 
                 const response = await axios.post(apiUrl, visionRequestBody, {
                     headers: {
                         'Authorization': `Bearer ${process.env.VENICE_API_KEY}`,
                         'Content-Type': 'application/json'
-                    },
-                    timeout: 30000
+                    }
                 });
 
                 console.log(`✅ Image analysis successful with model: ${modelName}`);
@@ -423,29 +419,25 @@ TIPS: [2-3 short practical tips based on what's in the image]`
             }
         }
         
-        // If all vision models failed, provide a helpful response
-        if (lastError) {
-            console.log('Vision analysis not available, providing helpful guidance...');
-            
-            // Return a helpful message for the user
-            const helpfulResponse = `RISK_SCORE: 5
-SAFETY: Unable to analyze
-WHY: Image analysis is temporarily unavailable. Please describe what you want to check instead.
+        // If all models failed, provide a graceful fallback
+        console.log('All vision models failed for image analysis, returning graceful fallback');
+        const helpfulResponse = `RISK_SCORE: 5
+SAFETY: Caution
+WHY: We couldn't analyze this image right now. Please try another photo or type what you want to check.
 TIPS:
-- Type the name of the item, food, or medication you want to check
-- Be specific (e.g., "tylenol", "sushi", "hair dye")
-- You can also search for activities like "hot yoga" or "flying"`;
-            
-            return res.json({ 
-                result: helpfulResponse,
-                riskScore: 5,
-                references: [
-                    { title: 'Mayo Clinic - Pregnancy Week by Week', url: 'https://www.mayoclinic.org/healthy-lifestyle/pregnancy-week-by-week/basics/pregnancy-week-by-week/hlv-20049471' },
-                    { title: 'American Pregnancy Association', url: 'https://americanpregnancy.org/healthy-pregnancy/' },
-                    { title: 'CDC - Pregnancy Safety', url: 'https://www.cdc.gov/pregnancy/index.html' }
-                ],
-                imageAnalysisUnavailable: true
-            });
+- Use a clear, well-lit photo focusing on one item
+- Or type the name of the item (e.g., "coffee", "sushi", "ibuprofen")
+- Include brand/type when relevant`;
+        
+        return res.json({ 
+            result: helpfulResponse,
+            riskScore: 5,
+            references: [
+                { title: 'Mayo Clinic - Pregnancy Week by Week', url: 'https://www.mayoclinic.org/healthy-lifestyle/pregnancy-week-by-week/basics/pregnancy-week-by-week/hlv-20049471' },
+                { title: 'American Pregnancy Association', url: 'https://americanpregnancy.org/healthy-pregnancy/' },
+                { title: 'CDC - Pregnancy Safety', url: 'https://www.cdc.gov/pregnancy/index.html' }
+            ]
+        });
             
             // Skip the text fallback API call since it won't help
             /*
@@ -470,7 +462,6 @@ TIPS: Take a clear photo in good lighting, or type what you want to check instea
                     max_tokens: 150
                 };
             */
-        }
     } catch (error) {
         console.error('Image analysis setup error:', error.message);
         // Final catch-all graceful response

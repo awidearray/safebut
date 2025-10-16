@@ -511,6 +511,9 @@ class PregnancySafetyChecker {
         const riskIndicator = document.getElementById('riskIndicator');
         const safetyVerdict = document.getElementById('safetyVerdict');
         const referenceLinks = document.getElementById('referenceLinks');
+        
+        // Add class to body for mobile scrolling fix
+        document.body.classList.add('results-shown');
 
         itemName.textContent = item;
 
@@ -901,6 +904,9 @@ class PregnancySafetyChecker {
 
     hideResults() {
         document.getElementById('results').style.display = 'none';
+        
+        // Remove class when results are hidden
+        document.body.classList.remove('results-shown');
         
         // Also hide details section
         const detailsSection = document.getElementById('detailsSection');

@@ -383,11 +383,9 @@ app.post('/api/check-image-safety', async (req, res) => {
         
         const apiUrl = 'https://api.venice.ai/api/v1/chat/completions';
         
-        // Try multiple vision models in order of preference
-        // Note: Venice AI may not support dedicated vision models, using GPT-4o which can handle images
+        // Use Venice vision-capable models (validated via /models)
         const visionModels = [
-            'gpt-4o',
-            'gpt-4o-mini'
+            'mistral-31-24b'
         ];
 
         let lastError = null;
@@ -433,16 +431,14 @@ TIPS: [2-3 short practical tips for breastfeeding mothers]`
                         }
                     ],
                     temperature: 0.3,
-                    max_tokens: 300,
-                    timeout: 30000
+                    max_tokens: 300
                 };
                 
                 const response = await axios.post(apiUrl, requestBody, {
                     headers: {
                         'Authorization': `Bearer ${process.env.VENICE_API_KEY}`,
                         'Content-Type': 'application/json'
-                    },
-                    timeout: 30000
+                    }
                 });
 
                 console.log(`✅ Image analysis successful with model: ${modelName}`);
@@ -455,14 +451,34 @@ TIPS: [2-3 short practical tips for breastfeeding mothers]`
             }
         }
         
-        // If no model succeeded, return error
-        if (!aiResponse) {
-            console.error('All vision models failed');
-            return res.status(500).json({ 
-                error: 'Failed to analyze image. Please try again later.',
-                details: lastError?.message || 'Unknown error'
-            });
-        }
+        // If all models failed, provide a graceful fallback
+        console.log('All vision models failed for image analysis (premium), returning graceful fallback');
+        const helpfulResponse = `PREGNANCY:
+RISK_SCORE: 5
+SAFETY: Caution
+WHY: We couldn't analyze this image right now. Please try another photo or type what you want to check.
+TIPS:
+- Use a clear, well-lit photo focusing on one item
+- Or type the item (e.g., "coffee", "sushi", "ibuprofen")
+
+BREASTFEEDING:
+RISK_SCORE: 5
+SAFETY: Caution
+WHY: Unable to analyze this image now. Type the product for guidance.
+TIPS:
+- Include brand/type for more precise advice`;
+        
+        return res.json({ 
+            result: helpfulResponse,
+            pregnancyRiskScore: 5,
+            breastfeedingRiskScore: 5,
+            riskScore: 5,
+            references: [
+                { title: 'Mayo Clinic - Pregnancy Week by Week', url: 'https://www.mayoclinic.org/healthy-lifestyle/pregnancy-week-by-week/basics/pregnancy-week-by-week/hlv-20049471' },
+                { title: 'American Pregnancy Association', url: 'https://americanpregnancy.org/healthy-pregnancy/' },
+                { title: 'CDC - Pregnancy Safety', url: 'https://www.cdc.gov/pregnancy/index.html' }
+            ]
+        });
         
         // Parse pregnancy risk score (default section)
         const pregnancyRiskMatch = aiResponse.match(/PREGNANCY:[\s\S]*?RISK_SCORE:\s*(\d+)/);
