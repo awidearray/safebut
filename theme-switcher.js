@@ -98,6 +98,15 @@ class ThemeSwitcher {
                     animation: slideIn 0.3s ease;
                 }
 
+                /* On mobile, position at top to avoid blocking content */
+                @media (max-width: 768px) {
+                    .theme-switcher-container {
+                        top: 10px;
+                        right: 10px;
+                        bottom: auto;
+                    }
+                }
+
                 .theme-switcher {
                     display: flex;
                     gap: 4px;
@@ -123,6 +132,13 @@ class ThemeSwitcher {
                     font-size: 0.85rem;
                     transition: all 0.2s ease;
                     font-family: inherit;
+                }
+
+                /* Smaller padding on mobile */
+                @media (max-width: 768px) {
+                    .theme-btn {
+                        padding: 6px 8px;
+                    }
                 }
 
                 .theme-btn:hover {

@@ -203,21 +203,49 @@
             cursor: pointer;
             font-size: 0.85rem;
             color: var(--text-secondary);
+            line-height: 1.4;
         }
 
         .terms-checkbox input {
             margin-right: 8px;
             margin-top: 3px;
             cursor: pointer;
+            flex-shrink: 0;
+            min-width: 16px;
+        }
+
+        .terms-checkbox span {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            width: 100%;
         }
 
         .terms-checkbox a {
             color: var(--primary-color);
             text-decoration: none;
+            white-space: nowrap;
         }
 
         .terms-checkbox a:hover {
             text-decoration: underline;
+        }
+
+        /* Mobile-specific fixes */
+        @media (max-width: 600px) {
+            .terms-checkbox label {
+                font-size: 0.8rem;
+            }
+            
+            .terms-checkbox span {
+                line-height: 1.5;
+            }
+            
+            /* Allow links to wrap on very small screens */
+            @media (max-width: 380px) {
+                .terms-checkbox a {
+                    white-space: normal;
+                }
+            }
         }
 
         .already-account {
@@ -270,10 +298,20 @@
         @media (max-width: 600px) {
             .login-container {
                 padding: 30px 20px;
+                margin-top: 60px; /* Add space for theme switcher at top */
+                margin-bottom: 40px; /* Ensure content isn't cut off */
             }
             
             h1 {
                 font-size: 1.75rem;
+            }
+            
+            /* Ensure button has enough tap area and isn't blocked */
+            .signup-button {
+                padding: 16px 20px;
+                margin-bottom: 25px;
+                position: relative;
+                z-index: 10;
             }
         }
     </style>
