@@ -46,6 +46,9 @@ const userSchema = new mongoose.Schema({
     // Encrypted health profile
     encryptedProfile: String,
     
+    // User preferences
+    showAIThoughts: { type: Boolean, default: false }, // Premium feature to see AI reasoning
+    
     // Subscription info
     isPremium: { type: Boolean, default: false },
     stripeCustomerId: String,

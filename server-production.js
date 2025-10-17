@@ -248,6 +248,9 @@ if (process.env.NODE_ENV !== 'production') {
 app.get('/api/profile', verifyToken, async (req, res) => {
     try {
         const profile = req.user.getProfile();
+        // Include the showAIThoughts preference
+        if (!profile.preferences) profile.preferences = {};
+        profile.preferences.showAIThoughts = req.user.showAIThoughts || false;
         res.json({ success: true, profile });
     } catch (error) {
         console.error('Get profile error:', error);
@@ -258,6 +261,13 @@ app.get('/api/profile', verifyToken, async (req, res) => {
 app.post('/api/profile', verifyToken, async (req, res) => {
     try {
         await req.user.saveProfile(req.body);
+        
+        // Also save the showAIThoughts preference if provided
+        if (req.body.preferences && req.body.preferences.showAIThoughts !== undefined) {
+            req.user.showAIThoughts = req.body.preferences.showAIThoughts;
+            await req.user.save();
+        }
+        
         res.json({ success: true, message: 'Profile saved successfully' });
     } catch (error) {
         console.error('Save profile error:', error);
@@ -486,19 +496,26 @@ TIPS: [2-3 short practical tips specific to the patient's conditions if applicab
         });
 
         const aiResponse = response.data.choices[0].message.content;
+        
+        // Clean the AI response to remove thinking process
+        const cleaned = cleanAIResponse(aiResponse);
+        
         // Parse risk scores for either single or dual format
         let responseData;
         if (includeBreastfeeding) {
-            const pregMatch = aiResponse.match(/PREGNANCY_RISK_SCORE:\s*(\d+)/i);
-            const bfMatch = aiResponse.match(/BREASTFEEDING_RISK_SCORE:\s*(\d+)/i);
+            const pregMatch = cleaned.response.match(/PREGNANCY_RISK_SCORE:\s*(\d+)/i);
+            const bfMatch = cleaned.response.match(/BREASTFEEDING_RISK_SCORE:\s*(\d+)/i);
             const pregnancyRiskScore = pregMatch ? parseInt(pregMatch[1]) : 5;
             const breastfeedingRiskScore = bfMatch ? parseInt(bfMatch[1]) : null;
             responseData = {
-                result: aiResponse,
+                result: cleaned.response,
                 hasBothSections: true,
                 pregnancyRiskScore,
                 breastfeedingRiskScore,
-                references
+                references,
+                thinking: cleaned.thinking,
+                hasThinking: cleaned.hasThinking,
+                showAIThoughts: user?.showAIThoughts || false
             };
             // Track usage and history if authenticated
             if (user) {
@@ -526,7 +543,7 @@ TIPS: [2-3 short practical tips specific to the patient's conditions if applicab
             return res.json(responseData);
         }
 
-        const riskScoreMatch = aiResponse.match(/RISK_SCORE:\s*(\d+)/);
+        const riskScoreMatch = cleaned.response.match(/RISK_SCORE:\s*(\d+)/);
         const riskScore = riskScoreMatch ? parseInt(riskScoreMatch[1]) : 5;
         
         const references = [
@@ -536,9 +553,12 @@ TIPS: [2-3 short practical tips specific to the patient's conditions if applicab
         ];
         
         responseData = { 
-            result: aiResponse,
+            result: cleaned.response,
             riskScore: riskScore,
-            references: references
+            references: references,
+            thinking: cleaned.thinking,
+            hasThinking: cleaned.hasThinking,
+            showAIThoughts: user?.showAIThoughts || false
         };
         
         // Cache the response
@@ -716,6 +736,72 @@ TIPS:
     }
 });
 
+// Helper function to clean AI thinking process from responses
+function cleanAIResponse(rawResponse) {
+    // Check if response contains thinking/reasoning patterns
+    const thinkingPatterns = [
+        /^\s*We are starting with.*?$/ms,
+        /^\s*First,? I.*?$/gm,
+        /^\s*I need to.*?$/gm,
+        /^\s*Let me.*?$/gm,
+        /^\s*Now,? I.*?$/gm,
+        /^\s*Important:.*?$/gm,
+        /^\s*Note:.*?about.*?$/gm,
+        /^\s*We must.*?$/gm,
+        /^\s*We are to.*?$/gm,
+        /^\s*Let's structure.*?$/gm,
+        /^\s*\d+\.\s+[A-Z][^:]+:.*?$/gm
+    ];
+    
+    let cleanedResponse = rawResponse;
+    let thinking = '';
+    
+    // Try to detect if there's a clear separation between thinking and actual response
+    // Look for RISK_SCORE as the start of the actual response
+    const riskScoreIndex = rawResponse.search(/^RISK_SCORE:\s*\d+/m);
+    
+    if (riskScoreIndex > 0) {
+        // Check if there's substantial text before RISK_SCORE that looks like thinking
+        const beforeRiskScore = rawResponse.substring(0, riskScoreIndex);
+        
+        // If there's thinking-like content before RISK_SCORE, separate it
+        if (beforeRiskScore.length > 30) {
+            // Check if the text before RISK_SCORE contains thinking patterns
+            const lowerBefore = beforeRiskScore.toLowerCase();
+            const hasThinkingIndicators = 
+                lowerBefore.includes('we are starting') ||
+                lowerBefore.includes('let me') ||
+                lowerBefore.includes('i need to') ||
+                lowerBefore.includes('first, i') ||
+                lowerBefore.includes('now, i') ||
+                lowerBefore.includes('we must') ||
+                lowerBefore.includes('we are to') ||
+                lowerBefore.includes("let's") ||
+                lowerBefore.includes('important:') ||
+                lowerBefore.includes('note:');
+            
+            if (hasThinkingIndicators) {
+                thinking = beforeRiskScore.trim();
+                cleanedResponse = rawResponse.substring(riskScoreIndex);
+            }
+        }
+    }
+    
+    // Additional cleanup: Remove any inline thinking patterns that might remain
+    for (const pattern of thinkingPatterns) {
+        cleanedResponse = cleanedResponse.replace(pattern, '');
+    }
+    
+    // Remove excessive blank lines
+    cleanedResponse = cleanedResponse.replace(/\n{3,}/g, '\n\n');
+    
+    return {
+        response: cleanedResponse.trim(),
+        thinking: thinking,
+        hasThinking: thinking.length > 0
+    };
+}
+
 // Detailed Safety Information endpoint
 app.post('/api/detailed-safety', async (req, res) => {
     try {
@@ -881,13 +967,20 @@ Be comprehensive and evidence-based. Address any specific conditions mentioned.`
 
         const aiResponse = response.data.choices[0].message.content;
         
+        // Clean the AI response to remove thinking process
+        const cleaned = cleanAIResponse(aiResponse);
+        
         // Extract risk score for UI meter if present
-        const riskMatch = aiResponse.match(/RISK_SCORE:\s*(\d+)/i);
+        const riskMatch = cleaned.response.match(/RISK_SCORE:\s*(\d+)/i);
         const riskScore = riskMatch ? parseInt(riskMatch[1]) : 5;
         
         res.json({ 
-            result: aiResponse,
-            riskScore
+            result: cleaned.response,
+            riskScore,
+            // Include thinking based on user preference
+            thinking: cleaned.thinking,
+            hasThinking: cleaned.hasThinking,
+            showAIThoughts: user?.showAIThoughts || false
         });
     } catch (error) {
         console.error('Venice AI detailed API error:', error.response?.data || error.message);

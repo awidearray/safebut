@@ -126,7 +126,8 @@ class PregnancySafetyChecker {
                 weightUnit: document.querySelector('input[name="weight-unit"]:checked')?.value || 'imperial',
                 detailLevel: document.querySelector('input[name="detail-level"]:checked')?.value || 'brief',
                 languageStyle: document.querySelector('input[name="language-style"]:checked')?.value || 'simple',
-                riskStyle: document.querySelector('input[name="risk-style"]:checked')?.value || 'balanced'
+                riskStyle: document.querySelector('input[name="risk-style"]:checked')?.value || 'balanced',
+                showAIThoughts: document.getElementById('show-ai-thoughts')?.checked || false
             }
         };
         
@@ -218,6 +219,14 @@ class PregnancySafetyChecker {
         if (profile.trimester) {
             const radio = document.querySelector(`input[name="trimester"][value="${profile.trimester}"]`);
             if (radio) radio.checked = true;
+        }
+        
+        // Load preferences including AI thoughts toggle
+        if (profile.preferences) {
+            if (profile.preferences.showAIThoughts !== undefined) {
+                const aiThoughtsCheckbox = document.getElementById('show-ai-thoughts');
+                if (aiThoughtsCheckbox) aiThoughtsCheckbox.checked = profile.preferences.showAIThoughts;
+            }
         }
     }
 
@@ -570,6 +579,23 @@ class PregnancySafetyChecker {
         }
 
         // Format and display content - handle both single and dual format
+        let contentHTML = '';
+        
+        // Add thinking accordion if present (check user preference or server flag)
+        const showAIThoughts = data.showAIThoughts || this.shouldShowAIThoughts();
+        if (data.hasThinking && data.thinking && showAIThoughts) {
+            contentHTML += `
+                <details class="thinking-accordion" style="margin-bottom: 1rem; padding: 0.5rem; background: #f5f5f5; border-radius: 8px; border: 1px solid #ddd;">
+                    <summary style="cursor: pointer; padding: 0.5rem; font-weight: 500; color: #666;">
+                        🤔 View AI Reasoning Process
+                    </summary>
+                    <div style="padding: 1rem; color: #666; font-size: 0.9rem; white-space: pre-wrap; max-height: 300px; overflow-y: auto;">
+                        ${this.escapeHtml(data.thinking)}
+                    </div>
+                </details>
+            `;
+        }
+        
         let formattedContent = this.formatContent(data.result);
         
         // If we have both pregnancy and breastfeeding sections, format them separately
@@ -577,7 +603,8 @@ class PregnancySafetyChecker {
             formattedContent = this.formatDualContent(data.result, data.pregnancyRiskScore, data.breastfeedingRiskScore);
         }
         
-        resultContent.innerHTML = formattedContent;
+        contentHTML += formattedContent;
+        resultContent.innerHTML = contentHTML;
 
         // Add reference links
         if (data.references && data.references.length > 0) {
@@ -630,8 +657,28 @@ class PregnancySafetyChecker {
 
             // Display detailed results
             if (detailedAnswer && result) {
+                let contentHTML = '';
+                
+                // Add thinking accordion if present (check user preference or server flag)
+                const showAIThoughts = result.showAIThoughts || this.shouldShowAIThoughts();
+                if (result.hasThinking && result.thinking && showAIThoughts) {
+                    contentHTML += `
+                        <details class="thinking-accordion" style="margin-bottom: 1rem; padding: 0.5rem; background: #f5f5f5; border-radius: 8px; border: 1px solid #ddd;">
+                            <summary style="cursor: pointer; padding: 0.5rem; font-weight: 500; color: #666;">
+                                🤔 View AI Reasoning Process
+                            </summary>
+                            <div style="padding: 1rem; color: #666; font-size: 0.9rem; white-space: pre-wrap; max-height: 300px; overflow-y: auto;">
+                                ${this.escapeHtml(result.thinking)}
+                            </div>
+                        </details>
+                    `;
+                }
+                
+                // Add the actual content
                 const formattedContent = this.formatContent(result.result);
-                detailedAnswer.innerHTML = formattedContent;
+                contentHTML += formattedContent;
+                
+                detailedAnswer.innerHTML = contentHTML;
                 detailedContent.style.display = 'block';
                 
                 // Change button text to indicate more details were loaded
@@ -682,6 +729,29 @@ class PregnancySafetyChecker {
         } else {
             return { text: 'Check Details', class: 'caution' };
         }
+    }
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    shouldShowAIThoughts() {
+        // Check if user is premium and has enabled AI thoughts
+        const isPremium = localStorage.getItem('isPremium') === 'true';
+        if (!isPremium) return false;
+        
+        // Check user preference
+        const savedProfile = localStorage.getItem('pregnancyProfile');
+        if (savedProfile) {
+            const profile = JSON.parse(savedProfile);
+            return profile.preferences?.showAIThoughts || false;
+        }
+        
+        // Also check the checkbox directly in case it was just changed
+        const checkbox = document.getElementById('show-ai-thoughts');
+        return checkbox?.checked || false;
     }
 
     formatContent(content) {
@@ -1613,13 +1683,16 @@ END:VCALENDAR`;
                 // Show/hide affiliate features based on premium status
                 const affiliateSection = document.getElementById('affiliateSection');
                 const leaderboardTab = document.getElementById('leaderboardTabBtn');
+                const aiThoughtsGroup = document.getElementById('aiThoughtsGroup');
                 
                 if (this.isPremium) {
                     if (affiliateSection) affiliateSection.style.display = 'block';
                     if (leaderboardTab) leaderboardTab.style.display = 'inline-block';
+                    if (aiThoughtsGroup) aiThoughtsGroup.style.display = 'block';
                 } else {
                     if (affiliateSection) affiliateSection.style.display = 'none';
                     if (leaderboardTab) leaderboardTab.style.display = 'none';
+                    if (aiThoughtsGroup) aiThoughtsGroup.style.display = 'none';
                 }
             }
         } catch (error) {
