@@ -1,20 +1,77 @@
-require('dotenv').config();
+// Only load dotenv in development
+if (process.env.NODE_ENV !== 'production') {
+    try {
+        require('dotenv').config();
+    } catch (error) {
+        console.log('No .env file found, using environment variables');
+    }
+}
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const axios = require('axios');
 const session = require('express-session');
-const MongoStore = require('connect-mongo');
-const connectDB = require('./config/database');
 
-// Import middleware
-const { verifyToken, requirePremium } = require('./middleware/auth');
+// Conditionally load MongoStore only if MongoDB is configured
+let MongoStore;
+if (process.env.MONGODB_URI || process.env.mongodb_uri) {
+    try {
+        MongoStore = require('connect-mongo');
+    } catch (error) {
+        console.log('connect-mongo not available, using MemoryStore for sessions');
+    }
+}
 
-// Import routes
-const authRoutes = require('./routes/auth');
-const affiliateRoutes = require('./routes/affiliate');
-const paymentRoutes = require('./routes/payment');
-const User = require('./models/User');
+let connectDB;
+try {
+    connectDB = require('./config/database');
+} catch (error) {
+    console.log('Database module not available');
+}
+
+// Import middleware with error handling
+let verifyToken, requirePremium;
+try {
+    const authMiddleware = require('./middleware/auth');
+    verifyToken = authMiddleware.verifyToken;
+    requirePremium = authMiddleware.requirePremium;
+} catch (error) {
+    console.error('Auth middleware not available:', error.message);
+    // Provide fallback middleware
+    verifyToken = (req, res, next) => {
+        res.status(503).json({ error: 'Authentication service unavailable' });
+    };
+    requirePremium = (req, res, next) => {
+        res.status(503).json({ error: 'Premium service unavailable' });
+    };
+}
+
+// Import routes with error handling
+let authRoutes, affiliateRoutes, paymentRoutes, User;
+try {
+    authRoutes = require('./routes/auth');
+} catch (error) {
+    console.error('Auth routes not available:', error.message);
+}
+
+try {
+    affiliateRoutes = require('./routes/affiliate');
+} catch (error) {
+    console.error('Affiliate routes not available:', error.message);
+}
+
+try {
+    paymentRoutes = require('./routes/payment');
+} catch (error) {
+    console.error('Payment routes not available:', error.message);
+}
+
+try {
+    User = require('./models/User');
+} catch (error) {
+    console.error('User model not available:', error.message);
+}
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -25,32 +82,47 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // Connect to MongoDB (gracefully skip if not configured to avoid serverless crash)
-if (process.env.MONGODB_URI || process.env.mongodb_uri) {
-    connectDB();
+if ((process.env.MONGODB_URI || process.env.mongodb_uri) && connectDB) {
+    try {
+        connectDB();
+    } catch (error) {
+        console.error('Failed to connect to database:', error.message);
+    }
 } else {
-    console.warn('MONGODB_URI is not set. Running without database connection.');
+    console.warn('MONGODB_URI is not set or database module unavailable. Running without database connection.');
 }
 
 // Simple in-memory cache
 const responseCache = new Map();
 const CACHE_DURATION = 60 * 60 * 1000; // 1 hour in milliseconds
 
-// Session configuration (fallbacks to prevent crashes when env missing)
-app.use(session({
-    secret: process.env.SESSION_SECRET || 'change-me-fallback-secret',
+// Session configuration with better error handling for serverless
+const sessionConfig = {
+    secret: process.env.SESSION_SECRET || process.env.session_secret || 'safebut-default-secret-change-in-production',
     resave: false,
     saveUninitialized: false,
-    store: process.env.MONGODB_URI ? MongoStore.create({
-        mongoUrl: process.env.MONGODB_URI,
-        ttl: 14 * 24 * 60 * 60 // 14 days
-    }) : undefined, // Use MemoryStore if no Mongo configured
     cookie: {
         secure: process.env.NODE_ENV === 'production',
         httpOnly: true,
         maxAge: 14 * 24 * 60 * 60 * 1000, // 14 days
         sameSite: 'lax' // Allow cookies from email client redirects
     }
-}));
+};
+
+// Only add MongoDB store if available and configured
+if ((process.env.MONGODB_URI || process.env.mongodb_uri) && MongoStore) {
+    try {
+        sessionConfig.store = MongoStore.create({
+            mongoUrl: process.env.MONGODB_URI || process.env.mongodb_uri,
+            ttl: 14 * 24 * 60 * 60, // 14 days
+            touchAfter: 24 * 3600 // lazy session update
+        });
+    } catch (error) {
+        console.error('Failed to create MongoDB session store:', error.message);
+    }
+}
+
+app.use(session(sessionConfig));
 
 
 app.use(cors({
@@ -90,17 +162,43 @@ app.use(express.static(path.join(__dirname), {
     }
 }));
 
-// Auth routes
-app.use('/auth', authRoutes);
-app.use('/api/affiliate', affiliateRoutes);
+// Auth routes (with fallback if not available)
+if (authRoutes) {
+    app.use('/auth', authRoutes);
+} else {
+    app.use('/auth', (req, res) => {
+        res.status(503).json({ error: 'Authentication service temporarily unavailable' });
+    });
+}
 
-// Payment routes
-app.use('/payment', paymentRoutes);
+if (affiliateRoutes) {
+    app.use('/api/affiliate', affiliateRoutes);
+}
 
-// Main pages
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
+// Payment routes (with fallback)
+if (paymentRoutes) {
+    app.use('/payment', paymentRoutes);
+} else {
+    app.use('/payment', (req, res) => {
+        res.status(503).json({ error: 'Payment service temporarily unavailable' });
+    });
+}
+
+// Error handler for async routes
+const asyncHandler = (fn) => (req, res, next) => {
+    Promise.resolve(fn(req, res, next)).catch(next);
+};
+
+// Main pages with error handling
+app.get('/', asyncHandler((req, res) => {
+    const indexPath = path.join(__dirname, 'index.html');
+    res.sendFile(indexPath, (err) => {
+        if (err) {
+            console.error('Error serving index.html:', err);
+            res.status(500).send('Server configuration error. Please contact support.');
+        }
+    });
+}));
 
 app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname, 'login.html'));
@@ -1484,6 +1582,32 @@ app.get('/api/history', verifyToken, async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch history' });
     }
+});
+
+// Global error handler middleware (must be last)
+app.use((err, req, res, next) => {
+    console.error('Global error handler caught:', err.stack || err);
+    
+    // Send appropriate error response
+    if (res.headersSent) {
+        return next(err);
+    }
+    
+    const isDevelopment = process.env.NODE_ENV !== 'production';
+    
+    res.status(err.status || 500).json({
+        error: isDevelopment ? err.message : 'An error occurred processing your request',
+        ...(isDevelopment && { stack: err.stack }),
+        message: 'The server encountered an error. Please try again later.'
+    });
+});
+
+// Handle 404s
+app.use((req, res) => {
+    res.status(404).json({ 
+        error: 'Not Found',
+        message: `Cannot ${req.method} ${req.originalUrl}`
+    });
 });
 
 // Only start server if not in Vercel environment
