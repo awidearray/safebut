@@ -996,13 +996,42 @@ Give thorough, well-structured responses with specific medical guidance. Do NOT 
                 'Authorization': `Bearer ${process.env.VENICE_API_KEY}`,
                 'Content-Type': 'application/json'
             },
-            timeout: 30000 // 30 second timeout to prevent gateway errors
+            timeout: 45000, // 45 second timeout to prevent gateway errors
+            validateStatus: function (status) {
+                return status < 500; // Resolve only if the status code is less than 500
+            }
         });
+        
+        // Check if the response was successful
+        if (response.status !== 200) {
+            throw new Error(`Venice API returned status ${response.status}`);
+        }
+        
+        // Validate the response structure
+        if (!response.data || !response.data.choices || !response.data.choices[0]) {
+            throw new Error('Invalid response structure from Venice API');
+        }
 
         const aiResponse = response.data.choices[0].message.content;
         
+        // Validate AI response exists
+        if (!aiResponse) {
+            throw new Error('Empty response from Venice API');
+        }
+        
         // Clean the AI response to remove thinking process
-        const cleaned = cleanAIResponse(aiResponse);
+        let cleaned;
+        try {
+            cleaned = cleanAIResponse(aiResponse);
+        } catch (cleanError) {
+            console.error('Error cleaning AI response:', cleanError);
+            // Fallback to uncleaned response
+            cleaned = {
+                response: aiResponse,
+                thinking: '',
+                hasThinking: false
+            };
+        }
         
         // Extract risk score for UI meter if present
         const riskMatch = cleaned.response.match(/RISK_SCORE:\s*(\d+)/i);
@@ -1018,15 +1047,40 @@ Give thorough, well-structured responses with specific medical guidance. Do NOT 
         });
     } catch (error) {
         console.error('Venice AI detailed API error:', error.response?.data || error.message);
+        
+        // Always ensure we return valid JSON
+        res.setHeader('Content-Type', 'application/json');
+        
         if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
             return res.status(504).json({ 
                 error: 'Request timed out',
-                message: 'The analysis is taking longer than expected. Please try again or simplify your query.'
+                message: 'The analysis is taking longer than expected. Please try again or simplify your query.',
+                isTimeout: true
             });
         }
-        res.status(500).json({ 
-            error: 'Failed to get detailed information. Please try again later.',
-            details: error.response?.data?.error || error.message 
+        
+        // Check if Venice API returned an error
+        if (error.response?.status === 429) {
+            return res.status(429).json({
+                error: 'Rate limit exceeded',
+                message: 'Too many requests. Please wait a moment and try again.',
+                retryAfter: error.response?.headers?.['retry-after'] || 60
+            });
+        }
+        
+        if (error.response?.status >= 500) {
+            return res.status(502).json({
+                error: 'External service error',
+                message: 'The AI service is temporarily unavailable. Please try again in a few moments.',
+                details: process.env.NODE_ENV === 'development' ? error.response?.data : undefined
+            });
+        }
+        
+        // Default error response
+        return res.status(500).json({ 
+            error: 'Failed to get detailed information',
+            message: 'An unexpected error occurred. Please try again.',
+            details: process.env.NODE_ENV === 'development' ? (error.response?.data?.error || error.message) : undefined
         });
     }
 });

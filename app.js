@@ -551,7 +551,8 @@ class PregnancySafetyChecker {
         return data;
     }
 
-    async getDetailedSafetyInfo(item) {
+    async getDetailedSafetyInfo(item, retryCount = 0) {
+        const maxRetries = 2;
         const authToken = localStorage.getItem('authToken');
         const headers = {
             'Content-Type': 'application/json'
@@ -562,24 +563,76 @@ class PregnancySafetyChecker {
             headers['Authorization'] = `Bearer ${authToken}`;
         }
         
-        const response = await fetch('/api/detailed-safety', {
-            method: 'POST',
-            headers: headers,
-            body: JSON.stringify({
-                item: item
-            })
-        });
+        try {
+            const response = await fetch('/api/detailed-safety', {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify({
+                    item: item
+                }),
+                // Add timeout for fetch
+                signal: AbortSignal.timeout(50000) // 50 second timeout
+            });
 
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.error || `Server Error: ${response.status}`);
+            // Check if response is JSON before trying to parse
+            const contentType = response.headers.get("content-type");
+            if (!contentType || !contentType.includes("application/json")) {
+                console.error('Non-JSON response received:', response.status, contentType);
+                throw new Error(`Server returned non-JSON response (${response.status})`);
+            }
+
+            if (!response.ok) {
+                let errorData = {};
+                try {
+                    errorData = await response.json();
+                } catch (jsonError) {
+                    console.error('Failed to parse error response:', jsonError);
+                    errorData = { error: `Server Error: ${response.status}` };
+                }
+                
+                // Check for specific error types
+                if (response.status === 429 && retryCount < maxRetries) {
+                    const retryAfter = errorData.retryAfter || 2;
+                    console.log(`Rate limited, retrying after ${retryAfter} seconds...`);
+                    await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
+                    return this.getDetailedSafetyInfo(item, retryCount + 1);
+                }
+                
+                if ((response.status === 502 || response.status === 504) && retryCount < maxRetries) {
+                    const backoffDelay = Math.min(1000 * Math.pow(2, retryCount), 5000);
+                    console.log(`Server timeout/error, retrying after ${backoffDelay}ms...`);
+                    await new Promise(resolve => setTimeout(resolve, backoffDelay));
+                    return this.getDetailedSafetyInfo(item, retryCount + 1);
+                }
+                
+                throw new Error(errorData.message || errorData.error || `Server Error: ${response.status}`);
+            }
+
+            let data;
+            try {
+                data = await response.json();
+            } catch (jsonError) {
+                console.error('Failed to parse successful response:', jsonError);
+                throw new Error('Invalid response format from server');
+            }
+            
+            return data;
+        } catch (error) {
+            // Handle fetch timeout
+            if (error.name === 'AbortError') {
+                if (retryCount < maxRetries) {
+                    console.log('Request timed out, retrying...');
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    return this.getDetailedSafetyInfo(item, retryCount + 1);
+                }
+                throw new Error('Request timed out. Please try again with a simpler query.');
+            }
+            throw error;
         }
-
-        const data = await response.json();
-        return data;
     }
 
-    async getDetailedImageSafetyInfo(imageData) {
+    async getDetailedImageSafetyInfo(imageData, retryCount = 0) {
+        const maxRetries = 2;
         const authToken = localStorage.getItem('authToken');
         const headers = {
             'Content-Type': 'application/json'
@@ -590,21 +643,72 @@ class PregnancySafetyChecker {
             headers['Authorization'] = `Bearer ${authToken}`;
         }
         
-        const response = await fetch('/api/detailed-image-safety', {
-            method: 'POST',
-            headers: headers,
-            body: JSON.stringify({
-                image: imageData
-            })
-        });
+        try {
+            const response = await fetch('/api/detailed-image-safety', {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify({
+                    image: imageData
+                }),
+                // Add timeout for fetch
+                signal: AbortSignal.timeout(50000) // 50 second timeout
+            });
 
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.error || `Server Error: ${response.status}`);
+            // Check if response is JSON before trying to parse
+            const contentType = response.headers.get("content-type");
+            if (!contentType || !contentType.includes("application/json")) {
+                console.error('Non-JSON response received:', response.status, contentType);
+                throw new Error(`Server returned non-JSON response (${response.status})`);
+            }
+
+            if (!response.ok) {
+                let errorData = {};
+                try {
+                    errorData = await response.json();
+                } catch (jsonError) {
+                    console.error('Failed to parse error response:', jsonError);
+                    errorData = { error: `Server Error: ${response.status}` };
+                }
+                
+                // Check for specific error types
+                if (response.status === 429 && retryCount < maxRetries) {
+                    const retryAfter = errorData.retryAfter || 2;
+                    console.log(`Rate limited, retrying after ${retryAfter} seconds...`);
+                    await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
+                    return this.getDetailedImageSafetyInfo(imageData, retryCount + 1);
+                }
+                
+                if ((response.status === 502 || response.status === 504) && retryCount < maxRetries) {
+                    const backoffDelay = Math.min(1000 * Math.pow(2, retryCount), 5000);
+                    console.log(`Server timeout/error, retrying after ${backoffDelay}ms...`);
+                    await new Promise(resolve => setTimeout(resolve, backoffDelay));
+                    return this.getDetailedImageSafetyInfo(imageData, retryCount + 1);
+                }
+                
+                throw new Error(errorData.message || errorData.error || `Server Error: ${response.status}`);
+            }
+
+            let data;
+            try {
+                data = await response.json();
+            } catch (jsonError) {
+                console.error('Failed to parse successful response:', jsonError);
+                throw new Error('Invalid response format from server');
+            }
+            
+            return data;
+        } catch (error) {
+            // Handle fetch timeout
+            if (error.name === 'AbortError') {
+                if (retryCount < maxRetries) {
+                    console.log('Request timed out, retrying...');
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    return this.getDetailedImageSafetyInfo(imageData, retryCount + 1);
+                }
+                throw new Error('Request timed out. Please try again with a simpler query.');
+            }
+            throw error;
         }
-
-        const data = await response.json();
-        return data;
     }
 
     displayResults(item, data) {
