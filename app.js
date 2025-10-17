@@ -39,6 +39,8 @@ class PregnancySafetyChecker {
                 // Store user profile if non-empty to avoid overwriting local data
                 if (data.profile && Object.keys(data.profile || {}).length > 0) {
                     localStorage.setItem('pregnancyProfile', JSON.stringify(data.profile));
+                    // Reload profile to ensure preferences are synced
+                    this.loadProfile();
                 }
                 
                 // Update UI for premium users
@@ -46,6 +48,18 @@ class PregnancySafetyChecker {
                     document.querySelectorAll('.upgrade-prompt').forEach(el => {
                         el.style.display = 'none';
                     });
+                    
+                    // Show AI thoughts toggle for premium users
+                    const aiThoughtsGroup = document.getElementById('aiThoughtsGroup');
+                    if (aiThoughtsGroup) {
+                        aiThoughtsGroup.style.display = 'block';
+                    }
+                    
+                    // Show affiliate section for premium users
+                    const affiliateSection = document.getElementById('affiliateSection');
+                    if (affiliateSection) {
+                        affiliateSection.style.display = 'block';
+                    }
                 }
                 
                 console.log('User status fetched:', {
@@ -53,6 +67,25 @@ class PregnancySafetyChecker {
                     email: data.email,
                     hasProfile: !!data.profile
                 });
+                
+                // Also try to load profile from backend
+                try {
+                    const profileResponse = await fetch('/api/profile', {
+                        headers: {
+                            'Authorization': `Bearer ${authToken}`
+                        }
+                    });
+                    
+                    if (profileResponse.ok) {
+                        const profileData = await profileResponse.json();
+                        if (profileData.success && profileData.profile) {
+                            localStorage.setItem('pregnancyProfile', JSON.stringify(profileData.profile));
+                            this.loadProfile();
+                        }
+                    }
+                } catch (profileError) {
+                    console.error('Failed to load profile from backend:', profileError);
+                }
             } else {
                 // Token is invalid, clear it
                 localStorage.removeItem('authToken');
@@ -223,6 +256,49 @@ class PregnancySafetyChecker {
         
         // Load preferences including AI thoughts toggle
         if (profile.preferences) {
+            // Measurement system
+            if (profile.preferences.measurementSystem) {
+                const radio = document.querySelector(`input[name="measurement-system"][value="${profile.preferences.measurementSystem}"]`);
+                if (radio) radio.checked = true;
+            }
+            
+            // Caffeine measurement
+            if (profile.preferences.caffeineMeasurement) {
+                const radio = document.querySelector(`input[name="caffeine-measurement"][value="${profile.preferences.caffeineMeasurement}"]`);
+                if (radio) radio.checked = true;
+            }
+            
+            // Temperature unit
+            if (profile.preferences.temperatureUnit) {
+                const radio = document.querySelector(`input[name="temperature-unit"][value="${profile.preferences.temperatureUnit}"]`);
+                if (radio) radio.checked = true;
+            }
+            
+            // Weight unit
+            if (profile.preferences.weightUnit) {
+                const radio = document.querySelector(`input[name="weight-unit"][value="${profile.preferences.weightUnit}"]`);
+                if (radio) radio.checked = true;
+            }
+            
+            // Detail level
+            if (profile.preferences.detailLevel) {
+                const radio = document.querySelector(`input[name="detail-level"][value="${profile.preferences.detailLevel}"]`);
+                if (radio) radio.checked = true;
+            }
+            
+            // Language style
+            if (profile.preferences.languageStyle) {
+                const radio = document.querySelector(`input[name="language-style"][value="${profile.preferences.languageStyle}"]`);
+                if (radio) radio.checked = true;
+            }
+            
+            // Risk style
+            if (profile.preferences.riskStyle) {
+                const radio = document.querySelector(`input[name="risk-style"][value="${profile.preferences.riskStyle}"]`);
+                if (radio) radio.checked = true;
+            }
+            
+            // AI thoughts toggle
             if (profile.preferences.showAIThoughts !== undefined) {
                 const aiThoughtsCheckbox = document.getElementById('show-ai-thoughts');
                 if (aiThoughtsCheckbox) aiThoughtsCheckbox.checked = profile.preferences.showAIThoughts;

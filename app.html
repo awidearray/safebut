@@ -743,6 +743,18 @@
                             // Hide upgrade prompts for premium users
                             const upgradeElements = document.querySelectorAll('.upgrade-prompt');
                             upgradeElements.forEach(el => el.style.display = 'none');
+                            
+                            // Show AI thoughts toggle for premium users
+                            const aiThoughtsGroup = document.getElementById('aiThoughtsGroup');
+                            if (aiThoughtsGroup) {
+                                aiThoughtsGroup.style.display = 'block';
+                            }
+                            
+                            // Show affiliate section for premium users
+                            const affiliateSection = document.getElementById('affiliateSection');
+                            if (affiliateSection) {
+                                affiliateSection.style.display = 'block';
+                            }
                         }
                         
                         // Store user profile only if non-empty to avoid overwriting local
