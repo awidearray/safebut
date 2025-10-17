@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const User = require('../models/User');
 const router = express.Router();
+const { v4: uuidv4 } = require('uuid');
 
 // Email transporter setup for Brevo (formerly Sendinblue)
 const transporter = nodemailer.createTransport({
@@ -284,12 +285,34 @@ router.get('/verify-magic-link', async (req, res) => {
         // Generate JWT token
         const jwtToken = generateToken(user._id);
         
-        // Save session with explicit save to ensure it persists
-        req.session.token = jwtToken;
-        req.session.userId = user._id.toString();
-        req.session.userEmail = user.email;
-        req.session.loginKeyType = 'email';
-        req.session.loginKeyValue = tokenData.email;
+        // Try to add session with device tracking
+        try {
+            const sessionId = uuidv4();
+            const deviceInfo = User.parseUserAgent(req.headers['user-agent']);
+            const ipAddress = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+            
+            await user.addSession({
+                sessionId,
+                token: jwtToken,
+                deviceInfo: {
+                    userAgent: req.headers['user-agent'],
+                    ...deviceInfo
+                },
+                ipAddress,
+                location: {} // You can add geo-location later if needed
+            });
+            
+            // Save session with explicit save to ensure it persists
+            req.session.token = jwtToken;
+            req.session.sessionId = sessionId;
+            req.session.userId = user._id.toString();
+            req.session.userEmail = user.email;
+            req.session.loginKeyType = 'email';
+            req.session.loginKeyValue = tokenData.email;
+        } catch (sessionError) {
+            console.error('Session limit error:', sessionError.message);
+            return res.redirect(`/login?error=session_limit&message=${encodeURIComponent(sessionError.message)}`);
+        }
         
         // Force session save before redirect
         await new Promise((resolve, reject) => {
@@ -378,20 +401,46 @@ router.post('/ton-wallet', async (req, res) => {
         // Generate JWT token
         const token = generateToken(user._id);
         
-        // Update session
-        req.session.token = token;
-        req.session.userId = user._id;
-        
-        // Update last login
-        user.lastLogin = new Date();
-        await user.save();
-        
-        res.json({
-            success: true,
-            token,
-            isPremium: user.isPremium || false,
-            walletAddress: address
-        });
+        // Try to add session with device tracking
+        try {
+            const sessionId = uuidv4();
+            const deviceInfo = User.parseUserAgent(req.headers['user-agent']);
+            const ipAddress = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+            
+            await user.addSession({
+                sessionId,
+                token,
+                deviceInfo: {
+                    userAgent: req.headers['user-agent'],
+                    ...deviceInfo
+                },
+                ipAddress,
+                location: {} // You can add geo-location later if needed
+            });
+            
+            // Update session
+            req.session.token = token;
+            req.session.sessionId = sessionId;
+            req.session.userId = user._id;
+            
+            // Update last login
+            user.lastLogin = new Date();
+            await user.save();
+            
+            res.json({
+                success: true,
+                token,
+                isPremium: user.isPremium || false,
+                walletAddress: address
+            });
+        } catch (sessionError) {
+            console.error('Session limit error:', sessionError.message);
+            res.status(403).json({ 
+                success: false, 
+                error: 'Session limit reached',
+                message: sessionError.message 
+            });
+        }
     } catch (error) {
         console.error('TON wallet auth error:', error);
         res.status(500).json({ success: false, error: 'Authentication failed' });
@@ -479,14 +528,32 @@ router.post('/test-email', async (req, res) => {
 });
 
 // Logout
-router.post('/logout', (req, res) => {
-    req.logout((err) => {
-        if (err) {
-            return res.status(500).json({ error: 'Failed to logout' });
+router.post('/logout', async (req, res) => {
+    try {
+        const token = req.header('Authorization')?.replace('Bearer ', '') || 
+                     req.session?.token;
+        const sessionId = req.session?.sessionId;
+        const userId = req.session?.userId;
+        
+        // Remove session from user's active sessions
+        if (userId && sessionId) {
+            const user = await User.findById(userId);
+            if (user) {
+                await user.removeSession(sessionId);
+            }
         }
-        req.session.destroy();
-        res.json({ success: true });
-    });
+        
+        req.logout((err) => {
+            if (err) {
+                return res.status(500).json({ error: 'Failed to logout' });
+            }
+            req.session.destroy();
+            res.json({ success: true });
+        });
+    } catch (error) {
+        console.error('Logout error:', error);
+        res.status(500).json({ error: 'Failed to logout' });
+    }
 });
 
 
@@ -525,7 +592,8 @@ router.get('/me', async (req, res) => {
             canSearch: user.isPremium || hasFreebies,
             profile: profile,
             affiliateCode: user.affiliateCode,
-            affiliatePoints: user.affiliatePoints
+            affiliatePoints: user.affiliatePoints,
+            createdAt: user.createdAt
         });
     } catch (error) {
         res.status(401).json({ authenticated: false });
@@ -544,6 +612,118 @@ router.get('/google-calendar-config', (req, res) => {
         clientId: process.env.GOOGLE_CALENDAR_CLIENT_ID || '',
         configured: !!(process.env.GOOGLE_CALENDAR_API_KEY && process.env.GOOGLE_CALENDAR_CLIENT_ID)
     });
+});
+
+// Get active sessions for the current user
+router.get('/sessions', async (req, res) => {
+    try {
+        const token = req.header('Authorization')?.replace('Bearer ', '') || 
+                     req.session?.token;
+        const userId = req.session?.userId;
+        
+        if (!token || !userId) {
+            return res.status(401).json({ error: 'Authentication required' });
+        }
+        
+        const user = await User.findById(userId);
+        
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        // Clean expired sessions
+        user.cleanExpiredSessions();
+        await user.save();
+        
+        // Format sessions for response
+        const sessions = user.activeSessions.map(session => ({
+            sessionId: session.sessionId,
+            device: session.deviceInfo?.device || 'Unknown',
+            browser: session.deviceInfo?.browser || 'Unknown',
+            os: session.deviceInfo?.os || 'Unknown',
+            ipAddress: session.ipAddress || 'Unknown',
+            location: session.location?.city ? 
+                `${session.location.city}, ${session.location.country}` : 'Unknown',
+            createdAt: session.createdAt,
+            lastActivity: session.lastActivity,
+            isCurrent: session.token === token
+        }));
+        
+        res.json({
+            sessions,
+            maxSessions: user.getMaxSessions(),
+            accountType: user.isPremium ? 'Premium' : 'Free'
+        });
+    } catch (error) {
+        console.error('Get sessions error:', error);
+        res.status(500).json({ error: 'Failed to get sessions' });
+    }
+});
+
+// Revoke a specific session
+router.delete('/sessions/:sessionId', async (req, res) => {
+    try {
+        const token = req.header('Authorization')?.replace('Bearer ', '') || 
+                     req.session?.token;
+        const userId = req.session?.userId;
+        const { sessionId } = req.params;
+        
+        if (!token || !userId) {
+            return res.status(401).json({ error: 'Authentication required' });
+        }
+        
+        const user = await User.findById(userId);
+        
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        // Check if session exists
+        const sessionToRemove = user.activeSessions.find(s => s.sessionId === sessionId);
+        if (!sessionToRemove) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+        
+        // Don't allow removing current session through this endpoint
+        if (sessionToRemove.token === token) {
+            return res.status(400).json({ error: 'Cannot revoke current session. Use logout instead.' });
+        }
+        
+        // Remove the session
+        await user.removeSession(sessionId);
+        
+        res.json({ success: true, message: 'Session revoked successfully' });
+    } catch (error) {
+        console.error('Revoke session error:', error);
+        res.status(500).json({ error: 'Failed to revoke session' });
+    }
+});
+
+// Revoke all sessions except current
+router.post('/sessions/revoke-all', async (req, res) => {
+    try {
+        const token = req.header('Authorization')?.replace('Bearer ', '') || 
+                     req.session?.token;
+        const userId = req.session?.userId;
+        
+        if (!token || !userId) {
+            return res.status(401).json({ error: 'Authentication required' });
+        }
+        
+        const user = await User.findById(userId);
+        
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        // Remove all sessions except the current one
+        await user.removeAllSessions(token);
+        
+        res.json({ success: true, message: 'All other sessions revoked successfully' });
+    } catch (error) {
+        console.error('Revoke all sessions error:', error);
+        res.status(500).json({ error: 'Failed to revoke sessions' });
+    }
 });
 
 module.exports = router;

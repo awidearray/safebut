@@ -2,6 +2,9 @@
 let deferredPrompt;
 let installButton = null;
 
+// Make deferredPrompt accessible globally
+window.deferredPrompt = null;
+
 // Check if user is premium
 function isPremiumUser() {
   return localStorage.getItem('isPremium') === 'true';
@@ -261,15 +264,17 @@ function showIOSInstructions() {
 
 // Handle the install prompt (Premium only)
 window.addEventListener('beforeinstallprompt', (e) => {
-  // Only allow premium users to install
-  if (!isPremiumUser()) {
-    return;
-  }
-  
   // Prevent the default prompt
   e.preventDefault();
   // Store the event for later use
   deferredPrompt = e;
+  window.deferredPrompt = e; // Make it globally accessible
+  
+  // Only allow premium users to install
+  if (!isPremiumUser()) {
+    console.log('Install prompt available but user is not premium');
+    return;
+  }
   
   // Check if user dismissed the banner recently (within 7 days)
   const dismissed = localStorage.getItem('pwa-install-dismissed');
@@ -410,3 +415,30 @@ function showBookmarkReminder() {
 
 // Show bookmark reminder on page load
 window.addEventListener('load', showBookmarkReminder);
+
+// Manual install function for settings page
+window.installPWAManually = function() {
+  if (!isPremiumUser()) {
+    alert('App installation is a Premium feature. Please upgrade to install the app.');
+    return;
+  }
+  
+  if (isAppInstalled()) {
+    alert('App is already installed!');
+    return;
+  }
+  
+  if (window.deferredPrompt) {
+    installPWA();
+  } else if (isIOS()) {
+    showIOSInstructions();
+  } else {
+    // No install prompt available, show instructions
+    alert('To install the app:\n\n• Chrome/Edge: Look for the install icon in the address bar\n• Firefox: Open menu > Install Safe Maternity\n• Safari (Mac): Share > Add to Dock');
+  }
+};
+
+// Make functions globally accessible for app.js
+window.isAppInstalled = isAppInstalled;
+window.createInstallBanner = createInstallBanner;
+window.isPremiumUser = isPremiumUser;

@@ -223,7 +223,6 @@
         .terms-checkbox a {
             color: var(--primary-color);
             text-decoration: none;
-            white-space: nowrap;
         }
 
         .terms-checkbox a:hover {
@@ -492,6 +491,33 @@
             errorDiv.style.color = '#155724';
         }
         
+        function showSessionLimitError(message) {
+            const container = document.querySelector('.login-container');
+            const errorDiv = document.createElement('div');
+            errorDiv.innerHTML = `
+                <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 10px; padding: 20px; margin: 20px 0; text-align: center;">
+                    <h3 style="color: #856404; margin-bottom: 15px;">⚠️ Session Limit Reached</h3>
+                    <p style="margin-bottom: 15px; color: #856404;">${message}</p>
+                    <div style="margin-top: 20px;">
+                        <p style="font-size: 14px; color: #666;">Options:</p>
+                        <ul style="text-align: left; display: inline-block; font-size: 14px; color: #666;">
+                            <li>Log out from one of your other devices</li>
+                            <li>Wait for old sessions to expire (14 days)</li>
+                            ${message.includes('Free') ? '<li><a href="/upgrade" style="color: #007bff;">Upgrade to Premium</a> for up to 3 simultaneous sessions</li>' : ''}
+                        </ul>
+                    </div>
+                </div>
+            `;
+            
+            // Insert after the logo/title
+            const subtitle = document.querySelector('.subtitle');
+            if (subtitle && subtitle.nextSibling) {
+                subtitle.parentNode.insertBefore(errorDiv, subtitle.nextSibling);
+            } else {
+                container.appendChild(errorDiv);
+            }
+        }
+        
         function showMagicLinkDemo(magicLink) {
             const container = document.querySelector('.login-container');
             const demoDiv = document.createElement('div');
@@ -549,6 +575,7 @@
         // Check for auth errors in URL
         const urlParams = new URLSearchParams(window.location.search);
         const error = urlParams.get('error');
+        const message = urlParams.get('message');
         
         if (error === 'auth_failed') {
             showError('Authentication failed. Please try again.');
@@ -558,6 +585,13 @@
             showError('This magic link has already been used. Please request a new one.');
         } else if (error === 'token_expired') {
             showError('Magic link has expired. Please request a new one.');
+        } else if (error === 'session_limit') {
+            // Show detailed session limit error
+            if (message) {
+                showSessionLimitError(decodeURIComponent(message));
+            } else {
+                showError('Session limit reached. Please log out from another device or upgrade your account.');
+            }
         }
 
     </script>

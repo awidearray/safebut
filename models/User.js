@@ -96,6 +96,25 @@ const userSchema = new mongoose.Schema({
         isPremium: { type: Boolean, default: false }
     }],
     
+    // Active sessions tracking
+    activeSessions: [{
+        sessionId: String,
+        token: String,
+        deviceInfo: {
+            userAgent: String,
+            browser: String,
+            os: String,
+            device: String
+        },
+        ipAddress: String,
+        location: {
+            city: String,
+            country: String
+        },
+        createdAt: { type: Date, default: Date.now },
+        lastActivity: { type: Date, default: Date.now }
+    }],
+    
     // Account timestamps
     createdAt: { type: Date, default: Date.now },
     lastLogin: { type: Date, default: Date.now }
@@ -181,6 +200,110 @@ userSchema.methods.addReferral = function(referredUser, pointsAwarded = 10) {
     // Award points to referrer
     this.affiliatePoints += pointsAwarded;
     return this.save();
+};
+
+// Session management methods
+userSchema.methods.getMaxSessions = function() {
+    return this.isPremium ? 3 : 1;
+};
+
+userSchema.methods.canAddSession = function() {
+    const maxSessions = this.getMaxSessions();
+    // Clean up expired sessions (older than 14 days)
+    this.cleanExpiredSessions();
+    return this.activeSessions.length < maxSessions;
+};
+
+userSchema.methods.cleanExpiredSessions = function() {
+    const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+    this.activeSessions = this.activeSessions.filter(session => 
+        session.lastActivity > fourteenDaysAgo
+    );
+};
+
+userSchema.methods.addSession = function(sessionData) {
+    // Clean expired sessions first
+    this.cleanExpiredSessions();
+    
+    // Check if we can add a new session
+    const maxSessions = this.getMaxSessions();
+    if (this.activeSessions.length >= maxSessions) {
+        const accountType = this.isPremium ? 'Premium' : 'Free';
+        const sessionLimit = this.isPremium ? 3 : 1;
+        throw new Error(`Session limit reached. ${accountType} accounts can have up to ${sessionLimit} active session${sessionLimit > 1 ? 's' : ''}. Please log out from another device or upgrade your account.`);
+    }
+    
+    // Add new session
+    this.activeSessions.push({
+        sessionId: sessionData.sessionId,
+        token: sessionData.token,
+        deviceInfo: sessionData.deviceInfo || {},
+        ipAddress: sessionData.ipAddress,
+        location: sessionData.location || {},
+        createdAt: new Date(),
+        lastActivity: new Date()
+    });
+    
+    return this.save();
+};
+
+userSchema.methods.updateSessionActivity = function(token) {
+    const session = this.activeSessions.find(s => s.token === token);
+    if (session) {
+        session.lastActivity = new Date();
+        return this.save();
+    }
+    return Promise.resolve();
+};
+
+userSchema.methods.removeSession = function(sessionId) {
+    this.activeSessions = this.activeSessions.filter(s => 
+        s.sessionId !== sessionId
+    );
+    return this.save();
+};
+
+userSchema.methods.removeAllSessions = function(exceptToken = null) {
+    if (exceptToken) {
+        this.activeSessions = this.activeSessions.filter(s => 
+            s.token === exceptToken
+        );
+    } else {
+        this.activeSessions = [];
+    }
+    return this.save();
+};
+
+userSchema.methods.findSessionByToken = function(token) {
+    return this.activeSessions.find(s => s.token === token);
+};
+
+// Helper to parse user agent
+userSchema.statics.parseUserAgent = function(userAgentString) {
+    const ua = userAgentString || '';
+    let browser = 'Unknown';
+    let os = 'Unknown';
+    let device = 'Desktop';
+    
+    // Detect browser
+    if (ua.includes('Chrome')) browser = 'Chrome';
+    else if (ua.includes('Firefox')) browser = 'Firefox';
+    else if (ua.includes('Safari')) browser = 'Safari';
+    else if (ua.includes('Edge')) browser = 'Edge';
+    else if (ua.includes('Opera')) browser = 'Opera';
+    
+    // Detect OS
+    if (ua.includes('Windows')) os = 'Windows';
+    else if (ua.includes('Mac')) os = 'macOS';
+    else if (ua.includes('Linux')) os = 'Linux';
+    else if (ua.includes('Android')) os = 'Android';
+    else if (ua.includes('iOS') || ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS';
+    
+    // Detect device type
+    if (ua.includes('Mobile')) device = 'Mobile';
+    else if (ua.includes('Tablet') || ua.includes('iPad')) device = 'Tablet';
+    
+    return { browser, os, device };
 };
 
 module.exports = mongoose.model('User', userSchema);

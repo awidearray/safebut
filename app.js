@@ -15,6 +15,7 @@ class PregnancySafetyChecker {
         this.initializeProfile();
         this.initializeLog();
         this.initializeAffiliate();
+        this.initializeSessionManagement();
         this.displayHistory();
     }
     
@@ -62,6 +63,9 @@ class PregnancySafetyChecker {
                     if (affiliateSection) {
                         affiliateSection.style.display = 'block';
                     }
+                    
+                    // Initialize PWA features for premium users
+                    this.initializePWA();
                 }
                 
                 console.log('User status fetched:', {
@@ -124,6 +128,11 @@ class PregnancySafetyChecker {
                 if (targetContent) {
                     targetContent.style.display = 'block';
                     targetContent.classList.add('active');
+                    
+                    // Load sessions when settings tab is opened
+                    if (targetTab === 'settings') {
+                        this.loadSessions();
+                    }
                 }
             });
         });
@@ -2194,6 +2203,317 @@ END:VCALENDAR`;
             }).join('');
         }
     }
+    
+    // Session Management Methods
+    initializeSessionManagement() {
+        const revokeAllBtn = document.getElementById('revokeAllSessions');
+        if (revokeAllBtn) {
+            revokeAllBtn.addEventListener('click', () => this.revokeAllSessions());
+        }
+    }
+    
+    // PWA Installation Methods
+    initializePWA() {
+        console.log('Initializing PWA for premium user...');
+        
+        // First ensure premium status is set in localStorage
+        localStorage.setItem('isPremium', 'true');
+        
+        // Register service worker if not already registered
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then(registration => {
+                    console.log('ServiceWorker registration successful for premium user');
+                    
+                    // After service worker is registered, check for install prompt
+                    setTimeout(() => {
+                        this.checkPWAInstallation();
+                    }, 1000);
+                })
+                .catch(err => {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+        } else {
+            // If no service worker support, still check for installation
+            setTimeout(() => {
+                this.checkPWAInstallation();
+            }, 1000);
+        }
+    }
+    
+    checkPWAInstallation() {
+        // Check if PWA installer functions are available
+        if (typeof window.createInstallBanner === 'function' && 
+            typeof window.isPremiumUser === 'function' && 
+            typeof window.isAppInstalled === 'function') {
+            
+            // Check if app is not already installed
+            if (!window.isAppInstalled()) {
+                // Check if we have a deferred prompt
+                if (window.deferredPrompt) {
+                    console.log('Showing PWA install banner for premium user');
+                    window.createInstallBanner();
+                } else {
+                    console.log('No deferred prompt available yet, will wait for beforeinstallprompt event');
+                    // The pwa-installer.js will handle it when the event fires
+                }
+            } else {
+                console.log('App is already installed');
+            }
+        } else {
+            console.log('PWA installer not loaded yet, retrying...');
+            // Retry after a short delay
+            setTimeout(() => {
+                this.checkPWAInstallation();
+            }, 2000);
+        }
+    }
+    
+    async loadSessions() {
+        const authToken = localStorage.getItem('authToken');
+        if (!authToken) {
+            this.showSessionsLoginRequired();
+            return;
+        }
+        
+        try {
+            const response = await fetch('/auth/sessions', {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                this.displaySessions(data);
+                this.updateAccountInfo();
+            } else {
+                this.showSessionsError('Failed to load sessions');
+            }
+        } catch (error) {
+            console.error('Error loading sessions:', error);
+            this.showSessionsError('Failed to load sessions');
+        }
+    }
+    
+    displaySessions(data) {
+        const { sessions, maxSessions, accountType } = data;
+        
+        // Update session info
+        document.getElementById('accountType').textContent = accountType;
+        document.getElementById('sessionLimit').textContent = `${maxSessions} device${maxSessions > 1 ? 's' : ''}`;
+        document.getElementById('activeSessionCount').textContent = sessions.length;
+        
+        // Display sessions list
+        const sessionsList = document.getElementById('sessionsList');
+        
+        if (sessions.length === 0) {
+            sessionsList.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No active sessions</p>';
+            document.getElementById('revokeAllSessions').style.display = 'none';
+            return;
+        }
+        
+        // Show revoke all button if there's more than one session
+        const hasMultipleSessions = sessions.filter(s => !s.isCurrent).length > 0;
+        document.getElementById('revokeAllSessions').style.display = hasMultipleSessions ? 'block' : 'none';
+        
+        const sessionsHTML = sessions.map(session => {
+            const createdDate = new Date(session.createdAt).toLocaleDateString();
+            const createdTime = new Date(session.createdAt).toLocaleTimeString();
+            const lastActiveDate = new Date(session.lastActivity).toLocaleDateString();
+            const lastActiveTime = new Date(session.lastActivity).toLocaleTimeString();
+            
+            return `
+                <div class="session-item ${session.isCurrent ? 'current' : ''}">
+                    <div class="session-header">
+                        <span class="session-device">
+                            ${this.getDeviceIcon(session.device)} ${session.browser} on ${session.os}
+                        </span>
+                        ${session.isCurrent ? '<span class="session-current-badge">Current Session</span>' : ''}
+                    </div>
+                    <div class="session-details">
+                        <p>Device: ${session.device}</p>
+                        <p>IP Address: ${session.ipAddress}</p>
+                        <p>Location: ${session.location || 'Unknown'}</p>
+                        <p>Logged in: ${createdDate} at ${createdTime}</p>
+                        <p>Last active: ${lastActiveDate} at ${lastActiveTime}</p>
+                    </div>
+                    ${!session.isCurrent ? `
+                        <button class="revoke-session-btn" onclick="window.checker.revokeSession('${session.sessionId}')">
+                            🚫 Log Out This Device
+                        </button>
+                    ` : ''}
+                </div>
+            `;
+        }).join('');
+        
+        sessionsList.innerHTML = sessionsHTML;
+    }
+    
+    getDeviceIcon(device) {
+        switch(device) {
+            case 'Mobile': return '📱';
+            case 'Tablet': return '📱';
+            case 'Desktop': return '💻';
+            default: return '🖥️';
+        }
+    }
+    
+    async revokeSession(sessionId) {
+        const authToken = localStorage.getItem('authToken');
+        if (!authToken) return;
+        
+        if (!confirm('Are you sure you want to log out this device?')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/auth/sessions/${sessionId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+            
+            if (response.ok) {
+                this.showSessionSuccess('Device logged out successfully');
+                // Reload sessions
+                this.loadSessions();
+            } else {
+                const error = await response.json();
+                this.showSessionsError(error.error || 'Failed to log out device');
+            }
+        } catch (error) {
+            console.error('Error revoking session:', error);
+            this.showSessionsError('Failed to log out device');
+        }
+    }
+    
+    async revokeAllSessions() {
+        const authToken = localStorage.getItem('authToken');
+        if (!authToken) return;
+        
+        if (!confirm('Are you sure you want to log out all other devices? This will keep only your current session active.')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch('/auth/sessions/revoke-all', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${authToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                this.showSessionSuccess('All other devices logged out successfully');
+                // Reload sessions
+                this.loadSessions();
+            } else {
+                const error = await response.json();
+                this.showSessionsError(error.error || 'Failed to log out devices');
+            }
+        } catch (error) {
+            console.error('Error revoking all sessions:', error);
+            this.showSessionsError('Failed to log out devices');
+        }
+    }
+    
+    async updateAccountInfo() {
+        const authToken = localStorage.getItem('authToken');
+        if (!authToken) return;
+        
+        try {
+            const response = await fetch('/auth/me', {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                
+                document.getElementById('userEmail').textContent = data.email || '-';
+                
+                // Format member since date
+                if (data.createdAt) {
+                    const memberDate = new Date(data.createdAt).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+                    document.getElementById('memberSince').textContent = memberDate;
+                }
+                
+                document.getElementById('accountStatus').textContent = data.isPremium ? '⭐ Premium' : 'Free';
+                
+                // Show/hide PWA install card for premium users
+                const pwaInstallCard = document.getElementById('pwaInstallCard');
+                const pwaInstallBtn = document.getElementById('pwaInstallBtn');
+                const pwaInstallStatus = document.getElementById('pwaInstallStatus');
+                
+                if (pwaInstallCard && data.isPremium) {
+                    pwaInstallCard.style.display = 'block';
+                    
+                    // Check if app is already installed
+                    if (window.isAppInstalled && window.isAppInstalled()) {
+                        pwaInstallStatus.innerHTML = '<p style="color: var(--success-color); margin: 15px 0;">✅ App is already installed!</p>';
+                        pwaInstallBtn.style.display = 'none';
+                    } else if (!window.deferredPrompt && !(/iPad|iPhone|iPod/.test(navigator.userAgent))) {
+                        // No install prompt available on desktop/Android
+                        pwaInstallStatus.innerHTML = '<p style="color: var(--text-secondary); margin: 15px 0;">To install: Look for the install icon in your browser\'s address bar or menu.</p>';
+                        pwaInstallBtn.textContent = '❓ Installation Help';
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error updating account info:', error);
+        }
+    }
+    
+    showSessionsLoginRequired() {
+        const sessionsList = document.getElementById('sessionsList');
+        sessionsList.innerHTML = `
+            <div style="text-align: center; padding: 20px;">
+                <p style="color: var(--text-secondary); margin-bottom: 15px;">Please log in to view your active sessions</p>
+                <button onclick="window.location.href='/login'" style="
+                    background: var(--primary-color);
+                    color: white;
+                    border: none;
+                    padding: 10px 20px;
+                    border-radius: 6px;
+                    cursor: pointer;
+                ">Log In</button>
+            </div>
+        `;
+    }
+    
+    showSessionsError(message) {
+        // Show error message temporarily
+        const sessionsList = document.getElementById('sessionsList');
+        const errorDiv = document.createElement('div');
+        errorDiv.style.cssText = 'background: #f8d7da; color: #721c24; padding: 10px; border-radius: 6px; margin-bottom: 15px;';
+        errorDiv.textContent = message;
+        sessionsList.insertBefore(errorDiv, sessionsList.firstChild);
+        
+        setTimeout(() => {
+            errorDiv.remove();
+        }, 5000);
+    }
+    
+    showSessionSuccess(message) {
+        // Show success message temporarily
+        const sessionsList = document.getElementById('sessionsList');
+        const successDiv = document.createElement('div');
+        successDiv.style.cssText = 'background: #d4edda; color: #155724; padding: 10px; border-radius: 6px; margin-bottom: 15px;';
+        successDiv.textContent = message;
+        sessionsList.insertBefore(successDiv, sessionsList.firstChild);
+        
+        setTimeout(() => {
+            successDiv.remove();
+        }, 5000);
+    }
 }
 
 // Global function to close log modal
@@ -2229,14 +2549,16 @@ function showUpgradeTab() {
     }
 }
 
-	let checker;
+        let checker;
 
-	// Since script might be loaded dynamically, check if DOM is already ready
-	if (document.readyState === 'loading') {
-		document.addEventListener('DOMContentLoaded', () => {
-			checker = new PregnancySafetyChecker();
-		});
-	} else {
-		// DOM is already ready
-		checker = new PregnancySafetyChecker();
-	}
+        // Since script might be loaded dynamically, check if DOM is already ready                                                                              
+        if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => {
+                        checker = new PregnancySafetyChecker();
+                        window.checker = checker; // Make it globally accessible
+                });
+        } else {
+                // DOM is already ready
+                checker = new PregnancySafetyChecker();
+                window.checker = checker; // Make it globally accessible
+        }

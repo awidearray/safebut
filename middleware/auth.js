@@ -20,6 +20,17 @@ const verifyToken = async (req, res, next) => {
         if (!user) {
             throw new Error();
         }
+        
+        // Check if this session is still valid
+        const session = user.findSessionByToken(token);
+        if (!session) {
+            return res.status(401).json({ 
+                error: 'Session expired or invalid. Please log in again.' 
+            });
+        }
+        
+        // Update session activity
+        await user.updateSessionActivity(token);
 
         req.user = user;
         req.token = token;

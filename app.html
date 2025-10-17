@@ -34,6 +34,7 @@
                 <button class="tab-btn" data-tab="history">📜 History</button>
                 <button class="tab-btn" data-tab="log" id="logTabBtn">📝 Log</button>
                 <button class="tab-btn" data-tab="leaderboard" id="leaderboardTabBtn" style="display: none;">🏆 Leaderboard</button>
+                <button class="tab-btn" data-tab="settings">⚙️ Settings</button>
                 <button class="tab-btn" data-tab="upgrade">🚀 Upgrade</button>
                 <button class="tab-btn logout-btn" id="logoutBtn" onclick="logout()">🚪 Logout</button>
             </div>
@@ -871,6 +872,67 @@
                 </div>
             </div>
 
+            <!-- Settings Tab Content -->
+            <div id="settingsTab" class="tab-content" style="display: none;">
+                <div class="settings-section">
+                    <h2>⚙️ Settings</h2>
+                    
+                    <!-- Active Sessions Section -->
+                    <div class="settings-card">
+                        <h3>🔐 Active Sessions</h3>
+                        <p class="settings-subtitle">Manage your logged-in devices</p>
+                        
+                        <div id="sessionInfo" class="session-info">
+                            <div class="session-limits">
+                                <p>Account Type: <strong id="accountType">Free</strong></p>
+                                <p>Session Limit: <strong id="sessionLimit">1 device</strong></p>
+                                <p>Active Sessions: <strong id="activeSessionCount">0</strong></p>
+                            </div>
+                        </div>
+                        
+                        <div id="sessionsList" class="sessions-list">
+                            <!-- Sessions will be loaded here -->
+                        </div>
+                        
+                        <button id="revokeAllSessions" class="revoke-all-btn" style="display: none;">
+                            🚫 Log Out All Other Devices
+                        </button>
+                    </div>
+                    
+                    <!-- Account Settings -->
+                    <div class="settings-card">
+                        <h3>👤 Account</h3>
+                        <div class="account-info">
+                            <p>Email: <strong id="userEmail">-</strong></p>
+                            <p>Member Since: <strong id="memberSince">-</strong></p>
+                            <p>Account Status: <strong id="accountStatus">-</strong></p>
+                        </div>
+                    </div>
+                    
+                    <!-- PWA Installation (Premium) -->
+                    <div class="settings-card" id="pwaInstallCard" style="display: none;">
+                        <h3>📱 App Installation</h3>
+                        <p class="settings-subtitle">Install Safe Maternity for offline access and quick launch</p>
+                        <div id="pwaInstallStatus">
+                            <p style="margin: 15px 0; color: var(--text-secondary);">Add Safe Maternity to your home screen for the best experience.</p>
+                        </div>
+                        <button id="pwaInstallBtn" class="pwa-install-btn" onclick="window.installPWAManually()" style="
+                            background: var(--primary-color);
+                            color: white;
+                            border: none;
+                            padding: 12px 24px;
+                            border-radius: 8px;
+                            cursor: pointer;
+                            font-size: 1rem;
+                            width: 100%;
+                            margin-top: 15px;
+                        ">
+                            📱 Install App
+                        </button>
+                    </div>
+                </div>
+            </div>
+
         </main>
 
         <footer>
@@ -1119,6 +1181,7 @@
                                     <div style="margin: 8px 0; color: #333;">✓ Image analysis with camera</div>
                                     <div style="margin: 8px 0; color: #333;">✓ Detailed medical reports</div>
                                     <div style="margin: 8px 0; color: #333;">✓ Export history as PDF</div>
+                                    <div style="margin: 8px 0; color: #333;">✓ Install as app for offline access</div>
                                 </div>
                             </div>
                             <button onclick="document.querySelector('[data-tab=\\"search\\"]').click()" style="
@@ -1137,6 +1200,24 @@
                     
                     // Switch to upgrade tab to show success
                     document.querySelector('[data-tab="upgrade"]').click();
+                    
+                    // Trigger PWA installation prompt for new premium users
+                    setTimeout(() => {
+                        if (window.deferredPrompt && window.createInstallBanner && !window.isAppInstalled()) {
+                            window.createInstallBanner();
+                        }
+                        
+                        // Register service worker for new premium user
+                        if ('serviceWorker' in navigator && !navigator.serviceWorker.controller) {
+                            navigator.serviceWorker.register('/sw.js')
+                                .then(registration => {
+                                    console.log('ServiceWorker registered for new premium user');
+                                })
+                                .catch(err => {
+                                    console.log('ServiceWorker registration failed: ', err);
+                                });
+                        }
+                    }, 3000);
                 }
             }
             

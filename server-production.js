@@ -82,6 +82,10 @@ app.use(express.static(path.join(__dirname), {
             res.setHeader('Content-Type', 'text/css');
         } else if (filePath.endsWith('.js')) {
             res.setHeader('Content-Type', 'application/javascript');
+        } else if (filePath.endsWith('.json')) {
+            res.setHeader('Content-Type', 'application/json');
+        } else if (filePath.endsWith('.webmanifest') || filePath.endsWith('manifest.json')) {
+            res.setHeader('Content-Type', 'application/manifest+json');
         }
     }
 }));
