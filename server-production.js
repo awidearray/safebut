@@ -875,7 +875,8 @@ Be comprehensive and evidence-based. Address any specific conditions mentioned.`
             headers: {
                 'Authorization': `Bearer ${process.env.VENICE_API_KEY}`,
                 'Content-Type': 'application/json'
-            }
+            },
+            timeout: 30000 // 30 second timeout to prevent gateway errors
         });
 
         const aiResponse = response.data.choices[0].message.content;
@@ -890,6 +891,12 @@ Be comprehensive and evidence-based. Address any specific conditions mentioned.`
         });
     } catch (error) {
         console.error('Venice AI detailed API error:', error.response?.data || error.message);
+        if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+            return res.status(504).json({ 
+                error: 'Request timed out',
+                message: 'The analysis is taking longer than expected. Please try again or simplify your query.'
+            });
+        }
         res.status(500).json({ 
             error: 'Failed to get detailed information. Please try again later.',
             details: error.response?.data?.error || error.message 
