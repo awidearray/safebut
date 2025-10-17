@@ -35,6 +35,6 @@
     "passport-facebook": "^3.0.0",
     "passport-instagram-graph": "^1.0.1",
     "stripe": "^19.1.0",
-    "uuid": "^13.0.0"
+    "uuid": "^9.0.1"
   }
 }
