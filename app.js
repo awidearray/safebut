@@ -770,17 +770,35 @@ class PregnancySafetyChecker {
         document.getElementById(qaId).scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         
         try {
-            // Prepare the context for the follow-up question
-            const contextPrompt = `
-                User is asking a follow-up question about: ${this.currentContext.item}
+            // Format the follow-up question more naturally for the AI
+            // Combine the original item with the follow-up question for context
+            let contextualQuery = '';
+            
+            // Check if it's asking about a variation or related item
+            if (question.toLowerCase().includes('what about') || 
+                question.toLowerCase().includes('how about') ||
+                question.toLowerCase().includes('and what about') ||
+                question.toLowerCase().includes('but')) {
+                // Extract the specific thing they're asking about
+                let extracted = question.replace(/^(but |and )?(what about|how about|and)\s*/i, '').trim();
+                extracted = extracted.replace(/\?$/, ''); // Remove trailing question mark
                 
-                Previous safety assessment:
-                ${this.currentContext.initialResponse}
-                
-                Follow-up question: ${question}
-                
-                Please provide a specific answer to their follow-up question, maintaining context about ${this.currentContext.item}.
-            `;
+                // For sushi-related queries, provide context
+                if (this.currentContext.item.toLowerCase().includes('sushi')) {
+                    contextualQuery = `${extracted} sushi during pregnancy`;
+                } else {
+                    contextualQuery = `${extracted} (related to ${this.currentContext.item} during pregnancy)`;
+                }
+            } else if (question.toLowerCase().includes('instead') || 
+                       question.toLowerCase().includes('alternative')) {
+                // Asking for alternatives
+                contextualQuery = `Safe alternatives to ${this.currentContext.item} during pregnancy: ${question}`;
+            } else {
+                // It's a more detailed question about the original item
+                contextualQuery = `${this.currentContext.item}: ${question}`;
+            }
+            
+            console.log('Follow-up query:', contextualQuery);
             
             const response = await fetch('/api/check-safety', {
                 method: 'POST',
@@ -789,8 +807,7 @@ class PregnancySafetyChecker {
                     'Authorization': `Bearer ${localStorage.getItem('authToken')}`
                 },
                 body: JSON.stringify({
-                    item: contextPrompt,
-                    searchType: 'followup'
+                    item: contextualQuery
                 })
             });
             
