@@ -7,20 +7,25 @@ class ThemeSwitcher {
     }
 
     init() {
-        // Apply saved theme on load
-        this.applyTheme(this.currentTheme);
-        
-        // Create theme switcher UI if it doesn't exist
-        this.createThemeSwitcher();
-        
-        // Listen for theme preference changes from other tabs
-        window.addEventListener('storage', (e) => {
-            if (e.key === 'safematernity-theme') {
-                this.currentTheme = e.newValue || 'neutral';
-                this.applyTheme(this.currentTheme);
-                this.updateThemeSwitcherUI();
-            }
-        });
+        try {
+            console.log('Theme switcher init - current theme:', this.currentTheme);
+            // Apply saved theme on load
+            this.applyTheme(this.currentTheme);
+            
+            // Create theme switcher UI if it doesn't exist
+            this.createThemeSwitcher();
+            
+            // Listen for theme preference changes from other tabs
+            window.addEventListener('storage', (e) => {
+                if (e.key === 'safematernity-theme') {
+                    this.currentTheme = e.newValue || 'neutral';
+                    this.applyTheme(this.currentTheme);
+                    this.updateThemeSwitcherUI();
+                }
+            });
+        } catch (error) {
+            console.error('Error initializing theme switcher:', error);
+        }
     }
 
     loadTheme() {
@@ -40,6 +45,7 @@ class ThemeSwitcher {
     }
 
     applyTheme(theme) {
+        console.log('Applying theme:', theme);
         // Apply theme to root element
         document.documentElement.setAttribute('data-theme', theme);
         
@@ -53,6 +59,7 @@ class ThemeSwitcher {
             };
             metaThemeColor.content = colors[theme] || colors['neutral'];
         }
+        console.log('Theme applied. Current data-theme:', document.documentElement.getAttribute('data-theme'));
     }
 
     createThemeSwitcher() {
@@ -311,9 +318,11 @@ class ThemeSwitcher {
 // Initialize theme switcher when DOM is ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
+        console.log('Initializing theme switcher (DOM loading)...');
         window.themeSwitcher = new ThemeSwitcher();
     });
 } else {
+    console.log('Initializing theme switcher (DOM ready)...');
     window.themeSwitcher = new ThemeSwitcher();
 }
 
