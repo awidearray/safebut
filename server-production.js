@@ -607,7 +607,7 @@ app.post('/api/check-image-safety', verifyToken, requirePremium, async (req, res
 
         // Try multiple vision models in order of preference
         const visionModels = [
-            'pixtral-12b-2409',
+            'mistral-31-24b',
             'llama-3.2-90b-vision-instruct',
             'llama-3.2-11b-vision-instruct'
         ];
@@ -940,7 +940,7 @@ app.post('/api/detailed-image-safety', async (req, res) => {
         
         // Try multiple vision models in order of preference
         const visionModels = [
-            'pixtral-12b-2409',
+            'mistral-31-24b',
             'llama-3.2-90b-vision-instruct',
             'llama-3.2-11b-vision-instruct'
         ];
