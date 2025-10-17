@@ -363,7 +363,8 @@ class PregnancySafetyChecker {
             this.hideResults();
 
             try {
-                const result = await this.checkImageSafety(this.capturedImage);
+                // Always use detailed image analysis
+                const result = await this.getDetailedImageSafetyInfo(this.capturedImage);
                 this.displayResults('Analyzed Image', result);
                 this.addToHistory('Photo Analysis', result.riskScore);
                 // Track current search for detailed answers
@@ -388,7 +389,8 @@ class PregnancySafetyChecker {
         this.hideResults();
 
         try {
-            const result = await this.checkSafety(query);
+            // Always use detailed analysis for text queries
+            const result = await this.getDetailedSafetyInfo(query);
             this.displayResults(query, result);
             this.addToHistory(query, result.riskScore);
             // Track current search for detailed answers
@@ -583,17 +585,10 @@ class PregnancySafetyChecker {
         const getDetailsBtn = document.getElementById('getDetailsBtn');
         
         if (detailsSection && detailedContent && getDetailsBtn) {
-            detailsSection.style.display = 'block';
+            // Hide the details section since we now always show detailed content
+            detailsSection.style.display = 'none';
             detailedContent.style.display = 'none';
-            getDetailsBtn.disabled = false;
-            
-            // Reset button text and loader
-            const btnText = getDetailsBtn.querySelector('.details-btn-text');
-            const loader = getDetailsBtn.querySelector('.details-loader');
-            if (btnText && loader) {
-                btnText.style.display = 'inline';
-                loader.style.display = 'none';
-            }
+            getDetailsBtn.disabled = true;
         }
     }
 
@@ -681,7 +676,14 @@ class PregnancySafetyChecker {
     }
 
     formatContent(content) {
-        // Clean up the simplified response format
+        // If the content already includes HTML structure, return it as-is (strip header lines)
+        if (/<\s*(h1|h2|h3|h4|p|ul|ol|li|strong|em)\b/i.test(content)) {
+            return content
+                .replace(/RISK_SCORE:.*\n/i, '')
+                .replace(/SAFETY:.*\n/i, '');
+        }
+
+        // Otherwise, clean up simplified response format into HTML
         let formatted = content
             .replace(/RISK_SCORE:.*\n/g, '')
             .replace(/SAFETY:.*\n/g, '')
@@ -695,24 +697,24 @@ class PregnancySafetyChecker {
         let finalFormatted = '';
 
         lines.forEach(line => {
-            line = line.trim();
-            if (!line) return;
+            const trimmed = line.trim();
+            if (!trimmed) return;
 
-            if (line.startsWith('• ')) {
+            if (trimmed.startsWith('• ')) {
                 if (!inList) {
                     finalFormatted += '<ul>';
                     inList = true;
                 }
-                finalFormatted += `<li>${line.substring(2)}</li>`;
+                finalFormatted += `<li>${trimmed.substring(2)}</li>`;
             } else {
                 if (inList) {
                     finalFormatted += '</ul>';
                     inList = false;
                 }
-                if (line.includes('<h3>')) {
-                    finalFormatted += line;
+                if (trimmed.includes('<h3>')) {
+                    finalFormatted += trimmed;
                 } else {
-                    finalFormatted += `<p>${line}</p>`;
+                    finalFormatted += `<p>${trimmed}</p>`;
                 }
             }
         });

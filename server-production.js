@@ -816,16 +816,37 @@ app.post('/api/detailed-safety', async (req, res) => {
 
         const prompt = `Provide a comprehensive, detailed analysis of "${item}" during pregnancy. ${contextInfo}${preferenceContext}
 
-Please provide a thorough examination including:
+Start your response with EXACTLY TWO header lines:
+RISK_SCORE: [1-10]
+SAFETY: [Safe/Caution/Avoid]
 
-1. **Safety Overview**: Detailed safety assessment and risk level
-2. **Trimester Considerations**: How safety/recommendations change by trimester
-3. **Dosage/Amount Guidelines**: Specific limits and recommendations if applicable
-4. **Medical Mechanisms**: How this affects pregnancy and fetal development
-5. **Special Circumstances**: Considerations for high-risk pregnancies or specific conditions
-6. **Practical Guidelines**: Detailed practical advice and alternatives
-7. **Warning Signs**: What symptoms to watch for
-8. **Healthcare Consultation**: When to contact healthcare providers
+Then a blank line followed by the full answer formatted using ONLY HTML tags (h3, p, ul, li, strong). Do NOT use markdown symbols like *, **, or #.
+
+Please provide a thorough examination including these HTML sections:
+
+<h3>Safety Overview</h3>
+<p>Detailed safety assessment and risk level</p>
+
+<h3>Trimester Considerations</h3>
+<p>How safety/recommendations change by trimester</p>
+
+<h3>Dosage/Amount Guidelines</h3>
+<p>Specific limits and recommendations if applicable</p>
+
+<h3>Medical Mechanisms</h3>
+<p>How this affects pregnancy and fetal development</p>
+
+<h3>Special Circumstances</h3>
+<p>Considerations for high-risk pregnancies or specific conditions</p>
+
+<h3>Practical Guidelines</h3>
+<ul><li>Detailed practical advice and alternatives</li></ul>
+
+<h3>Warning Signs</h3>
+<ul><li>What symptoms to watch for</li></ul>
+
+<h3>Healthcare Consultation</h3>
+<p>When to contact healthcare providers</p>
 
 Be comprehensive and evidence-based. Address any specific conditions mentioned.`;
 
@@ -855,8 +876,13 @@ Be comprehensive and evidence-based. Address any specific conditions mentioned.`
 
         const aiResponse = response.data.choices[0].message.content;
         
+        // Extract risk score for UI meter if present
+        const riskMatch = aiResponse.match(/RISK_SCORE:\s*(\d+)/i);
+        const riskScore = riskMatch ? parseInt(riskMatch[1]) : 5;
+        
         res.json({ 
-            result: aiResponse
+            result: aiResponse,
+            riskScore
         });
     } catch (error) {
         console.error('Venice AI detailed API error:', error.response?.data || error.message);
