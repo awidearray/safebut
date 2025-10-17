@@ -789,9 +789,20 @@ class PregnancySafetyChecker {
                        question.toLowerCase().includes('alternative')) {
                 // Asking for alternatives
                 contextualQuery = `Safe alternatives to ${this.currentContext.item} during pregnancy: ${question}`;
-            } else {
-                // It's a more detailed question about the original item
+            } else if (question.split(' ').length <= 3 && !question.includes('?')) {
+                // Short queries (1-3 words) without question marks are likely new items
+                contextualQuery = `${question} during pregnancy`;
+            } else if (question.toLowerCase().includes('is it safe') || 
+                       question.toLowerCase().includes('can i') ||
+                       question.toLowerCase().includes('should i') ||
+                       question.toLowerCase().includes('how') ||
+                       question.toLowerCase().includes('why') ||
+                       question.toLowerCase().includes('when')) {
+                // Questions about the original item
                 contextualQuery = `${this.currentContext.item}: ${question}`;
+            } else {
+                // Default: assume it's a new item to check
+                contextualQuery = `${question} during pregnancy`;
             }
             
             console.log('Follow-up query:', contextualQuery);
