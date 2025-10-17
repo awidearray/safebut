@@ -783,12 +783,8 @@ class PregnancySafetyChecker {
                 let extracted = question.replace(/^(but |and )?(what about|how about|and)\s*/i, '').trim();
                 extracted = extracted.replace(/\?$/, ''); // Remove trailing question mark
                 
-                // For sushi-related queries, provide context
-                if (this.currentContext.item.toLowerCase().includes('sushi')) {
-                    contextualQuery = `${extracted} sushi during pregnancy`;
-                } else {
-                    contextualQuery = `${extracted} (related to ${this.currentContext.item} during pregnancy)`;
-                }
+                // Simply ask about the new item during pregnancy
+                contextualQuery = `${extracted} during pregnancy`;
             } else if (question.toLowerCase().includes('instead') || 
                        question.toLowerCase().includes('alternative')) {
                 // Asking for alternatives
