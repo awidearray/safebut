@@ -265,6 +265,10 @@ app.post('/api/profile', verifyToken, async (req, res) => {
     }
 });
 
+// Load text models from env or use defaults
+const TEXT_MODEL = process.env.TEXT_MODEL || 'llama-3.3-70b';
+const DETAILED_TEXT_MODEL = process.env.DETAILED_TEXT_MODEL || 'llama-3.3-70b';
+
 // API endpoint for safety checks (1 free per day for trial/free users, unlimited for premium)
 app.post('/api/check-safety', async (req, res) => {
     console.log('🔍 Safety check request received:', {
@@ -425,7 +429,6 @@ app.post('/api/check-safety', async (req, res) => {
 
         const prompt = includeBreastfeeding
             ? `Provide a concise, dual safety assessment of "${item}" for both pregnancy and breastfeeding.${contextInfo}${preferenceContext}
-
 Respond EXACTLY in this structured format:
 PREGNANCY_RISK_SCORE: [1-10]
 BREASTFEEDING_RISK_SCORE: [1-10]
@@ -451,7 +454,7 @@ TIPS: [2-3 short practical tips specific to the patient's conditions if applicab
 
         const apiUrl = 'https://api.venice.ai/api/v1/chat/completions';
         const requestBody = {
-            model: 'llama-3.3-70b',
+            model: TEXT_MODEL,
             messages: [
                 {
                     role: 'system',
@@ -817,7 +820,6 @@ app.post('/api/detailed-safety', async (req, res) => {
         }
 
         const prompt = `Provide a comprehensive, detailed analysis of "${item}" during pregnancy. ${contextInfo}${preferenceContext}
-
 Start your response with EXACTLY TWO header lines:
 RISK_SCORE: [1-10]
 SAFETY: [Safe/Caution/Avoid]
@@ -854,7 +856,7 @@ Be comprehensive and evidence-based. Address any specific conditions mentioned.`
 
         const apiUrl = 'https://api.venice.ai/api/v1/chat/completions';
         const requestBody = {
-            model: 'llama-3.3-70b',
+            model: DETAILED_TEXT_MODEL,
             messages: [
                 {
                     role: 'system',
