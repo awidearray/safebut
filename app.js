@@ -43,8 +43,10 @@ class PregnancySafetyChecker {
                     this.loadProfile();
                 }
                 
-                // Update UI for premium users
-                if (data.isPremium) {
+            // Update UI for premium users
+            if (data.isPremium) {
+                // Premium users get PWA features
+                console.log('Premium user detected - PWA features enabled');
                     document.querySelectorAll('.upgrade-prompt').forEach(el => {
                         el.style.display = 'none';
                     });
@@ -150,6 +152,7 @@ class PregnancySafetyChecker {
             conditions: [],
             riskFactors: [],
             diet: [],
+            allergies: [],
             trimester: document.querySelector('input[name="trimester"]:checked')?.value,
             // Response preferences
             preferences: {
@@ -177,6 +180,11 @@ class PregnancySafetyChecker {
         // Save diet
         document.querySelectorAll('input[name="diet"]:checked').forEach(input => {
             profile.diet.push(input.id);
+        });
+        
+        // Save allergies
+        document.querySelectorAll('input[name="allergies"]:checked').forEach(input => {
+            profile.allergies.push(input.id);
         });
         
         localStorage.setItem('pregnancyProfile', JSON.stringify(profile));
@@ -243,6 +251,14 @@ class PregnancySafetyChecker {
         // Load diet
         if (profile.diet) {
             profile.diet.forEach(id => {
+                const checkbox = document.getElementById(id);
+                if (checkbox) checkbox.checked = true;
+            });
+        }
+        
+        // Load allergies
+        if (profile.allergies) {
+            profile.allergies.forEach(id => {
                 const checkbox = document.getElementById(id);
                 if (checkbox) checkbox.checked = true;
             });

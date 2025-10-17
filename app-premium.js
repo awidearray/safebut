@@ -804,6 +804,14 @@ class PregnancySafetyChecker {
             });
         }
         
+        // Populate allergies
+        if (this.profileData.allergies) {
+            Object.keys(this.profileData.allergies).forEach(key => {
+                const checkbox = document.getElementById(key);
+                if (checkbox) checkbox.checked = this.profileData.allergies[key];
+            });
+        }
+        
         // Populate trimester
         if (this.profileData.trimester) {
             document.querySelectorAll('input[name="trimester"]').forEach(radio => {
@@ -832,6 +840,7 @@ class PregnancySafetyChecker {
             conditions: {},
             riskFactors: {},
             diet: {},
+            allergies: {},
             
             // Trimester
             trimester: document.querySelector('input[name="trimester"]:checked')?.value
@@ -850,6 +859,11 @@ class PregnancySafetyChecker {
         // Collect diet
         document.querySelectorAll('input[name="diet"]').forEach(checkbox => {
             profileData.diet[checkbox.id] = checkbox.checked;
+        });
+        
+        // Collect allergies
+        document.querySelectorAll('input[name="allergies"]').forEach(checkbox => {
+            profileData.allergies[checkbox.id] = checkbox.checked;
         });
         
         try {

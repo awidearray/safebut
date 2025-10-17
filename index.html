@@ -6,11 +6,12 @@
     <title>Safe Maternity - Your Trusted Pregnancy Safety Guide</title>
     <meta name="description" content="Get instant, reliable pregnancy safety information for foods, medications, and activities. Trusted by thousands of expecting mothers.">
     <meta name="theme-color" content="#b8956a">
+    
+    <!-- Standard favicon -->
+    <link rel="icon" type="image/png" href="/logo.png">
+    
     <link rel="stylesheet" href="globals.css">
     <script src="theme-switcher.js"></script>
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="/logo.png">
     
     <style>
         * {
@@ -589,6 +590,29 @@
             color: #b8c5d6;
         }
 
+        .social-links {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .social-link {
+            width: 40px;
+            height: 40px;
+            background: #3d5068;
+
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-inverse);
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+
+        .social-link:hover {
+            background: var(--primary-color);
+        }
 
         /* Disclaimer */
         .disclaimer {
@@ -670,13 +694,12 @@
     <nav>
         <div class="nav-container">
             <a href="/" class="logo">
-                <img src="/logo.png" alt="Safe Maternity Logo" style="width: 45px; height: 45px; vertical-align: middle; margin-right: 10px;">
+                <span class="logo-icon">🤰</span>
                 Safe Maternity
             </a>
             <ul class="nav-links">
                 <li><a href="#features">Features</a></li>
                 <li><a href="#how-it-works">How It Works</a></li>
-                <li><a href="/guide">Resources</a></li>
                 <li><a href="#about">About</a></li>
                 <li><a href="/app">Sign In</a></li>
                 <li><a href="/app" class="nav-cta">Get Started Free</a></li>
@@ -853,6 +876,11 @@
             <div class="footer-section">
                 <h4>Safe Maternity</h4>
                 <p style="color: #b8c5d6; margin-bottom: 20px;">Your trusted companion for a safe and healthy pregnancy journey.</p>
+                <div class="social-links">
+                    <a href="#" class="social-link">f</a>
+                    <a href="#" class="social-link">t</a>
+                    <a href="#" class="social-link">i</a>
+                </div>
             </div>
             <div class="footer-section">
                 <h4>Quick Links</h4>
@@ -866,10 +894,10 @@
             <div class="footer-section">
                 <h4>Resources</h4>
                 <ul>
-                    <li><a href="/guide">Pregnancy Resources Guide</a></li>
-                    <li><a href="/app">Safety Checker</a></li>
-                    <li><a href="/guide#official">Medical References</a></li>
-                    <li><a href="/guide#community">Community Forums</a></li>
+                    <li><a href="/guide">Pregnancy Guide</a></li>
+                    <li><a href="/safety">Safety Reference</a></li>
+                    <li><a href="/medical">Medical References</a></li>
+                    <li><a href="/faq">FAQ</a></li>
                 </ul>
             </div>
             <div class="footer-section">

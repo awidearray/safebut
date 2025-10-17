@@ -5,13 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Safe Maternity - Pregnancy Safety Checker</title>
     <meta name="theme-color" content="#b8956a">
+    
+    <!-- PWA Configuration -->
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icon-72.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/icon-72.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Safe Maternity">
+    
     <link rel="stylesheet" href="globals.css">
     <link rel="stylesheet" href="styles.css">
     <script src="theme-switcher.js"></script>
+    <script src="pwa-installer.js" defer></script>
     <script src="https://js.stripe.com/v3/"></script>
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="/logo.png">
 </head>
 <body>
     <div class="container">
@@ -267,6 +275,109 @@
                             <label class="condition-toggle">
                                 <input type="checkbox" id="lactose-intolerant" name="diet">
                                 <span class="toggle-label">Lactose Intolerant</span>
+                            </label>
+                        </div>
+                        
+                        <h3>🤧 Allergies</h3>
+                        <div class="condition-grid">
+                            <label class="condition-toggle">
+                                <input type="checkbox" id="peanuts" name="allergies">
+                                <span class="toggle-label">Peanuts</span>
+                            </label>
+                            
+                            <label class="condition-toggle">
+                                <input type="checkbox" id="tree-nuts" name="allergies">
+                                <span class="toggle-label">Tree Nuts (almonds, cashews, walnuts, etc.)</span>
+                            </label>
+                            
+                            <label class="condition-toggle">
+                                <input type="checkbox" id="milk" name="allergies">
+                                <span class="toggle-label">Milk/Dairy</span>
+                            </label>
+                            
+                            <label class="condition-toggle">
+                                <input type="checkbox" id="eggs" name="allergies">
+                                <span class="toggle-label">Eggs</span>
+                            </label>
+                            
+                            <label class="condition-toggle">
+                                <input type="checkbox" id="soy" name="allergies">
+                                <span class="toggle-label">Soy</span>
+                            </label>
+                            
+                            <label class="condition-toggle">
+                                <input type="checkbox" id="wheat" name="allergies">
+                                <span class="toggle-label">Wheat</span>
+                            </label>
+                            
+                            <label class="condition-toggle">
+                                <input type="checkbox" id="shellfish" name="allergies">
+                                <span class="toggle-label">Shellfish</span>
+                            </label>
+                            
+                            <label class="condition-toggle">
+                                <input type="checkbox" id="fish" name="allergies">
+                                <span class="toggle-label">Fish</span>
+                            </label>
+                            
+                            <label class="condition-toggle">
+                                <input type="checkbox" id="sesame" name="allergies">
+                                <span class="toggle-label">Sesame</span>
+                            </label>
+                            
+                            <label class="condition-toggle">
+                                <input type="checkbox" id="latex" name="allergies">
+                                <span class="toggle-label">Latex</span>
+                            </label>
+                            
+                            <label class="condition-toggle">
+                                <input type="checkbox" id="penicillin" name="allergies">
+                                <span class="toggle-label">Penicillin</span>
+                            </label>
+                            
+                            <label class="condition-toggle">
+                                <input type="checkbox" id="aspirin" name="allergies">
+                                <span class="toggle-label">Aspirin/NSAIDs</span>
+                            </label>
+                            
+                            <label class="condition-toggle">
+                                <input type="checkbox" id="sulfa" name="allergies">
+                                <span class="toggle-label">Sulfa Drugs</span>
+                            </label>
+                            
+                            <label class="condition-toggle">
+                                <input type="checkbox" id="iodine" name="allergies">
+                                <span class="toggle-label">Iodine/Contrast Dye</span>
+                            </label>
+                            
+                            <label class="condition-toggle">
+                                <input type="checkbox" id="bee-stings" name="allergies">
+                                <span class="toggle-label">Bee/Wasp Stings</span>
+                            </label>
+                            
+                            <label class="condition-toggle">
+                                <input type="checkbox" id="pollen" name="allergies">
+                                <span class="toggle-label">Pollen/Hay Fever</span>
+                            </label>
+                            
+                            <label class="condition-toggle">
+                                <input type="checkbox" id="dust-mites" name="allergies">
+                                <span class="toggle-label">Dust Mites</span>
+                            </label>
+                            
+                            <label class="condition-toggle">
+                                <input type="checkbox" id="pet-dander" name="allergies">
+                                <span class="toggle-label">Pet Dander</span>
+                            </label>
+                            
+                            <label class="condition-toggle">
+                                <input type="checkbox" id="mold" name="allergies">
+                                <span class="toggle-label">Mold</span>
+                            </label>
+                            
+                            <label class="condition-toggle">
+                                <input type="checkbox" id="nickel" name="allergies">
+                                <span class="toggle-label">Nickel/Metal</span>
                             </label>
                         </div>
                         
@@ -597,20 +708,105 @@
                     
                     <div class="upgrade-benefits">
                         <h3>✨ Premium Benefits</h3>
-                        <div class="benefit-item">
-                            <span>✓</span> Unlimited safety checks (vs 1/day free)
+                        
+                        <!-- Core Features -->
+                        <div class="benefit-category">
+                            <h4 style="color: var(--primary-color); margin: 15px 0 10px 0;">🌟 Core Features</h4>
+                            <div class="benefit-item">
+                                <span>✓</span> Unlimited safety checks (vs 1/day free)
+                            </div>
+                            <div class="benefit-item">
+                                <span>✓</span> 📸 Camera & image analysis - snap photos to check safety
+                            </div>
+                            <div class="benefit-item">
+                                <span>✓</span> 🔬 Detailed medical reports with AI reasoning
+                            </div>
+                            <div class="benefit-item">
+                                <span>✓</span> 🤖 See AI's thought process behind safety ratings
+                            </div>
+                            <div class="benefit-item">
+                                <span>✓</span> 🤱 Breastfeeding safety information included
+                            </div>
                         </div>
-                        <div class="benefit-item">
-                            <span>✓</span> 📸 Camera & image analysis
+                        
+                        <!-- PWA Features -->
+                        <div class="benefit-category">
+                            <h4 style="color: var(--primary-color); margin: 15px 0 10px 0;">📱 Mobile App Features</h4>
+                            <div class="benefit-item">
+                                <span>✓</span> 📲 Install as app on your phone (PWA)
+                            </div>
+                            <div class="benefit-item">
+                                <span>✓</span> 🔌 Works offline - no internet needed
+                            </div>
+                            <div class="benefit-item">
+                                <span>✓</span> ⚡ Lightning-fast cached loading
+                            </div>
+                            <div class="benefit-item">
+                                <span>✓</span> 🏠 One-tap access from home screen
+                            </div>
+                            <div class="benefit-item">
+                                <span>✓</span> 📶 Automatic sync when back online
+                            </div>
                         </div>
-                        <div class="benefit-item">
-                            <span>✓</span> 🔬 Detailed medical reports
+                        
+                        <!-- Tracking & Export -->
+                        <div class="benefit-category">
+                            <h4 style="color: var(--primary-color); margin: 15px 0 10px 0;">📊 Tracking & Export</h4>
+                            <div class="benefit-item">
+                                <span>✓</span> 📝 Complete search history forever
+                            </div>
+                            <div class="benefit-item">
+                                <span>✓</span> 📄 Export history as PDF for doctor visits
+                            </div>
+                            <div class="benefit-item">
+                                <span>✓</span> 📅 Pregnancy journal with voice notes
+                            </div>
+                            <div class="benefit-item">
+                                <span>✓</span> 📈 Track patterns and trends
+                            </div>
+                            <div class="benefit-item">
+                                <span>✓</span> 🔄 Sync across all your devices
+                            </div>
                         </div>
-                        <div class="benefit-item">
-                            <span>✓</span> 📄 Export history as PDF
+                        
+                        <!-- Community & Support -->
+                        <div class="benefit-category">
+                            <h4 style="color: var(--primary-color); margin: 15px 0 10px 0;">🤝 Community & Support</h4>
+                            <div class="benefit-item">
+                                <span>✓</span> 🏆 Access to leaderboard & community
+                            </div>
+                            <div class="benefit-item">
+                                <span>✓</span> 💰 Affiliate program - earn from referrals
+                            </div>
+                            <div class="benefit-item">
+                                <span>✓</span> 📧 Priority email support
+                            </div>
+                            <div class="benefit-item">
+                                <span>✓</span> 🎯 Early access to new features
+                            </div>
+                            <div class="benefit-item">
+                                <span>✓</span> 💝 Support independent development
+                            </div>
                         </div>
-                        <div class="benefit-item">
-                            <span>✓</span> No subscriptions or hidden fees
+                        
+                        <!-- Value Proposition -->
+                        <div class="benefit-category">
+                            <h4 style="color: var(--primary-color); margin: 15px 0 10px 0;">💎 Lifetime Value</h4>
+                            <div class="benefit-item">
+                                <span>✓</span> 🚫 No subscriptions or hidden fees
+                            </div>
+                            <div class="benefit-item">
+                                <span>✓</span> ♾️ Use throughout pregnancy & breastfeeding
+                            </div>
+                            <div class="benefit-item">
+                                <span>✓</span> 👶 Keep for future pregnancies
+                            </div>
+                            <div class="benefit-item">
+                                <span>✓</span> 🔒 Privacy-focused - your data stays yours
+                            </div>
+                            <div class="benefit-item">
+                                <span>✓</span> 💚 30-day money-back guarantee
+                            </div>
                         </div>
                     </div>
 

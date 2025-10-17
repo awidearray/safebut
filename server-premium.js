@@ -240,6 +240,39 @@ app.post('/api/check-safety', async (req, res) => {
             }
         }
         
+        if (userProfile.allergies) {
+            const activeAllergies = Object.entries(userProfile.allergies)
+                .filter(([key, value]) => value === true)
+                .map(([key, value]) => {
+                    const allergyMap = {
+                        'peanuts': 'peanut allergy',
+                        'tree-nuts': 'tree nut allergy',
+                        'milk': 'milk/dairy allergy',
+                        'eggs': 'egg allergy',
+                        'soy': 'soy allergy',
+                        'wheat': 'wheat allergy',
+                        'shellfish': 'shellfish allergy',
+                        'fish': 'fish allergy',
+                        'sesame': 'sesame allergy',
+                        'latex': 'latex allergy',
+                        'penicillin': 'penicillin allergy',
+                        'aspirin': 'aspirin/NSAID allergy',
+                        'sulfa': 'sulfa drug allergy',
+                        'iodine': 'iodine/contrast dye allergy',
+                        'bee-stings': 'bee/wasp sting allergy',
+                        'pollen': 'pollen/hay fever',
+                        'dust-mites': 'dust mite allergy',
+                        'pet-dander': 'pet dander allergy',
+                        'mold': 'mold allergy',
+                        'nickel': 'nickel/metal allergy'
+                    };
+                    return allergyMap[key] || key;
+                });
+            if (activeAllergies.length > 0) {
+                contextInfo += `\nPatient has allergies: ${activeAllergies.join(', ')}.`;
+            }
+        }
+        
         if (userProfile.trimester) {
             contextInfo += `\nCurrently in ${userProfile.trimester} trimester.`;
         }
