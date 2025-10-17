@@ -591,6 +591,15 @@ TIPS: [2-3 short practical tips specific to the patient's conditions if applicab
     }
 });
 
+// Load vision models from env or use defaults
+const VISION_MODELS = process.env.VISION_MODELS 
+    ? process.env.VISION_MODELS.split(',').map(m => m.trim())
+    : [
+        'mistral-31-24b',
+        'llama-3.2-90b-vision-instruct',
+        'llama-3.2-11b-vision-instruct'
+    ];
+
 // Image analysis endpoint (premium feature only)
 app.post('/api/check-image-safety', verifyToken, requirePremium, async (req, res) => {
     try {
@@ -605,16 +614,9 @@ app.post('/api/check-image-safety', verifyToken, requirePremium, async (req, res
 
         const apiUrl = 'https://api.venice.ai/api/v1/chat/completions';
 
-        // Try multiple vision models in order of preference
-        const visionModels = [
-            'mistral-31-24b',
-            'llama-3.2-90b-vision-instruct',
-            'llama-3.2-11b-vision-instruct'
-        ];
-
         let lastError = null;
         
-        for (const modelName of visionModels) {
+        for (const modelName of VISION_MODELS) {
             try {
                 console.log(`🔍 Attempting image analysis with model: ${modelName}`);
                 
@@ -938,16 +940,9 @@ app.post('/api/detailed-image-safety', async (req, res) => {
         
         const apiUrl = 'https://api.venice.ai/api/v1/chat/completions';
         
-        // Try multiple vision models in order of preference
-        const visionModels = [
-            'mistral-31-24b',
-            'llama-3.2-90b-vision-instruct',
-            'llama-3.2-11b-vision-instruct'
-        ];
-
         let lastError = null;
         
-        for (const modelName of visionModels) {
+        for (const modelName of VISION_MODELS) {
             try {
                 console.log(`🔍 Attempting detailed image analysis with model: ${modelName}`);
                 
