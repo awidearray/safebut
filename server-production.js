@@ -266,8 +266,17 @@ app.post('/api/profile', verifyToken, async (req, res) => {
 });
 
 // Load text models from env or use defaults
-const TEXT_MODEL = process.env.TEXT_MODEL || 'llama-3.3-70b';
-const DETAILED_TEXT_MODEL = process.env.DETAILED_TEXT_MODEL || 'llama-3.3-70b';
+const TEXT_MODEL = process.env.TEXT_MODEL || 'llama-3.2-3b';
+const DETAILED_TEXT_MODEL = process.env.DETAILED_TEXT_MODEL || 'llama-3.2-3b';
+
+// Load vision models from env or use defaults
+const VISION_MODELS = process.env.VISION_MODELS 
+    ? process.env.VISION_MODELS.split(',').map(m => m.trim())
+    : [
+        'llama-3.2-11b-vision-instruct',  // Smallest/fastest vision model
+        'mistral-31-24b',
+        'llama-3.2-90b-vision-instruct'
+    ];
 
 // API endpoint for safety checks (1 free per day for trial/free users, unlimited for premium)
 app.post('/api/check-safety', async (req, res) => {
@@ -593,15 +602,6 @@ TIPS: [2-3 short practical tips specific to the patient's conditions if applicab
         res.json(fallbackResponse);
     }
 });
-
-// Load vision models from env or use defaults
-const VISION_MODELS = process.env.VISION_MODELS 
-    ? process.env.VISION_MODELS.split(',').map(m => m.trim())
-    : [
-        'mistral-31-24b',
-        'llama-3.2-90b-vision-instruct',
-        'llama-3.2-11b-vision-instruct'
-    ];
 
 // Image analysis endpoint (premium feature only)
 app.post('/api/check-image-safety', verifyToken, requirePremium, async (req, res) => {
