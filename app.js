@@ -741,16 +741,6 @@ class PregnancySafetyChecker {
         const question = followUpInput.value.trim();
         if (!question) return;
         
-        // Check authentication and search limits
-        const canSearch = await this.checkSearchLimit();
-        if (!canSearch) {
-            const isPremium = localStorage.getItem('isPremium') === 'true';
-            if (!isPremium) {
-                this.showUpgradePrompt();
-                return;
-            }
-        }
-        
         // Disable button and show loading state
         followUpBtn.disabled = true;
         followUpBtn.innerHTML = `
@@ -804,11 +794,11 @@ class PregnancySafetyChecker {
                 })
             });
             
-            if (!response.ok) {
-                throw new Error('Failed to get response');
-            }
-            
             const result = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(result.error || 'Failed to get response');
+            }
             
             // Update the answer in the conversation
             const answerDiv = document.querySelector(`#${qaId} .follow-up-answer`);
@@ -822,7 +812,15 @@ class PregnancySafetyChecker {
             console.error('Follow-up error:', error);
             const answerDiv = document.querySelector(`#${qaId} .follow-up-answer`);
             answerDiv.style.opacity = '1';
-            answerDiv.innerHTML = `<span style="color: red;">Sorry, I couldn't get an answer. Please try again.</span>`;
+            
+            // Check if it's a daily limit error
+            if (error.message && (error.message.includes('Daily limit reached') || error.message.includes('Trial limit reached'))) {
+                this.showUpgradePrompt();
+                // Remove the failed question from conversation
+                document.getElementById(qaId).remove();
+            } else {
+                answerDiv.innerHTML = `<span style="color: red;">Sorry, I couldn't get an answer. Please try again.</span>`;
+            }
         } finally {
             // Re-enable button
             followUpBtn.disabled = false;
