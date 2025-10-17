@@ -586,6 +586,11 @@ footer {
     color: #721c24;
 }
 
+.safety-verdict.caution {
+    background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+    color: #856404;
+}
+
 /* Dual Safety Sections */
 .dual-safety-sections {
     display: grid;

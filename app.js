@@ -551,12 +551,21 @@ class PregnancySafetyChecker {
         riskIndicator.style.borderColor = color;
         riskIndicator.style.color = color;
 
-        // Set safety verdict
-        if (riskScore <= 4) {
+        // Set safety verdict based on new scale
+        if (riskScore <= 2) {
+            safetyVerdict.textContent = '✅ VERY SAFE - This is considered very safe during pregnancy';
+            safetyVerdict.className = 'safety-verdict safe';
+        } else if (riskScore <= 4) {
             safetyVerdict.textContent = '✅ SAFE - This is generally considered safe during pregnancy';
             safetyVerdict.className = 'safety-verdict safe';
+        } else if (riskScore === 5) {
+            safetyVerdict.textContent = '⚖️ JUDGMENT CALL - Consider your specific situation and consult your provider';
+            safetyVerdict.className = 'safety-verdict caution';
+        } else if (riskScore <= 8) {
+            safetyVerdict.textContent = '⚠️ USE CAUTION - This requires careful consideration and may pose risks';
+            safetyVerdict.className = 'safety-verdict caution';
         } else {
-            safetyVerdict.textContent = '❌ NOT SAFE - This should be avoided or used with extreme caution';
+            safetyVerdict.textContent = '❌ UNSAFE - This should be avoided during pregnancy';
             safetyVerdict.className = 'safety-verdict unsafe';
         }
 
@@ -645,16 +654,16 @@ class PregnancySafetyChecker {
 
     getRiskColor(score) {
         const colors = [
-            '#00ff00', // 1 - Bright Green
-            '#33ff00', // 2
-            '#66ff00', // 3
-            '#99ff00', // 4
-            '#ffff00', // 5 - Yellow
-            '#ffcc00', // 6
-            '#ff9900', // 7
-            '#ff6600', // 8
-            '#ff3300', // 9
-            '#ff0000'  // 10 - Red
+            '#00c851', // 1 - Deep Green (Very Safe)
+            '#00c851', // 2 - Deep Green (Very Safe)
+            '#4CAF50', // 3 - Green (Safe)
+            '#4CAF50', // 4 - Green (Safe)
+            '#FFC107', // 5 - Amber (Judgment Call - Neutral)
+            '#FF9800', // 6 - Orange (Use Caution)
+            '#FF6F00', // 7 - Dark Orange (Use Caution)
+            '#FF5722', // 8 - Deep Orange (Use Caution)
+            '#F44336', // 9 - Red (Unsafe)
+            '#D32F2F'  // 10 - Dark Red (Unsafe)
         ];
         return colors[Math.min(Math.max(score - 1, 0), 9)];
     }
