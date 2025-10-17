@@ -795,7 +795,8 @@ class PregnancySafetyChecker {
         };
 
         // Initialize follow-up question functionality
-        this.initializeFollowUp();
+        // Commented out for now - not working properly
+        // this.initializeFollowUp();
 
         resultsSection.style.display = 'block';
         
