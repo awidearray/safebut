@@ -83,10 +83,29 @@ if (process.env.NODE_ENV === 'production') {
 
 // Connect to MongoDB (gracefully skip if not configured to avoid serverless crash)
 if ((process.env.MONGODB_URI || process.env.mongodb_uri) && connectDB) {
-    try {
-        connectDB();
-    } catch (error) {
-        console.error('Failed to connect to database:', error.message);
+    // In serverless environment, handle connection more gracefully
+    if (process.env.VERCEL === '1') {
+        console.log('Running in Vercel serverless environment, database connection will be established on demand');
+        // Don't connect immediately in serverless - let mongoose handle it on first query
+        try {
+            // Just set up the connection string, don't actually connect
+            const mongoose = require('mongoose');
+            const mongoUri = process.env.MONGODB_URI || process.env.mongodb_uri;
+            mongoose.set('strictQuery', false);
+            // Set connection options for serverless
+            mongoose.connection.on('error', (err) => {
+                console.error('MongoDB connection error:', err);
+            });
+        } catch (error) {
+            console.error('Failed to configure database:', error.message);
+        }
+    } else {
+        // Normal server environment - connect immediately
+        try {
+            connectDB();
+        } catch (error) {
+            console.error('Failed to connect to database:', error.message);
+        }
     }
 } else {
     console.warn('MONGODB_URI is not set or database module unavailable. Running without database connection.');
@@ -345,6 +364,32 @@ if (process.env.NODE_ENV !== 'production') {
         res.sendFile(path.join(__dirname, 'app-debug.js'));
     });
 }
+
+// Health check endpoint - useful for debugging
+app.get('/api/health', (req, res) => {
+    const health = {
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || 'development',
+        vercel: process.env.VERCEL === '1',
+        config: {
+            hasMongoUri: !!(process.env.MONGODB_URI || process.env.mongodb_uri),
+            hasSessionSecret: !!process.env.SESSION_SECRET,
+            hasJwtSecret: !!process.env.JWT_SECRET,
+            hasVeniceKey: !!process.env.VENICE_API_KEY,
+            mongooseConnected: false
+        }
+    };
+    
+    try {
+        const mongoose = require('mongoose');
+        health.config.mongooseConnected = mongoose.connection.readyState === 1;
+    } catch (e) {
+        // Mongoose not available
+    }
+    
+    res.json(health);
+});
 
 // API endpoints for profile management
 app.get('/api/profile', verifyToken, async (req, res) => {
