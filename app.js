@@ -682,12 +682,16 @@ class PregnancySafetyChecker {
         contentHTML += formattedContent;
         resultContent.innerHTML = contentHTML;
 
-        // Add reference links
-        if (data.references && data.references.length > 0) {
-            referenceLinks.innerHTML = data.references.map(ref => 
-                `<a href="${ref.url}" target="_blank" class="reference-link">→ ${ref.title}</a>`
-            ).join('');
-        }
+        // Store current context for follow-up questions
+        this.currentContext = {
+            item: item,
+            initialResponse: data.result,
+            riskScore: data.riskScore,
+            type: this.currentSearchType
+        };
+
+        // Initialize follow-up question functionality
+        this.initializeFollowUp();
 
         resultsSection.style.display = 'block';
         
@@ -701,6 +705,133 @@ class PregnancySafetyChecker {
             detailsSection.style.display = 'none';
             detailedContent.style.display = 'none';
             getDetailsBtn.disabled = true;
+        }
+    }
+
+    initializeFollowUp() {
+        const followUpBtn = document.getElementById('followUpBtn');
+        const followUpInput = document.getElementById('followUpInput');
+        
+        // Remove existing listeners to avoid duplicates
+        const newFollowUpBtn = followUpBtn.cloneNode(true);
+        followUpBtn.parentNode.replaceChild(newFollowUpBtn, followUpBtn);
+        
+        // Add event listener for follow-up button
+        newFollowUpBtn.addEventListener('click', () => this.handleFollowUp());
+        
+        // Add enter key support for follow-up input
+        followUpInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                this.handleFollowUp();
+            }
+        });
+        
+        // Clear previous conversation
+        const followUpConversation = document.getElementById('followUpConversation');
+        followUpConversation.innerHTML = '';
+        followUpConversation.style.display = 'none';
+    }
+    
+    async handleFollowUp() {
+        const followUpInput = document.getElementById('followUpInput');
+        const followUpConversation = document.getElementById('followUpConversation');
+        const followUpBtn = document.getElementById('followUpBtn');
+        
+        const question = followUpInput.value.trim();
+        if (!question) return;
+        
+        // Check authentication and search limits
+        const canSearch = await this.checkSearchLimit();
+        if (!canSearch) {
+            const isPremium = localStorage.getItem('isPremium') === 'true';
+            if (!isPremium) {
+                this.showUpgradePrompt();
+                return;
+            }
+        }
+        
+        // Disable button and show loading state
+        followUpBtn.disabled = true;
+        followUpBtn.innerHTML = `
+            <span>Asking...</span>
+            <div class="loading-spinner-small"></div>
+        `;
+        
+        // Show the conversation area
+        followUpConversation.style.display = 'block';
+        
+        // Add the question to conversation
+        const qaId = `qa-${Date.now()}`;
+        const qaHTML = `
+            <div class="follow-up-qa" id="${qaId}">
+                <div class="follow-up-question">
+                    <strong>Q:</strong> ${this.escapeHtml(question)}
+                </div>
+                <div class="follow-up-answer" style="opacity: 0.6;">
+                    <div class="loading-spinner-small"></div>
+                    Getting answer...
+                </div>
+            </div>
+        `;
+        followUpConversation.insertAdjacentHTML('beforeend', qaHTML);
+        
+        // Scroll to the new question
+        document.getElementById(qaId).scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        
+        try {
+            // Prepare the context for the follow-up question
+            const contextPrompt = `
+                User is asking a follow-up question about: ${this.currentContext.item}
+                
+                Previous safety assessment:
+                ${this.currentContext.initialResponse}
+                
+                Follow-up question: ${question}
+                
+                Please provide a specific answer to their follow-up question, maintaining context about ${this.currentContext.item}.
+            `;
+            
+            const response = await fetch('/api/check-safety', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                },
+                body: JSON.stringify({
+                    item: contextPrompt,
+                    searchType: 'followup'
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to get response');
+            }
+            
+            const result = await response.json();
+            
+            // Update the answer in the conversation
+            const answerDiv = document.querySelector(`#${qaId} .follow-up-answer`);
+            answerDiv.style.opacity = '1';
+            answerDiv.innerHTML = `<strong>A:</strong> ${this.formatContent(result.result)}`;
+            
+            // Clear the input
+            followUpInput.value = '';
+            
+        } catch (error) {
+            console.error('Follow-up error:', error);
+            const answerDiv = document.querySelector(`#${qaId} .follow-up-answer`);
+            answerDiv.style.opacity = '1';
+            answerDiv.innerHTML = `<span style="color: red;">Sorry, I couldn't get an answer. Please try again.</span>`;
+        } finally {
+            // Re-enable button
+            followUpBtn.disabled = false;
+            followUpBtn.innerHTML = `
+                <span>Ask Follow-up</span>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M15.707 7.293l-6-6a1 1 0 0 0-1.414 1.414L12.586 7H1a1 1 0 1 0 0 2h11.586l-4.293 4.293a1 1 0 1 0 1.414 1.414l6-6a1 1 0 0 0 0-1.414z"/>
+                </svg>
+            `;
         }
     }
 

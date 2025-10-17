@@ -92,9 +92,20 @@
                     
                     <!-- Details section removed: always show detailed answer in main content -->
                     
-                    <div id="referencesSection" class="references-section">
-                        <h3>📚 Learn More</h3>
-                        <div id="referenceLinks"></div>
+                    <div id="followUpSection" class="follow-up-section">
+                        <h3>💬 Have a Follow-up Question?</h3>
+                        <div class="follow-up-input-container">
+                            <textarea id="followUpInput" class="follow-up-input" placeholder="Ask a more specific question about this item..." rows="2"></textarea>
+                            <button id="followUpBtn" class="follow-up-btn">
+                                <span>Ask Follow-up</span>
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                    <path d="M15.707 7.293l-6-6a1 1 0 0 0-1.414 1.414L12.586 7H1a1 1 0 1 0 0 2h11.586l-4.293 4.293a1 1 0 1 0 1.414 1.414l6-6a1 1 0 0 0 0-1.414z"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div id="followUpConversation" class="follow-up-conversation" style="display: none;">
+                            <!-- Follow-up Q&A will appear here -->
+                        </div>
                     </div>
                     
                     <div class="disclaimer">
