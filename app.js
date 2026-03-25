@@ -9,13 +9,15 @@ class PregnancySafetyChecker {
         this.logEntries = [];
         this.currentSearchItem = null;
         this.currentSearchType = null; // 'text' or 'image'
-        this.fetchUserStatus(); // Fetch user status on initialization
+        this.fetchUserStatus();
         this.initializeTabs();
         this.initializeEventListeners();
         this.initializeProfile();
         this.initializeLog();
         this.initializeAffiliate();
         this.initializeSessionManagement();
+        this.initializeCompareMode();
+        this.initializeEmergencyContacts();
         this.displayHistory();
     }
     
@@ -1960,13 +1962,13 @@ END:VCALENDAR`;
             
             <div class="loading-analysis">
                 <div class="loading-spinner"></div>
-                <p>Analyzing your entry with Venice AI...</p>
+                <p>Analyzing your entry with Shroud AI...</p>
             </div>
         `;
         
         modal.style.display = 'block';
         
-        // Get Venice AI analysis
+        // Get Shroud AI analysis
         try {
             const response = await fetch('/api/analyze-log-entry', {
                 method: 'POST',
@@ -2503,7 +2505,6 @@ END:VCALENDAR`;
     }
     
     showSessionSuccess(message) {
-        // Show success message temporarily
         const sessionsList = document.getElementById('sessionsList');
         const successDiv = document.createElement('div');
         successDiv.style.cssText = 'background: #d4edda; color: #155724; padding: 10px; border-radius: 6px; margin-bottom: 15px;';
@@ -2513,6 +2514,161 @@ END:VCALENDAR`;
         setTimeout(() => {
             successDiv.remove();
         }, 5000);
+    }
+
+    // ==========================================
+    // Compare Mode (Feature 9)
+    // ==========================================
+    initializeCompareMode() {
+        const toggleBtn = document.getElementById('compareToggleBtn');
+        const compareMode = document.getElementById('compareMode');
+        const addThirdBtn = document.getElementById('addThirdItemBtn');
+        const compareBtn = document.getElementById('compareBtn');
+
+        if (!toggleBtn) return;
+
+        toggleBtn.addEventListener('click', () => {
+            const isVisible = compareMode.style.display !== 'none';
+            compareMode.style.display = isVisible ? 'none' : 'block';
+            toggleBtn.classList.toggle('active', !isVisible);
+            if (isVisible) {
+                document.getElementById('compareResults').style.display = 'none';
+            }
+        });
+
+        addThirdBtn.addEventListener('click', () => {
+            const item3 = document.getElementById('compareItem3');
+            const vs3 = document.getElementById('compareVs3');
+            const show = item3.style.display === 'none';
+            item3.style.display = show ? 'block' : 'none';
+            vs3.style.display = show ? 'inline' : 'none';
+            addThirdBtn.textContent = show ? '- Remove 3rd' : '+ Add 3rd item';
+        });
+
+        compareBtn.addEventListener('click', () => this.performComparison());
+    }
+
+    async performComparison() {
+        const item1 = document.getElementById('compareItem1').value.trim();
+        const item2 = document.getElementById('compareItem2').value.trim();
+        const item3El = document.getElementById('compareItem3');
+        const item3 = item3El.style.display !== 'none' ? item3El.value.trim() : '';
+
+        if (!item1 || !item2) {
+            this.showError('Please enter at least 2 items to compare.');
+            return;
+        }
+
+        const items = [item1, item2];
+        if (item3) items.push(item3);
+
+        const compareBtn = document.getElementById('compareBtn');
+        const btnText = compareBtn.querySelector('.btn-text');
+        const loader = compareBtn.querySelector('.loader');
+        btnText.style.display = 'none';
+        loader.style.display = 'inline-block';
+        compareBtn.disabled = true;
+
+        try {
+            const authToken = localStorage.getItem('authToken');
+            const headers = { 'Content-Type': 'application/json' };
+            if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+
+            const response = await fetch('/api/compare-safety', {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({ items })
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.error || 'Comparison failed');
+            }
+
+            const data = await response.json();
+            this.renderComparisonResults(data);
+        } catch (error) {
+            this.showError(error.message);
+        } finally {
+            btnText.style.display = 'inline';
+            loader.style.display = 'none';
+            compareBtn.disabled = false;
+        }
+    }
+
+    renderComparisonResults(data) {
+        const container = document.getElementById('compareResults');
+        if (!data.comparisons || data.comparisons.length === 0) {
+            container.innerHTML = '<p>Could not parse comparison results. Please try again.</p>';
+            container.style.display = 'block';
+            return;
+        }
+
+        const safetyClass = (safety) => (safety || 'caution').toLowerCase();
+        const scoreClass = (score) => score <= 4 ? 'safe' : score <= 6 ? 'caution' : 'avoid';
+
+        let cardsHtml = data.comparisons.map(c => `
+            <div class="compare-card">
+                <h3>${c.item}</h3>
+                <div class="compare-score ${scoreClass(c.riskScore)}">${c.riskScore}/10</div>
+                <span class="compare-safety-label ${safetyClass(c.safety)}">${c.safety}</span>
+                <p class="compare-summary">${c.summary}</p>
+                ${c.keyConcern && c.keyConcern !== 'None' ? `<p class="compare-detail"><strong>Key concern:</strong> ${c.keyConcern}</p>` : ''}
+                ${c.saferAlternative && c.saferAlternative !== 'N/A' ? `<p class="compare-detail"><strong>Safer alt:</strong> ${c.saferAlternative}</p>` : ''}
+            </div>
+        `).join('');
+
+        container.innerHTML = `
+            <div class="compare-grid">${cardsHtml}</div>
+            ${data.recommendation ? `<div class="compare-recommendation">💡 ${data.recommendation}</div>` : ''}
+            <div class="confidential-badge" style="margin-top: 12px;">
+                <span class="badge-icon">🔒</span>
+                <span class="badge-text">Compared via <strong>Shroud TEE</strong> — confidential inference</span>
+            </div>
+        `;
+        container.style.display = 'block';
+    }
+
+    // ==========================================
+    // Emergency Contacts Widget (Feature 13)
+    // ==========================================
+    initializeEmergencyContacts() {
+        const toggle = document.getElementById('emergencyToggle');
+        const panel = document.getElementById('emergencyPanel');
+        if (!toggle || !panel) return;
+
+        toggle.addEventListener('click', () => {
+            const isOpen = panel.style.display !== 'none';
+            panel.style.display = isOpen ? 'none' : 'block';
+        });
+
+        document.addEventListener('click', (e) => {
+            const widget = document.getElementById('emergencyWidget');
+            if (widget && !widget.contains(e.target)) {
+                panel.style.display = 'none';
+            }
+        });
+
+        this.loadOBGYNContact();
+    }
+
+    loadOBGYNContact() {
+        try {
+            const profile = JSON.parse(localStorage.getItem('pregnancyProfile') || '{}');
+            const provider = profile.healthcareProvider || profile.provider || '';
+            if (provider) {
+                const obgynEl = document.getElementById('emergencyOBGYN');
+                const phoneEl = document.getElementById('obgynPhone');
+                if (obgynEl && phoneEl) {
+                    obgynEl.style.display = 'flex';
+                    const label = obgynEl.querySelector('.emergency-label');
+                    if (label) label.textContent = provider;
+                    phoneEl.textContent = 'Saved in profile';
+                }
+            }
+        } catch (e) {
+            // Profile not available yet
+        }
     }
 }
 

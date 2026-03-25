@@ -46,6 +46,61 @@ const userSchema = new mongoose.Schema({
     // Encrypted health profile
     encryptedProfile: String,
     
+    // Baby profiles for Baibai Doula (postpartum care)
+    babyProfiles: [{
+        id: String,
+        name: String,
+        birthDate: Date,
+        age: String, // Calculated/stored as "X months Y days"
+        gender: String,
+        weight: {
+            value: Number,
+            unit: String // 'kg' or 'lbs'
+        },
+        length: {
+            value: Number,
+            unit: String // 'cm' or 'inches'
+        },
+        headCircumference: {
+            value: Number,
+            unit: String // 'cm' or 'inches'
+        },
+        bloodType: String,
+        eyeColor: String,
+        knownAllergies: [String],
+        medicalConditions: [String],
+        medications: [String],
+        vaccinations: [{
+            name: String,
+            date: Date,
+            dueDate: Date
+        }],
+        sleepHabits: {
+            averageHours: Number,
+            nightWakings: Number,
+            napSchedule: String
+        },
+        feedingInfo: {
+            type: String, // 'breastfed', 'formula', 'mixed', 'solids'
+            schedule: String,
+            allergiesReactions: [String]
+        },
+        developmentalMilestones: [{
+            milestone: String,
+            achieved: Boolean,
+            date: Date
+        }],
+        pediatrician: {
+            name: String,
+            phone: String,
+            lastVisit: Date,
+            nextVisit: Date
+        },
+        notes: String,
+        createdAt: { type: Date, default: Date.now },
+        updatedAt: { type: Date, default: Date.now }
+    }],
+    
     // User preferences
     showAIThoughts: { type: Boolean, default: false }, // Premium feature to see AI reasoning
     
@@ -170,6 +225,41 @@ userSchema.methods.saveProfile = function(profileData) {
 // Get decrypted profile
 userSchema.methods.getProfile = function() {
     return decrypt(this.encryptedProfile) || {};
+};
+
+// Baby profile methods for Baibai Doula
+userSchema.methods.addBabyProfile = function(babyData) {
+    const babyId = crypto.randomBytes(8).toString('hex');
+    const baby = {
+        id: babyId,
+        ...babyData,
+        createdAt: new Date(),
+        updatedAt: new Date()
+    };
+    this.babyProfiles.push(baby);
+    return this.save();
+};
+
+userSchema.methods.updateBabyProfile = function(babyId, updates) {
+    const babyIndex = this.babyProfiles.findIndex(b => b.id === babyId);
+    if (babyIndex === -1) {
+        throw new Error('Baby profile not found');
+    }
+    this.babyProfiles[babyIndex] = {
+        ...this.babyProfiles[babyIndex],
+        ...updates,
+        updatedAt: new Date()
+    };
+    return this.save();
+};
+
+userSchema.methods.removeBabyProfile = function(babyId) {
+    this.babyProfiles = this.babyProfiles.filter(b => b.id !== babyId);
+    return this.save();
+};
+
+userSchema.methods.getBabyProfile = function(babyId) {
+    return this.babyProfiles.find(b => b.id === babyId);
 };
 
 // Generate unique affiliate code

@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baibai Doula - Safe for Bebe</title>
+    <meta name="theme-color" content="#f8b4d9">
+    
+    <!-- PWA Configuration -->
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icon-72.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/icon-72.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Baibai Doula">
+    
+    <link rel="stylesheet" href="globals.css">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="baibai-styles.css">
+    <script src="theme-switcher.js"></script>
+    <script src="pwa-installer.js" defer></script>
+</head>
+<body class="baibai-theme">
+    <div class="container">
+        <header>
+            <h1><img src="/logo.png" alt="Logo" style="width: 50px; height: 50px; vertical-align: middle; margin-right: 12px;">Baibai Doula</h1>
+            <p class="subtitle">Postpartum care & baby safety checker</p>
+            
+            <!-- Tab Navigation -->
+            <div class="tab-navigation">
+                <button class="tab-btn active" data-tab="search">🔍 Safe for Bebe</button>
+                <button class="tab-btn" data-tab="profiles">👶 Baby Profiles</button>
+                <button class="tab-btn" data-tab="parent">👤 Parent Profile</button>
+                <button class="tab-btn" data-tab="history">📜 History</button>
+                <button class="tab-btn" data-tab="milestones">📈 Milestones</button>
+                <button class="tab-btn" data-tab="maternity">🤰 Maternity Mode</button>
+                <button class="tab-btn logout-btn" id="logoutBtn" onclick="logout()">🚪 Logout</button>
+            </div>
+        </header>
+
+        <main>
+            <!-- Search Tab Content -->
+            <div id="searchTab" class="tab-content active">
+                <div class="search-section">
+                    <!-- Baby Selector -->
+                    <div class="baby-selector">
+                        <label>Checking for:</label>
+                        <select id="activeBabySelect" class="baby-select">
+                            <option value="">Select baby profile...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="input-group">
+                        <input 
+                            type="text" 
+                            id="searchInput" 
+                            placeholder="Enter anything to check if it's safe for bebe (e.g., 'honey', 'sunscreen', 'car seat position')"
+                            autocomplete="off"
+                        >
+                        <button id="cameraBtn" type="button" class="camera-btn" title="Take a photo">
+                            📷
+                        </button>
+                        <button id="searchBtn" type="button">
+                            <span class="btn-text">Check Baby Safety</span>
+                            <span class="loader" style="display: none;"></span>
+                        </button>
+                    </div>
+                    
+                    <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;">
+                    
+                    <div id="imagePreview" class="image-preview" style="display: none;">
+                        <img id="capturedImage" alt="Captured image">
+                        <button id="removeImage" class="remove-image">✕</button>
+                    </div>
+                    
+                    <div class="example-chips">
+                        <span class="chip" data-example="honey">Honey</span>
+                        <span class="chip" data-example="cow's milk">Cow's Milk</span>
+                        <span class="chip" data-example="sunscreen">Sunscreen</span>
+                        <span class="chip" data-example="baby walker">Baby Walker</span>
+                        <span class="chip" data-example="blanket in crib">Blanket in Crib</span>
+                        <span class="chip" data-example="solid foods">Solid Foods</span>
+                    </div>
+                </div>
+
+                <div id="results" class="results-section" style="display: none;">
+                    <div class="result-card">
+                        <div class="result-header">
+                            <h2 id="itemName"></h2>
+                            <span id="safetyBadge" class="safety-badge"></span>
+                        </div>
+                        
+                        <div id="safetyVerdict" class="safety-verdict"></div>
+                        
+                        <div id="ageRecommendation" class="age-recommendation" style="display: none;">
+                            <h3>Age Guidelines</h3>
+                            <div id="ageContent"></div>
+                        </div>
+                        
+                        <div class="risk-scale">
+                            <h3>Safety Assessment for Baby</h3>
+                            <div class="risk-meter">
+                                <div id="riskIndicator" class="risk-indicator">5</div>
+                            </div>
+                            <div class="risk-labels">
+                                <span>1-2 (Very Safe)</span>
+                                <span>5 (Use Caution)</span>
+                                <span>9-10 (Unsafe)</span>
+                            </div>
+                        </div>
+                        
+                        <div id="resultContent" class="result-content"></div>
+                        
+                        <div class="disclaimer">
+                            <strong>⚠️ Important:</strong> This information is AI-generated and should not replace professional pediatric advice. Always consult your pediatrician before making decisions about your baby's health and safety.
+                        </div>
+                    </div>
+                </div>
+
+                <div id="error" class="error-message" style="display: none;">
+                    <span class="error-icon">⚠️</span>
+                    <span id="errorText"></span>
+                </div>
+            </div>
+            
+            <!-- Baby Profiles Tab -->
+            <div id="profilesTab" class="tab-content" style="display: none;">
+                <div class="profiles-section">
+                    <h2>Baby Profiles</h2>
+                    <p class="profile-intro">Manage your baby's information for personalized safety recommendations</p>
+                    
+                    <!-- Baby Profile List -->
+                    <div id="babyProfilesList" class="baby-profiles-list">
+                        <!-- Baby profiles will be loaded here -->
+                    </div>
+                    
+                    <!-- Add New Baby Button -->
+                    <button id="addBabyBtn" class="add-baby-btn">➕ Add Baby Profile</button>
+                    
+                    <!-- Baby Profile Form (Hidden by default) -->
+                    <div id="babyProfileForm" class="baby-profile-form" style="display: none;">
+                        <h3 id="formTitle">Add New Baby</h3>
+                        
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="baby-name">Name</label>
+                                <input type="text" id="baby-name" placeholder="Baby's name" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="birth-date">Birth Date</label>
+                                <input type="date" id="birth-date" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="baby-gender">Gender</label>
+                                <select id="baby-gender">
+                                    <option value="">Select...</option>
+                                    <option value="male">Male</option>
+                                    <option value="female">Female</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="baby-weight">Weight</label>
+                                <div class="input-with-unit">
+                                    <input type="number" id="baby-weight" placeholder="Weight" step="0.1">
+                                    <select id="weight-unit">
+                                        <option value="kg">kg</option>
+                                        <option value="lbs">lbs</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="baby-length">Length/Height</label>
+                                <div class="input-with-unit">
+                                    <input type="number" id="baby-length" placeholder="Length" step="0.1">
+                                    <select id="length-unit">
+                                        <option value="cm">cm</option>
+                                        <option value="inches">inches</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="head-circumference">Head Circumference</label>
+                                <div class="input-with-unit">
+                                    <input type="number" id="head-circumference" placeholder="Head circumference" step="0.1">
+                                    <select id="head-unit">
+                                        <option value="cm">cm</option>
+                                        <option value="inches">inches</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="blood-type">Blood Type</label>
+                                <select id="blood-type">
+                                    <option value="">Unknown</option>
+                                    <option value="A+">A+</option>
+                                    <option value="A-">A-</option>
+                                    <option value="B+">B+</option>
+                                    <option value="B-">B-</option>
+                                    <option value="AB+">AB+</option>
+                                    <option value="AB-">AB-</option>
+                                    <option value="O+">O+</option>
+                                    <option value="O-">O-</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="eye-color">Eye Color</label>
+                                <input type="text" id="eye-color" placeholder="Eye color">
+                            </div>
+                        </div>
+                        
+                        <!-- Health Information -->
+                        <h4>Health Information</h4>
+                        <div class="form-group">
+                            <label for="known-allergies">Known Allergies</label>
+                            <input type="text" id="known-allergies" placeholder="Enter allergies separated by commas">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="medical-conditions">Medical Conditions</label>
+                            <input type="text" id="medical-conditions" placeholder="Enter conditions separated by commas">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="medications">Current Medications</label>
+                            <input type="text" id="medications" placeholder="Enter medications separated by commas">
+                        </div>
+                        
+                        <!-- Sleep & Feeding -->
+                        <h4>Sleep & Feeding Habits</h4>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="sleep-hours">Average Sleep Hours</label>
+                                <input type="number" id="sleep-hours" placeholder="Hours per day" step="0.5">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="night-wakings">Night Wakings</label>
+                                <input type="number" id="night-wakings" placeholder="Times per night">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="feeding-type">Feeding Type</label>
+                                <select id="feeding-type">
+                                    <option value="breastfed">Breastfed</option>
+                                    <option value="formula">Formula</option>
+                                    <option value="mixed">Mixed</option>
+                                    <option value="solids">Solids Introduced</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Pediatrician Info -->
+                        <h4>Pediatrician Information</h4>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="pediatrician-name">Pediatrician Name</label>
+                                <input type="text" id="pediatrician-name" placeholder="Doctor's name">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="pediatrician-phone">Phone</label>
+                                <input type="tel" id="pediatrician-phone" placeholder="Contact number">
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button id="saveBabyProfile" class="save-btn">💾 Save Baby Profile</button>
+                            <button id="cancelBabyProfile" class="cancel-btn">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Parent Profile Tab -->
+            <div id="parentTab" class="tab-content" style="display: none;">
+                <div class="parent-section">
+                    <h2>Parent Health Profile</h2>
+                    <p class="profile-intro">Postpartum recovery & breastfeeding information</p>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="parent-name">Name</label>
+                            <input type="text" id="parent-name" placeholder="Your name">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="delivery-date">Delivery Date</label>
+                            <input type="date" id="delivery-date">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="delivery-type">Delivery Type</label>
+                            <select id="delivery-type">
+                                <option value="">Select...</option>
+                                <option value="vaginal">Vaginal Delivery</option>
+                                <option value="cesarean">C-Section</option>
+                                <option value="vbac">VBAC</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="breastfeeding-status">Breastfeeding Status</label>
+                            <select id="breastfeeding-status">
+                                <option value="">Select...</option>
+                                <option value="exclusive">Exclusively Breastfeeding</option>
+                                <option value="pumping">Pumping</option>
+                                <option value="supplementing">Supplementing with Formula</option>
+                                <option value="weaning">Weaning</option>
+                                <option value="not">Not Breastfeeding</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Postpartum Conditions -->
+                    <h3>Postpartum Conditions</h3>
+                    <div class="condition-grid">
+                        <label class="condition-toggle">
+                            <input type="checkbox" id="ppd" name="postpartum-conditions">
+                            <span class="toggle-label">Postpartum Depression</span>
+                        </label>
+                        
+                        <label class="condition-toggle">
+                            <input type="checkbox" id="ppa" name="postpartum-conditions">
+                            <span class="toggle-label">Postpartum Anxiety</span>
+                        </label>
+                        
+                        <label class="condition-toggle">
+                            <input type="checkbox" id="mastitis" name="postpartum-conditions">
+                            <span class="toggle-label">Mastitis</span>
+                        </label>
+                        
+                        <label class="condition-toggle">
+                            <input type="checkbox" id="engorgement" name="postpartum-conditions">
+                            <span class="toggle-label">Engorgement</span>
+                        </label>
+                        
+                        <label class="condition-toggle">
+                            <input type="checkbox" id="low-supply" name="postpartum-conditions">
+                            <span class="toggle-label">Low Milk Supply</span>
+                        </label>
+                        
+                        <label class="condition-toggle">
+                            <input type="checkbox" id="oversupply" name="postpartum-conditions">
+                            <span class="toggle-label">Oversupply</span>
+                        </label>
+                    </div>
+                    
+                    <button id="saveParentProfile" class="save-profile-btn">💾 Save Parent Profile</button>
+                </div>
+            </div>
+            
+            <!-- History Tab -->
+            <div id="historyTab" class="tab-content" style="display: none;">
+                <div class="history-section">
+                    <div class="history-header">
+                        <h3>Search History</h3>
+                        <button id="clearHistory" class="clear-history">Clear All</button>
+                    </div>
+                    <div id="historyItems" class="history-items"></div>
+                </div>
+            </div>
+            
+            <!-- Milestones Tab -->
+            <div id="milestonesTab" class="tab-content" style="display: none;">
+                <div class="milestones-section">
+                    <h2>Developmental Milestones</h2>
+                    
+                    <!-- Milestone Selector -->
+                    <div class="baby-selector">
+                        <label>Tracking milestones for:</label>
+                        <select id="milestoneBabySelect" class="baby-select">
+                            <option value="">Select baby...</option>
+                        </select>
+                    </div>
+                    
+                    <div id="milestonesContent" class="milestones-content">
+                        <!-- Milestones will be loaded here based on baby's age -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Maternity Mode Tab -->
+            <div id="maternityTab" class="tab-content" style="display: none;">
+                <div class="maternity-redirect">
+                    <h2>🤰 Switch to Maternity Mode</h2>
+                    <p>Access pregnancy safety information and maternity features</p>
+                    <button onclick="window.location.href='/app.html'" class="switch-mode-btn">
+                        Go to Safe Maternity
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>This tool provides general information only. Always consult your pediatrician for personalized medical advice.</p>
+        </footer>
+    </div>
+
+    <script>
+        // Logout function
+        function logout() {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('isPremium');
+            localStorage.removeItem('userEmail');
+            
+            fetch('/auth/logout', {
+                method: 'POST',
+                credentials: 'include'
+            }).then(() => {
+                window.location.href = '/login';
+            }).catch(() => {
+                window.location.href = '/login';
+            });
+        }
+        
+        // Check authentication
+        (function() {
+            const authToken = localStorage.getItem('authToken');
+            if (!authToken) {
+                window.location.href = '/login';
+                return;
+            }
+            
+            // Load the main Baibai app script
+            const script = document.createElement('script');
+            script.src = 'baibai.js';
+            document.body.appendChild(script);
+        })();
+    </script>
+</body>
+</html>

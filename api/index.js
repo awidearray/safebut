@@ -17,7 +17,7 @@ try {
         hasMongoUri: !!(process.env.MONGODB_URI || process.env.mongodb_uri),
         hasSessionSecret: !!process.env.SESSION_SECRET,
         hasJwtSecret: !!process.env.JWT_SECRET,
-        hasVeniceKey: !!process.env.VENICE_API_KEY,
+        hasShroudKey: !!process.env.SHROUD_API_KEY,
         functionTimeout: process.env.FUNCTION_TIMEOUT || '30s',
         vercelEnv: process.env.VERCEL
     });
@@ -62,7 +62,7 @@ try {
                 hasMongoUri: !!(process.env.MONGODB_URI || process.env.mongodb_uri),
                 hasSessionSecret: !!process.env.SESSION_SECRET,
                 hasJwtSecret: !!process.env.JWT_SECRET,
-                hasVeniceKey: !!process.env.VENICE_API_KEY
+                hasShroudKey: !!process.env.SHROUD_API_KEY
             };
         }
         
