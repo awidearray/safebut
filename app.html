@@ -34,6 +34,7 @@
                 <button class="tab-btn" data-tab="history">📜 History</button>
                 <button class="tab-btn" data-tab="log" id="logTabBtn">📝 Log</button>
                 <button class="tab-btn" data-tab="leaderboard" id="leaderboardTabBtn" style="display: none;">🏆 Leaderboard</button>
+                <button class="tab-btn" data-tab="baibai" onclick="window.location.href='/baibai'">👶 Baibai Doula</button>
                 <button class="tab-btn" data-tab="settings">⚙️ Settings</button>
                 <button class="tab-btn" data-tab="upgrade">🚀 Upgrade</button>
                 <button class="tab-btn logout-btn" id="logoutBtn" onclick="logout()">🚪 Logout</button>
@@ -66,6 +67,29 @@
                     <img id="capturedImage" alt="Captured image">
                     <button id="removeImage" class="remove-image">✕</button>
                 </div>
+                <div class="compare-toggle">
+                    <button id="compareToggleBtn" type="button" class="compare-btn" title="Compare 2-3 items side by side">
+                        ⚖️ Compare Items
+                    </button>
+                </div>
+                <div id="compareMode" class="compare-mode" style="display: none;">
+                    <p class="compare-hint">Enter 2-3 items to compare safety side by side:</p>
+                    <div class="compare-inputs">
+                        <input type="text" id="compareItem1" placeholder="Item 1 (e.g., Tylenol)" autocomplete="off">
+                        <span class="compare-vs">vs</span>
+                        <input type="text" id="compareItem2" placeholder="Item 2 (e.g., Advil)" autocomplete="off">
+                        <span class="compare-vs" id="compareVs3" style="display: none;">vs</span>
+                        <input type="text" id="compareItem3" placeholder="Item 3 (optional)" autocomplete="off" style="display: none;">
+                    </div>
+                    <div class="compare-actions">
+                        <button id="addThirdItemBtn" type="button" class="compare-add-btn">+ Add 3rd item</button>
+                        <button id="compareBtn" type="button" class="compare-submit-btn">
+                            <span class="btn-text">Compare Now</span>
+                            <span class="loader" style="display: none;"></span>
+                        </button>
+                    </div>
+                </div>
+                <div id="compareResults" class="compare-results" style="display: none;"></div>
                 <div class="example-chips">
                     <span class="chip" data-example="coffee">Coffee</span>
                     <span class="chip" data-example="sushi">Sushi</span>
@@ -117,6 +141,11 @@
                             <!-​- Follow-up Q&A will appear here -​->
                         </div>
                     </div> -->
+                    
+                    <div id="confidentialBadge" class="confidential-badge">
+                        <span class="badge-icon">🔒</span>
+                        <span class="badge-text">Processed via <strong>Shroud TEE</strong> — your query was confidentially analyzed</span>
+                    </div>
                     
                     <div class="disclaimer">
                         <strong>⚠️ Important:</strong> This information is AI-generated and should not replace professional medical advice. Always consult your healthcare provider before making any decisions during pregnancy.
@@ -404,7 +433,7 @@
                     <!-- Response Preferences -->
                     <div class="preferences-section">
                         <h3>⚙️ Response Preferences</h3>
-                        <p class="preferences-intro">Customize how Venice AI provides recommendations:</p>
+                        <p class="preferences-intro">Customize how Shroud AI provides recommendations:</p>
                         
                         <!-- Measurement System -->
                         <div class="preference-group">
@@ -934,6 +963,36 @@
             </div>
 
         </main>
+
+        <!-- Emergency Contacts Floating Widget -->
+        <div id="emergencyWidget" class="emergency-widget">
+            <button id="emergencyToggle" class="emergency-toggle" title="Emergency Contacts">
+                🆘
+            </button>
+            <div id="emergencyPanel" class="emergency-panel" style="display: none;">
+                <h3>Emergency Contacts</h3>
+                <a href="tel:911" class="emergency-item emergency-critical">
+                    <span class="emergency-icon">🚨</span>
+                    <span class="emergency-label">Emergency (911)</span>
+                </a>
+                <a href="tel:1-800-222-1222" class="emergency-item">
+                    <span class="emergency-icon">☠️</span>
+                    <span class="emergency-label">Poison Control</span>
+                    <span class="emergency-number">1-800-222-1222</span>
+                </a>
+                <a href="tel:988" class="emergency-item">
+                    <span class="emergency-icon">💙</span>
+                    <span class="emergency-label">Mental Health Crisis</span>
+                    <span class="emergency-number">988</span>
+                </a>
+                <div class="emergency-item emergency-custom" id="emergencyOBGYN" style="display: none;">
+                    <span class="emergency-icon">👩‍⚕️</span>
+                    <span class="emergency-label">My OB-GYN</span>
+                    <a href="#" class="emergency-number" id="obgynPhone"></a>
+                </div>
+                <p class="emergency-tip">Tap your provider's name in your Profile to add their number here.</p>
+            </div>
+        </div>
 
         <footer>
             <p>This tool provides general information only. Always consult your healthcare provider for personalized medical advice.</p>

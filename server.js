@@ -6,6 +6,7 @@ const axios = require('axios');
 const mongoose = require('mongoose');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
+const User = require('./models/User');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -56,7 +57,7 @@ app.use((req, res, next) => {
         "style-src 'self' 'unsafe-inline'; " +
         "img-src 'self' data: blob: https:; " +
         "font-src 'self' data:; " +
-        "connect-src 'self' http://localhost:* https://api.venice.ai;"
+        "connect-src 'self' http://localhost:* https://dev.shroud.us;"
     );
     next();
 });
@@ -81,6 +82,30 @@ app.use(express.static(path.join(__dirname), {
         }
     }
 }));
+
+// Authentication middleware
+const authenticateUser = async (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    
+    if (!token) {
+        return res.status(401).json({ error: 'No token provided' });
+    }
+    
+    try {
+        const user = await User.findOne({ 'activeSessions.token': token });
+        if (!user) {
+            return res.status(401).json({ error: 'Invalid token' });
+        }
+        
+        req.userId = user._id;
+        req.user = user;
+        next();
+    } catch (error) {
+        console.error('Auth error:', error);
+        res.status(500).json({ error: 'Authentication failed' });
+    }
+};
 
 // Import and mount auth routes
 const authRoutes = require('./routes/auth');
@@ -144,12 +169,12 @@ app.get('/logo.svg', (req, res) => {
 
 app.post('/api/check-safety', async (req, res) => {
     try {
-        if (!process.env.VENICE_API_KEY) {
-            console.error('VENICE_API_KEY is not set in environment variables');
-            return res.status(500).json({ error: 'Venice API key not configured' });
+        if (!process.env.SHROUD_API_KEY) {
+            console.error('SHROUD_API_KEY is not set in environment variables');
+            return res.status(500).json({ error: 'Shroud API key not configured' });
         }
 
-        console.log('API Key loaded:', process.env.VENICE_API_KEY.substring(0, 10) + '...');
+        console.log('API Key loaded:', process.env.SHROUD_API_KEY.substring(0, 10) + '...');
 
         const { item } = req.body;
         
@@ -241,9 +266,9 @@ SAFETY: [Safe/Caution/Avoid]
 WHY: [1 sentence explanation]
 TIPS: [2-3 short practical tips]`;
 
-        const apiUrl = 'https://api.venice.ai/api/v1/chat/completions';
+        const apiUrl = (process.env.SHROUD_HTTP_URL || 'https://dev.shroud.us') + '/v1/chat/completions';
         const requestBody = {
-            model: 'llama-3.3-70b',
+            model: process.env.SHROUD_MODEL || 'Qwen/Qwen3-32B',
             messages: [
                 {
                     role: 'system',
@@ -263,7 +288,7 @@ TIPS: [2-3 short practical tips]`;
 
         const response = await axios.post(apiUrl, requestBody, {
             headers: {
-                'Authorization': `Bearer ${process.env.VENICE_API_KEY}`,
+                'Authorization': `Bearer ${process.env.SHROUD_API_KEY}`,
                 'Content-Type': 'application/json'
             }
         });
@@ -326,7 +351,7 @@ TIPS: [2-3 short practical tips]`;
         
         res.json(responseData);
     } catch (error) {
-        console.error('Venice AI API error:', error.response?.data || error.message);
+        console.error('Shroud AI API error:', error.response?.data || error.message);
         console.error('Status:', error.response?.status);
         console.error('Headers:', error.response?.headers);
         
@@ -350,8 +375,8 @@ TIPS: Please try again in a moment, Consult your healthcare provider for specifi
 
 app.post('/api/check-image-safety', async (req, res) => {
     try {
-        if (!process.env.VENICE_API_KEY) {
-            return res.status(500).json({ error: 'Venice API key not configured' });
+        if (!process.env.SHROUD_API_KEY) {
+            return res.status(500).json({ error: 'Shroud API key not configured' });
         }
 
         const { image } = req.body;
@@ -360,11 +385,10 @@ app.post('/api/check-image-safety', async (req, res) => {
             return res.status(400).json({ error: 'No image provided' });
         }
         
-        const apiUrl = 'https://api.venice.ai/api/v1/chat/completions';
+        const apiUrl = (process.env.SHROUD_HTTP_URL || 'https://dev.shroud.us') + '/v1/chat/completions';
         
-        // Use Venice vision-capable models (validated via /models)
         const visionModels = [
-            'mistral-31-24b'
+            process.env.SHROUD_MODEL || 'Qwen/Qwen3-32B'
         ];
 
         let lastError = null;
@@ -406,7 +430,7 @@ TIPS: [2-3 short practical tips based on what's in the image]`
                 
                 const response = await axios.post(apiUrl, visionRequestBody, {
                     headers: {
-                        'Authorization': `Bearer ${process.env.VENICE_API_KEY}`,
+                        'Authorization': `Bearer ${process.env.SHROUD_API_KEY}`,
                         'Content-Type': 'application/json'
                     }
                 });
@@ -510,7 +534,6 @@ app.post('/api/log-entry', async (req, res) => {
             return res.status(401).json({ error: 'User not found' });
         }
         
-        const User = require('./models/User');
         const user = await User.findById(userId);
         
         if (!user || !user.isPremium) {
@@ -551,7 +574,6 @@ app.get('/api/log-entries', async (req, res) => {
             return res.status(401).json({ error: 'User not found' });
         }
         
-        const User = require('./models/User');
         const user = await User.findById(userId);
         
         if (!user || !user.isPremium) {
@@ -592,9 +614,9 @@ Please provide:
 
 Format as HTML with clear sections and bullet points.`;
 
-        const apiUrl = 'https://api.venice.ai/api/v1/chat/completions';
+        const apiUrl = (process.env.SHROUD_HTTP_URL || 'https://dev.shroud.us') + '/v1/chat/completions';
         const requestBody = {
-            model: 'llama-3.3-70b',
+            model: process.env.SHROUD_MODEL || 'Qwen/Qwen3-32B',
             messages: [
                 {
                     role: 'system',
@@ -611,7 +633,7 @@ Format as HTML with clear sections and bullet points.`;
         
         const response = await axios.post(apiUrl, requestBody, {
             headers: {
-                'Authorization': `Bearer ${process.env.VENICE_API_KEY}`,
+                'Authorization': `Bearer ${process.env.SHROUD_API_KEY}`,
                 'Content-Type': 'application/json'
             }
         });
@@ -620,9 +642,231 @@ Format as HTML with clear sections and bullet points.`;
         
         res.json({ result: aiResponse });
     } catch (error) {
-        console.error('Venice AI analysis error:', error);
+        console.error('Shroud AI analysis error:', error);
         res.status(500).json({ error: 'Failed to analyze entry' });
     }
+});
+
+// Baby profiles API endpoints for Baibai Doula
+app.get('/api/baby-profiles', authenticateUser, async (req, res) => {
+    try {
+        const user = await User.findById(req.userId);
+        res.json({ profiles: user.babyProfiles || [] });
+    } catch (error) {
+        console.error('Error fetching baby profiles:', error);
+        res.status(500).json({ error: 'Failed to fetch baby profiles' });
+    }
+});
+
+app.post('/api/baby-profiles', authenticateUser, async (req, res) => {
+    try {
+        const user = await User.findById(req.userId);
+        await user.addBabyProfile(req.body);
+        res.json({ success: true, profiles: user.babyProfiles });
+    } catch (error) {
+        console.error('Error adding baby profile:', error);
+        res.status(500).json({ error: 'Failed to add baby profile' });
+    }
+});
+
+app.put('/api/baby-profiles/:id', authenticateUser, async (req, res) => {
+    try {
+        const user = await User.findById(req.userId);
+        await user.updateBabyProfile(req.params.id, req.body);
+        res.json({ success: true, profiles: user.babyProfiles });
+    } catch (error) {
+        console.error('Error updating baby profile:', error);
+        res.status(500).json({ error: 'Failed to update baby profile' });
+    }
+});
+
+app.delete('/api/baby-profiles/:id', authenticateUser, async (req, res) => {
+    try {
+        const user = await User.findById(req.userId);
+        await user.removeBabyProfile(req.params.id);
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error deleting baby profile:', error);
+        res.status(500).json({ error: 'Failed to delete baby profile' });
+    }
+});
+
+// Baby safety check API
+app.post('/api/baby-safety', async (req, res) => {
+    try {
+        if (!process.env.SHROUD_API_KEY) {
+            return res.status(500).json({ error: 'Shroud API key not configured' });
+        }
+        
+        const { item, babyAgeMonths, isBreastfeeding } = req.body;
+        
+        // Construct age-appropriate prompt
+        let ageContext = '';
+        if (babyAgeMonths !== null && babyAgeMonths !== undefined) {
+            if (babyAgeMonths < 1) {
+                ageContext = 'newborn (less than 1 month old)';
+            } else if (babyAgeMonths < 6) {
+                ageContext = `${babyAgeMonths} month${babyAgeMonths > 1 ? 's' : ''} old infant`;
+            } else if (babyAgeMonths < 12) {
+                ageContext = `${babyAgeMonths} month old baby`;
+            } else {
+                const years = Math.floor(babyAgeMonths / 12);
+                ageContext = `${years} year${years > 1 ? 's' : ''} old toddler`;
+            }
+        }
+        
+        const breastfeedingContext = isBreastfeeding ? 
+            ' The parent is currently breastfeeding, so also mention if this affects the breastfeeding parent.' : '';
+        
+        const prompt = `Is "${item}" safe for a ${ageContext || 'baby'}?${breastfeedingContext} 
+        
+        Provide a detailed safety assessment including:
+        1. Overall safety rating (1-10 where 1 is very safe and 10 is very dangerous)
+        2. Age-specific recommendations (when it becomes safe if not currently)
+        3. Potential risks or concerns
+        4. Safe alternatives if applicable
+        5. Guidelines for safe use if applicable
+        
+        Be specific about choking hazards, allergen risks, developmental appropriateness, and any other safety concerns.`;
+        
+        const apiUrl = (process.env.SHROUD_HTTP_URL || 'https://dev.shroud.us') + '/v1/chat/completions';
+        const requestBody = {
+            model: process.env.SHROUD_MODEL || 'Qwen/Qwen3-32B',
+            messages: [
+                {
+                    role: 'system',
+                    content: 'You are a pediatric safety expert providing detailed, accurate information about baby and child safety. Focus on evidence-based recommendations from pediatric organizations.'
+                },
+                {
+                    role: 'user',
+                    content: prompt
+                }
+            ],
+            temperature: 0.3,
+            max_tokens: 800
+        };
+        
+        const response = await axios.post(apiUrl, requestBody, {
+            headers: {
+                'Authorization': `Bearer ${process.env.SHROUD_API_KEY}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const aiResponse = response.data.choices[0].message.content;
+        
+        // Extract risk score from response
+        const riskMatch = aiResponse.match(/(?:safety rating|risk score|rating)[:\s]+(\d+)/i);
+        const riskScore = riskMatch ? parseInt(riskMatch[1]) : 5;
+        
+        // Extract age recommendation if present
+        let ageRecommendation = null;
+        const ageMatch = aiResponse.match(/(?:safe (?:from|after|at)|appropriate (?:from|after|at)|recommended (?:from|after|at))[\s:]+(\d+[\s-]?\w+)/i);
+        if (ageMatch) {
+            ageRecommendation = `Recommended from: ${ageMatch[1]}`;
+        }
+        
+        res.json({ 
+            result: aiResponse,
+            riskScore: riskScore,
+            ageRecommendation: ageRecommendation
+        });
+        
+    } catch (error) {
+        console.error('Shroud AI error:', error);
+        res.status(500).json({ error: 'Failed to check baby safety' });
+    }
+});
+
+// Baby image safety check API
+app.post('/api/baby-image-safety', async (req, res) => {
+    try {
+        if (!process.env.SHROUD_API_KEY) {
+            return res.status(500).json({ error: 'Shroud API key not configured' });
+        }
+        
+        const { image, babyAgeMonths, isBreastfeeding } = req.body;
+        
+        // Construct age context
+        let ageContext = '';
+        if (babyAgeMonths !== null && babyAgeMonths !== undefined) {
+            if (babyAgeMonths < 1) {
+                ageContext = 'newborn (less than 1 month old)';
+            } else if (babyAgeMonths < 6) {
+                ageContext = `${babyAgeMonths} month${babyAgeMonths > 1 ? 's' : ''} old infant`;
+            } else if (babyAgeMonths < 12) {
+                ageContext = `${babyAgeMonths} month old baby`;
+            } else {
+                const years = Math.floor(babyAgeMonths / 12);
+                ageContext = `${years} year${years > 1 ? 's' : ''} old toddler`;
+            }
+        }
+        
+        const breastfeedingContext = isBreastfeeding ? 
+            ' The parent is currently breastfeeding, so also mention if this affects the breastfeeding parent.' : '';
+        
+        const apiUrl = (process.env.SHROUD_HTTP_URL || 'https://dev.shroud.us') + '/v1/chat/completions';
+        const requestBody = {
+            model: process.env.SHROUD_MODEL || 'Qwen/Qwen3-32B',
+            messages: [
+                {
+                    role: 'system',
+                    content: 'You are a pediatric safety expert analyzing images for baby and child safety. Focus on identifying potential hazards, age-appropriateness, and safety concerns.'
+                },
+                {
+                    role: 'user',
+                    content: [
+                        {
+                            type: 'text',
+                            text: `Analyze this image for safety for a ${ageContext || 'baby'}.${breastfeedingContext}
+                            
+                            Provide:
+                            1. Identification of what's in the image
+                            2. Safety rating (1-10 where 1 is very safe and 10 is very dangerous)
+                            3. Specific safety concerns for this age group
+                            4. Recommendations for safe use or alternatives
+                            5. Age when this becomes appropriate (if not currently safe)`
+                        },
+                        {
+                            type: 'image_url',
+                            image_url: {
+                                url: image
+                            }
+                        }
+                    ]
+                }
+            ],
+            temperature: 0.3,
+            max_tokens: 800
+        };
+        
+        const response = await axios.post(apiUrl, requestBody, {
+            headers: {
+                'Authorization': `Bearer ${process.env.SHROUD_API_KEY}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const aiResponse = response.data.choices[0].message.content;
+        
+        // Extract risk score
+        const riskMatch = aiResponse.match(/(?:safety rating|risk score|rating)[:\s]+(\d+)/i);
+        const riskScore = riskMatch ? parseInt(riskMatch[1]) : 5;
+        
+        res.json({ 
+            result: aiResponse,
+            riskScore: riskScore
+        });
+        
+    } catch (error) {
+        console.error('Shroud AI image analysis error:', error);
+        res.status(500).json({ error: 'Failed to analyze image for baby safety' });
+    }
+});
+
+// Baibai Doula page route
+app.get('/baibai', (req, res) => {
+    res.sendFile(path.join(__dirname, 'baibai.html'));
 });
 
 app.listen(PORT, () => {

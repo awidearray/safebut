@@ -21,7 +21,9 @@ You need to add these environment variables in your Vercel project settings:
 # Required
 SESSION_SECRET=your-secure-random-string-here
 JWT_SECRET=your-secure-jwt-secret-here
-VENICE_API_KEY=your-venice-api-key-here
+SHROUD_API_KEY=shroud_prod_your_api_key_here
+SHROUD_HTTP_URL=https://dev.shroud.us
+SHROUD_MODEL=Qwen/Qwen3-32B
 
 # Optional but recommended
 MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/dbname

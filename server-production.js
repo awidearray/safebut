@@ -161,7 +161,7 @@ app.use((req, res, next) => {
         "img-src 'self' data: blob: https:; " +
         "font-src 'self' data:; " +
         "frame-src https://js.stripe.com; " +
-        "connect-src 'self' http://localhost:* https://api.venice.ai https://api.stripe.com;"
+        "connect-src 'self' http://localhost:* https://dev.shroud.us https://api.stripe.com;"
     );
     next();
 });
@@ -297,6 +297,10 @@ app.get('/faq', (req, res) => {
     res.sendFile(path.join(__dirname, 'faq.html'));
 });
 
+app.get('/baibai', (req, res) => {
+    res.sendFile(path.join(__dirname, 'baibai.html'));
+});
+
 app.get('/medical', (req, res) => {
     res.sendFile(path.join(__dirname, 'medical.html'));
 });
@@ -376,7 +380,7 @@ app.get('/api/health', (req, res) => {
             hasMongoUri: !!(process.env.MONGODB_URI || process.env.mongodb_uri),
             hasSessionSecret: !!process.env.SESSION_SECRET,
             hasJwtSecret: !!process.env.JWT_SECRET,
-            hasVeniceKey: !!process.env.VENICE_API_KEY,
+            hasShroudKey: !!process.env.SHROUD_API_KEY,
             mongooseConnected: false
         }
     };
@@ -422,18 +426,11 @@ app.post('/api/profile', verifyToken, async (req, res) => {
     }
 });
 
-// Load text models from env or use defaults
-const TEXT_MODEL = process.env.TEXT_MODEL || 'llama-3.2-3b';
-const DETAILED_TEXT_MODEL = process.env.DETAILED_TEXT_MODEL || 'llama-3.2-3b';
-
-// Load vision models from env or use defaults
-const VISION_MODELS = process.env.VISION_MODELS 
-    ? process.env.VISION_MODELS.split(',').map(m => m.trim())
-    : [
-        'llama-3.2-11b-vision-instruct',  // Smallest/fastest vision model
-        'mistral-31-24b',
-        'llama-3.2-90b-vision-instruct'
-    ];
+// Shroud model config — single model for all inference
+const SHROUD_MODEL = process.env.SHROUD_MODEL || 'Qwen/Qwen3-32B';
+const TEXT_MODEL = SHROUD_MODEL;
+const DETAILED_TEXT_MODEL = SHROUD_MODEL;
+const VISION_MODELS = [SHROUD_MODEL];
 
 // API endpoint for safety checks (1 free per day for trial/free users, unlimited for premium)
 app.post('/api/check-safety', async (req, res) => {
@@ -445,9 +442,9 @@ app.post('/api/check-safety', async (req, res) => {
     });
     
     try {
-        if (!process.env.VENICE_API_KEY) {
-            console.error('VENICE_API_KEY is not set in environment variables');
-            return res.status(500).json({ error: 'Venice API key not configured' });
+        if (!process.env.SHROUD_API_KEY) {
+            console.error('SHROUD_API_KEY is not set in environment variables');
+            return res.status(500).json({ error: 'Shroud API key not configured' });
         }
 
         const { item } = req.body;
@@ -651,7 +648,7 @@ SAFETY: [Safe/Caution/Avoid]
 WHY: [1 sentence explanation]
 TIPS: [2-3 short practical tips specific to the patient's conditions if applicable]`;
 
-        const apiUrl = 'https://api.venice.ai/api/v1/chat/completions';
+        const apiUrl = (process.env.SHROUD_HTTP_URL || 'https://dev.shroud.us') + '/v1/chat/completions';
         const requestBody = {
             model: TEXT_MODEL,
             messages: [
@@ -681,7 +678,7 @@ Be accurate and evidence-based. Consider patient-specific conditions.`
 
         const response = await axios.post(apiUrl, requestBody, {
             headers: {
-                'Authorization': `Bearer ${process.env.VENICE_API_KEY}`,
+                'Authorization': `Bearer ${process.env.SHROUD_API_KEY}`,
                 'Content-Type': 'application/json'
             }
         });
@@ -693,6 +690,11 @@ Be accurate and evidence-based. Consider patient-specific conditions.`
         
         // Parse risk scores for either single or dual format
         let responseData;
+        const references = [
+            { title: 'Mayo Clinic - Pregnancy Week by Week', url: 'https://www.mayoclinic.org/healthy-lifestyle/pregnancy-week-by-week/basics/pregnancy-week-by-week/hlv-20049471' },
+            { title: 'American Pregnancy Association', url: 'https://americanpregnancy.org/healthy-pregnancy/' },
+            { title: 'CDC - Pregnancy Safety', url: 'https://www.cdc.gov/pregnancy/index.html' }
+        ];
         if (includeBreastfeeding) {
             const pregMatch = cleaned.response.match(/PREGNANCY_RISK_SCORE:\s*(\d+)/i);
             const bfMatch = cleaned.response.match(/BREASTFEEDING_RISK_SCORE:\s*(\d+)/i);
@@ -737,16 +739,10 @@ Be accurate and evidence-based. Consider patient-specific conditions.`
         const riskScoreMatch = cleaned.response.match(/RISK_SCORE:\s*(\d+)/);
         const riskScore = riskScoreMatch ? parseInt(riskScoreMatch[1]) : 5;
         
-        const references = [
-            { title: 'Mayo Clinic - Pregnancy Week by Week', url: 'https://www.mayoclinic.org/healthy-lifestyle/pregnancy-week-by-week/basics/pregnancy-week-by-week/hlv-20049471' },
-            { title: 'American Pregnancy Association', url: 'https://americanpregnancy.org/healthy-pregnancy/' },
-            { title: 'CDC - Pregnancy Safety', url: 'https://www.cdc.gov/pregnancy/index.html' }
-        ];
-        
         responseData = { 
             result: cleaned.response,
             riskScore: riskScore,
-            references: references,
+            references,
             thinking: cleaned.thinking,
             hasThinking: cleaned.hasThinking,
             showAIThoughts: user?.showAIThoughts || false
@@ -817,8 +813,8 @@ Be accurate and evidence-based. Consider patient-specific conditions.`
 // Image analysis endpoint (premium feature only)
 app.post('/api/check-image-safety', verifyToken, requirePremium, async (req, res) => {
     try {
-        if (!process.env.VENICE_API_KEY) {
-            return res.status(500).json({ error: 'Venice API key not configured' });
+        if (!process.env.SHROUD_API_KEY) {
+            return res.status(500).json({ error: 'Shroud API key not configured' });
         }
 
         const { image } = req.body;
@@ -826,7 +822,7 @@ app.post('/api/check-image-safety', verifyToken, requirePremium, async (req, res
             return res.status(400).json({ error: 'No image provided' });
         }
 
-        const apiUrl = 'https://api.venice.ai/api/v1/chat/completions';
+        const apiUrl = (process.env.SHROUD_HTTP_URL || 'https://dev.shroud.us') + '/v1/chat/completions';
 
         let lastError = null;
         
@@ -880,7 +876,7 @@ TIPS:
 
                 const response = await axios.post(apiUrl, requestBody, {
                     headers: {
-                        'Authorization': `Bearer ${process.env.VENICE_API_KEY}`,
+                        'Authorization': `Bearer ${process.env.SHROUD_API_KEY}`,
                         'Content-Type': 'application/json'
                     },
                     timeout: 30000
@@ -1007,9 +1003,9 @@ function cleanAIResponse(rawResponse) {
 // Detailed Safety Information endpoint
 app.post('/api/detailed-safety', async (req, res) => {
     try {
-        if (!process.env.VENICE_API_KEY) {
-            console.error('VENICE_API_KEY is not set in environment variables');
-            return res.status(500).json({ error: 'Venice API key not configured' });
+        if (!process.env.SHROUD_API_KEY) {
+            console.error('SHROUD_API_KEY is not set in environment variables');
+            return res.status(500).json({ error: 'Shroud API key not configured' });
         }
 
         const { item } = req.body;
@@ -1175,7 +1171,7 @@ Please provide a thorough examination including these HTML sections:
 
 Be comprehensive and evidence-based. Address any specific conditions mentioned.`;
 
-        const apiUrl = 'https://api.venice.ai/api/v1/chat/completions';
+        const apiUrl = (process.env.SHROUD_HTTP_URL || 'https://dev.shroud.us') + '/v1/chat/completions';
         const requestBody = {
             model: DETAILED_TEXT_MODEL,
             messages: [
@@ -1206,30 +1202,28 @@ Give thorough, well-structured responses with specific medical guidance. Do NOT 
 
         const response = await axios.post(apiUrl, requestBody, {
             headers: {
-                'Authorization': `Bearer ${process.env.VENICE_API_KEY}`,
+                'Authorization': `Bearer ${process.env.SHROUD_API_KEY}`,
                 'Content-Type': 'application/json'
             },
-            timeout: 45000, // 45 second timeout to prevent gateway errors
+            timeout: 45000,
             validateStatus: function (status) {
-                return status < 500; // Resolve only if the status code is less than 500
+                return status < 500;
             }
         });
         
-        // Check if the response was successful
         if (response.status !== 200) {
-            throw new Error(`Venice API returned status ${response.status}`);
+            throw new Error(`Shroud API returned status ${response.status}`);
         }
         
-        // Validate the response structure
         if (!response.data || !response.data.choices || !response.data.choices[0]) {
-            throw new Error('Invalid response structure from Venice API');
+            throw new Error('Invalid response structure from Shroud API');
         }
 
         const aiResponse = response.data.choices[0].message.content;
         
         // Validate AI response exists
         if (!aiResponse) {
-            throw new Error('Empty response from Venice API');
+            throw new Error('Empty response from Shroud API');
         }
         
         // Clean the AI response to remove thinking process
@@ -1259,7 +1253,7 @@ Give thorough, well-structured responses with specific medical guidance. Do NOT 
             showAIThoughts: user?.showAIThoughts || false
         });
     } catch (error) {
-        console.error('Venice AI detailed API error:', error.response?.data || error.message);
+        console.error('Shroud AI detailed API error:', error.response?.data || error.message);
         
         // Always ensure we return valid JSON
         res.setHeader('Content-Type', 'application/json');
@@ -1272,7 +1266,7 @@ Give thorough, well-structured responses with specific medical guidance. Do NOT 
             });
         }
         
-        // Check if Venice API returned an error
+        // Check if Shroud API returned an error
         if (error.response?.status === 429) {
             return res.status(429).json({
                 error: 'Rate limit exceeded',
@@ -1301,8 +1295,8 @@ Give thorough, well-structured responses with specific medical guidance. Do NOT 
 // Detailed Image Analysis endpoint
 app.post('/api/detailed-image-safety', async (req, res) => {
     try {
-        if (!process.env.VENICE_API_KEY) {
-            return res.status(500).json({ error: 'Venice API key not configured' });
+        if (!process.env.SHROUD_API_KEY) {
+            return res.status(500).json({ error: 'Shroud API key not configured' });
         }
 
         const { image } = req.body;
@@ -1341,7 +1335,7 @@ app.post('/api/detailed-image-safety', async (req, res) => {
             }
         }
         
-        const apiUrl = 'https://api.venice.ai/api/v1/chat/completions';
+        const apiUrl = (process.env.SHROUD_HTTP_URL || 'https://dev.shroud.us') + '/v1/chat/completions';
         
         let lastError = null;
         
@@ -1422,7 +1416,7 @@ Be thorough and evidence-based. Use ONLY HTML tags (h3, p, ul, li, strong). Do N
                 
                 const response = await axios.post(apiUrl, requestBody, {
                     headers: {
-                        'Authorization': `Bearer ${process.env.VENICE_API_KEY}`,
+                        'Authorization': `Bearer ${process.env.SHROUD_API_KEY}`,
                         'Content-Type': 'application/json'
                     },
                     timeout: 30000
@@ -1586,9 +1580,9 @@ Please provide:
 
 Format as HTML with clear sections and bullet points.`;
 
-        const apiUrl = 'https://api.venice.ai/api/v1/chat/completions';
+        const apiUrl = (process.env.SHROUD_HTTP_URL || 'https://dev.shroud.us') + '/v1/chat/completions';
         const requestBody = {
-            model: 'llama-3.3-70b',
+            model: SHROUD_MODEL,
             messages: [
                 {
                     role: 'system',
@@ -1605,7 +1599,7 @@ Format as HTML with clear sections and bullet points.`;
         
         const response = await axios.post(apiUrl, requestBody, {
             headers: {
-                'Authorization': `Bearer ${process.env.VENICE_API_KEY}`,
+                'Authorization': `Bearer ${process.env.SHROUD_API_KEY}`,
                 'Content-Type': 'application/json'
             }
         });
@@ -1614,7 +1608,7 @@ Format as HTML with clear sections and bullet points.`;
         
         res.json({ result: aiResponse });
     } catch (error) {
-        console.error('Venice AI analysis error:', error);
+        console.error('Shroud AI analysis error:', error);
         res.status(500).json({ error: 'Failed to analyze entry' });
     }
 });
@@ -1626,6 +1620,307 @@ app.get('/api/history', verifyToken, async (req, res) => {
         res.json(user.searchHistory);
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch history' });
+    }
+});
+
+// Baby profiles API (Baibai Doula)
+app.get('/api/baby-profiles', verifyToken, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        res.json({ profiles: user.babyProfiles || [] });
+    } catch (error) {
+        console.error('Error fetching baby profiles:', error);
+        res.status(500).json({ error: 'Failed to fetch baby profiles' });
+    }
+});
+
+app.post('/api/baby-profiles', verifyToken, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        await user.addBabyProfile(req.body);
+        res.json({ success: true, profiles: user.babyProfiles });
+    } catch (error) {
+        console.error('Error adding baby profile:', error);
+        res.status(500).json({ error: 'Failed to add baby profile' });
+    }
+});
+
+app.put('/api/baby-profiles/:id', verifyToken, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        await user.updateBabyProfile(req.params.id, req.body);
+        res.json({ success: true, profiles: user.babyProfiles });
+    } catch (error) {
+        console.error('Error updating baby profile:', error);
+        res.status(500).json({ error: 'Failed to update baby profile' });
+    }
+});
+
+app.delete('/api/baby-profiles/:id', verifyToken, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        await user.removeBabyProfile(req.params.id);
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error deleting baby profile:', error);
+        res.status(500).json({ error: 'Failed to delete baby profile' });
+    }
+});
+
+app.post('/api/baby-safety', async (req, res) => {
+    try {
+        if (!process.env.SHROUD_API_KEY) {
+            return res.status(500).json({ error: 'Shroud API key not configured' });
+        }
+
+        const { item, babyAgeMonths, isBreastfeeding } = req.body;
+
+        let ageContext = '';
+        if (babyAgeMonths !== null && babyAgeMonths !== undefined) {
+            if (babyAgeMonths < 1) {
+                ageContext = 'newborn (less than 1 month old)';
+            } else if (babyAgeMonths < 6) {
+                ageContext = `${babyAgeMonths} month${babyAgeMonths > 1 ? 's' : ''} old infant`;
+            } else if (babyAgeMonths < 12) {
+                ageContext = `${babyAgeMonths} month old baby`;
+            } else {
+                const years = Math.floor(babyAgeMonths / 12);
+                ageContext = `${years} year${years > 1 ? 's' : ''} old toddler`;
+            }
+        }
+
+        const breastfeedingContext = isBreastfeeding
+            ? ' The parent is currently breastfeeding, so also mention if this affects the breastfeeding parent.'
+            : '';
+
+        const prompt = `Is "${item}" safe for a ${ageContext || 'baby'}?${breastfeedingContext} 
+        
+        Provide a detailed safety assessment including:
+        1. Overall safety rating (1-10 where 1 is very safe and 10 is very dangerous)
+        2. Age-specific recommendations (when it becomes safe if not currently)
+        3. Potential risks or concerns
+        4. Safe alternatives if applicable
+        5. Guidelines for safe use if applicable
+        
+        Be specific about choking hazards, allergen risks, developmental appropriateness, and any other safety concerns.`;
+
+        const apiUrl = (process.env.SHROUD_HTTP_URL || 'https://dev.shroud.us') + '/v1/chat/completions';
+        const requestBody = {
+            model: SHROUD_MODEL,
+            messages: [
+                {
+                    role: 'system',
+                    content: 'You are a pediatric safety expert providing detailed, accurate information about baby and child safety. Focus on evidence-based recommendations from pediatric organizations.'
+                },
+                {
+                    role: 'user',
+                    content: prompt
+                }
+            ],
+            temperature: 0.3,
+            max_tokens: 800
+        };
+
+        const response = await axios.post(apiUrl, requestBody, {
+            headers: {
+                'Authorization': `Bearer ${process.env.SHROUD_API_KEY}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const aiResponse = response.data.choices[0].message.content;
+
+        const riskMatch = aiResponse.match(/(?:safety rating|risk score|rating)[:\s]+(\d+)/i);
+        const riskScore = riskMatch ? parseInt(riskMatch[1], 10) : 5;
+
+        let ageRecommendation = null;
+        const ageMatch = aiResponse.match(/(?:safe (?:from|after|at)|appropriate (?:from|after|at)|recommended (?:from|after|at))[\s:]+(\d+[\s-]?\w+)/i);
+        if (ageMatch) {
+            ageRecommendation = `Recommended from: ${ageMatch[1]}`;
+        }
+
+        res.json({
+            result: aiResponse,
+            riskScore: riskScore,
+            ageRecommendation: ageRecommendation
+        });
+    } catch (error) {
+        console.error('Shroud AI error:', error);
+        res.status(500).json({ error: 'Failed to check baby safety' });
+    }
+});
+
+app.post('/api/baby-image-safety', async (req, res) => {
+    try {
+        if (!process.env.SHROUD_API_KEY) {
+            return res.status(500).json({ error: 'Shroud API key not configured' });
+        }
+
+        const { image, babyAgeMonths, isBreastfeeding } = req.body;
+
+        let ageContext = '';
+        if (babyAgeMonths !== null && babyAgeMonths !== undefined) {
+            if (babyAgeMonths < 1) {
+                ageContext = 'newborn (less than 1 month old)';
+            } else if (babyAgeMonths < 6) {
+                ageContext = `${babyAgeMonths} month${babyAgeMonths > 1 ? 's' : ''} old infant`;
+            } else if (babyAgeMonths < 12) {
+                ageContext = `${babyAgeMonths} month old baby`;
+            } else {
+                const years = Math.floor(babyAgeMonths / 12);
+                ageContext = `${years} year${years > 1 ? 's' : ''} old toddler`;
+            }
+        }
+
+        const breastfeedingContext = isBreastfeeding
+            ? ' The parent is currently breastfeeding, so also mention if this affects the breastfeeding parent.'
+            : '';
+
+        const apiUrl = (process.env.SHROUD_HTTP_URL || 'https://dev.shroud.us') + '/v1/chat/completions';
+        const requestBody = {
+            model: SHROUD_MODEL,
+            messages: [
+                {
+                    role: 'system',
+                    content: 'You are a pediatric safety expert analyzing images for baby and child safety. Focus on identifying potential hazards, age-appropriateness, and safety concerns.'
+                },
+                {
+                    role: 'user',
+                    content: [
+                        {
+                            type: 'text',
+                            text: `Analyze this image for safety for a ${ageContext || 'baby'}.${breastfeedingContext}
+                            
+                            Provide:
+                            1. Identification of what's in the image
+                            2. Safety rating (1-10 where 1 is very safe and 10 is very dangerous)
+                            3. Specific safety concerns for this age group
+                            4. Recommendations for safe use or alternatives
+                            5. Age when this becomes appropriate (if not currently safe)`
+                        },
+                        {
+                            type: 'image_url',
+                            image_url: {
+                                url: image
+                            }
+                        }
+                    ]
+                }
+            ],
+            temperature: 0.3,
+            max_tokens: 800
+        };
+
+        const response = await axios.post(apiUrl, requestBody, {
+            headers: {
+                'Authorization': `Bearer ${process.env.SHROUD_API_KEY}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const aiResponse = response.data.choices[0].message.content;
+
+        const riskMatch = aiResponse.match(/(?:safety rating|risk score|rating)[:\s]+(\d+)/i);
+        const riskScore = riskMatch ? parseInt(riskMatch[1], 10) : 5;
+
+        res.json({
+            result: aiResponse,
+            riskScore: riskScore
+        });
+    } catch (error) {
+        console.error('Shroud AI image analysis error:', error);
+        res.status(500).json({ error: 'Failed to analyze image for baby safety' });
+    }
+});
+
+// Safety Comparison endpoint — compare 2-3 items side by side
+app.post('/api/compare-safety', async (req, res) => {
+    try {
+        if (!process.env.SHROUD_API_KEY) {
+            return res.status(500).json({ error: 'Shroud API key not configured' });
+        }
+
+        const { items } = req.body;
+
+        if (!items || !Array.isArray(items) || items.length < 2 || items.length > 3) {
+            return res.status(400).json({ error: 'Provide 2-3 items to compare' });
+        }
+
+        const itemList = items.map((it, i) => `${i + 1}. "${it}"`).join('\n');
+
+        const prompt = `Compare the pregnancy safety of these items side by side:\n${itemList}\n\nFor EACH item provide EXACTLY:\nITEM: [name]\nRISK_SCORE: [1-10]\nSAFETY: [Safe/Caution/Avoid]\nSUMMARY: [1-2 sentence explanation]\nKEY_CONCERN: [main risk factor or "None"]\nSAFER_ALTERNATIVE: [if applicable, otherwise "N/A"]\n\nThen provide:\nRECOMMENDATION: [which item is safest and why, 1 sentence]\n\nBe concise, accurate, and evidence-based.`;
+
+        const apiUrl = (process.env.SHROUD_HTTP_URL || 'https://dev.shroud.us') + '/v1/chat/completions';
+        const requestBody = {
+            model: SHROUD_MODEL,
+            messages: [
+                {
+                    role: 'system',
+                    content: `You are a pregnancy safety expert comparing multiple items. Provide structured, side-by-side comparisons with clear risk scores. Use the exact format requested.
+
+Risk Score Guidelines (1-10):
+- 1-2: Very safe (walking, prenatal vitamins)
+- 3-4: Generally safe (moderate exercise, most cooked foods)
+- 5: Requires judgment (hair dye, hot baths)
+- 6-7: Use caution (some medications, certain exercises)
+- 8-9: High risk/Avoid (raw fish, alcohol, certain drugs)
+- 10: Extremely dangerous`
+                },
+                {
+                    role: 'user',
+                    content: prompt
+                }
+            ],
+            temperature: 0.15,
+            max_tokens: 600
+        };
+
+        const response = await axios.post(apiUrl, requestBody, {
+            headers: {
+                'Authorization': `Bearer ${process.env.SHROUD_API_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            timeout: 30000
+        });
+
+        const aiResponse = response.data.choices[0].message.content;
+        const cleaned = cleanAIResponse(aiResponse);
+
+        const comparisonItems = [];
+        const itemBlocks = cleaned.response.split(/(?=ITEM:)/i).filter(b => b.trim());
+
+        for (const block of itemBlocks) {
+            const nameMatch = block.match(/ITEM:\s*(.+)/i);
+            const scoreMatch = block.match(/RISK_SCORE:\s*(\d+)/i);
+            const safetyMatch = block.match(/SAFETY:\s*(Safe|Caution|Avoid)/i);
+            const summaryMatch = block.match(/SUMMARY:\s*(.+)/i);
+            const concernMatch = block.match(/KEY_CONCERN:\s*(.+)/i);
+            const altMatch = block.match(/SAFER_ALTERNATIVE:\s*(.+)/i);
+
+            if (nameMatch) {
+                comparisonItems.push({
+                    item: nameMatch[1].trim(),
+                    riskScore: scoreMatch ? parseInt(scoreMatch[1], 10) : 5,
+                    safety: safetyMatch ? safetyMatch[1] : 'Caution',
+                    summary: summaryMatch ? summaryMatch[1].trim() : '',
+                    keyConcern: concernMatch ? concernMatch[1].trim() : '',
+                    saferAlternative: altMatch ? altMatch[1].trim() : 'N/A'
+                });
+            }
+        }
+
+        const recMatch = cleaned.response.match(/RECOMMENDATION:\s*(.+)/i);
+        const recommendation = recMatch ? recMatch[1].trim() : '';
+
+        res.json({
+            comparisons: comparisonItems,
+            recommendation,
+            raw: cleaned.response,
+            confidential: true
+        });
+    } catch (error) {
+        console.error('Comparison API error:', error.response?.data || error.message);
+        res.status(500).json({ error: 'Failed to compare items' });
     }
 });
 

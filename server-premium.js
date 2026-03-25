@@ -59,7 +59,7 @@ app.use((req, res, next) => {
         "img-src 'self' data: blob: https:; " +
         "font-src 'self' data:; " +
         "frame-src https://js.stripe.com; " +
-        "connect-src 'self' http://localhost:* https://api.venice.ai https://api.stripe.com;"
+        "connect-src 'self' http://localhost:* https://dev.shroud.us https://api.stripe.com;"
     );
     next();
 });
@@ -174,9 +174,9 @@ app.post('/api/profile', verifyToken, async (req, res) => {
 // API endpoint for safety checks (1 free per day for trial/free users, unlimited for premium)
 app.post('/api/check-safety', async (req, res) => {
     try {
-        if (!process.env.VENICE_API_KEY) {
-            console.error('VENICE_API_KEY is not set in environment variables');
-            return res.status(500).json({ error: 'Venice API key not configured' });
+        if (!process.env.SHROUD_API_KEY) {
+            console.error('SHROUD_API_KEY is not set in environment variables');
+            return res.status(500).json({ error: 'Shroud API key not configured' });
         }
 
         const { item } = req.body;
@@ -300,9 +300,9 @@ SAFETY: [Safe/Caution/Avoid]
 WHY: [1 sentence explanation]
 TIPS: [2-3 short practical tips for breastfeeding mothers]` : ''}`;
 
-        const apiUrl = 'https://api.venice.ai/api/v1/chat/completions';
+        const apiUrl = (process.env.SHROUD_HTTP_URL || 'https://dev.shroud.us') + '/v1/chat/completions';
         const requestBody = {
-            model: 'llama-3.3-70b',
+            model: process.env.SHROUD_MODEL || 'Qwen/Qwen3-32B',
             messages: [
                 {
                     role: 'system',
@@ -319,7 +319,7 @@ TIPS: [2-3 short practical tips for breastfeeding mothers]` : ''}`;
 
         const response = await axios.post(apiUrl, requestBody, {
             headers: {
-                'Authorization': `Bearer ${process.env.VENICE_API_KEY}`,
+                'Authorization': `Bearer ${process.env.SHROUD_API_KEY}`,
                 'Content-Type': 'application/json'
             }
         });
@@ -393,7 +393,7 @@ TIPS: [2-3 short practical tips for breastfeeding mothers]` : ''}`;
         
         res.json(responseData);
     } catch (error) {
-        console.error('Venice AI API error:', error.response?.data || error.message);
+        console.error('Shroud AI API error:', error.response?.data || error.message);
         res.status(500).json({ 
             error: 'Failed to check safety. Please try again later.',
             details: error.response?.data?.error || error.message 
@@ -404,8 +404,8 @@ TIPS: [2-3 short practical tips for breastfeeding mothers]` : ''}`;
 // Image analysis endpoint (premium feature only)
 app.post('/api/check-image-safety', async (req, res) => {
     try {
-        if (!process.env.VENICE_API_KEY) {
-            return res.status(500).json({ error: 'Venice API key not configured' });
+        if (!process.env.SHROUD_API_KEY) {
+            return res.status(500).json({ error: 'Shroud API key not configured' });
         }
 
         const { image } = req.body;
@@ -414,11 +414,10 @@ app.post('/api/check-image-safety', async (req, res) => {
             return res.status(400).json({ error: 'No image provided' });
         }
         
-        const apiUrl = 'https://api.venice.ai/api/v1/chat/completions';
+        const apiUrl = (process.env.SHROUD_HTTP_URL || 'https://dev.shroud.us') + '/v1/chat/completions';
         
-        // Use Venice vision-capable models (validated via /models)
         const visionModels = [
-            'mistral-31-24b'
+            process.env.SHROUD_MODEL || 'Qwen/Qwen3-32B'
         ];
 
         let lastError = null;
@@ -469,7 +468,7 @@ TIPS: [2-3 short practical tips for breastfeeding mothers]`
                 
                 const response = await axios.post(apiUrl, requestBody, {
                     headers: {
-                        'Authorization': `Bearer ${process.env.VENICE_API_KEY}`,
+                        'Authorization': `Bearer ${process.env.SHROUD_API_KEY}`,
                         'Content-Type': 'application/json'
                     }
                 });
