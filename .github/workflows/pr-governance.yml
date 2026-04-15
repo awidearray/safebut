@@ -1,0 +1,69 @@
+name: PR Governance
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  validate-pr-description:
+    name: Validate PR Description
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enforce ticket and checklist completeness
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.pull_request.body || '';
+            const requiredChecklistItems = [
+              'Branch created from latest `main`',
+              'Branch is up to date with `main` before merge (rebased/updated)',
+              'Commits are atomic and messages are clear',
+              'CI checks are green',
+              'Required reviews requested',
+              'Rollback plan documented for risky changes'
+            ];
+
+            const hasTicketLink = /(?:Closes|Fixes|Resolves)\s+#\d+|https?:\/\/|[A-Z][A-Z0-9]+-\d+/i.test(body);
+            if (!hasTicketLink) {
+              core.setFailed('PR must include a tracking ticket/issue link in the Tracking section.');
+              return;
+            }
+
+            const unchecked = [];
+            for (const item of requiredChecklistItems) {
+              const escaped = item.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              const checkedRegex = new RegExp(`-\\s*\\[[xX]\\]\\s*${escaped}`);
+              if (!checkedRegex.test(body)) {
+                unchecked.push(item);
+              }
+            }
+
+            if (unchecked.length > 0) {
+              core.setFailed(`PR checklist incomplete. Missing checked items: ${unchecked.join('; ')}`);
+            }
+
+  branch-freshness:
+    name: Ensure Branch Up To Date
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check divergence from main
+        run: |
+          git fetch origin main
+          COUNTS=$(git rev-list --left-right --count origin/main...HEAD)
+          BEHIND=$(echo "$COUNTS" | awk '{print $1}')
+          AHEAD=$(echo "$COUNTS" | awk '{print $2}')
+          echo "Branch divergence: behind=$BEHIND ahead=$AHEAD"
+          if [ "$BEHIND" -gt 0 ]; then
+            echo "PR branch is behind main by $BEHIND commit(s). Rebase/update required."
+            exit 1
+          fi
