@@ -1,6 +1,5 @@
 const express = require('express');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { verifyToken } = require('../middleware/auth');
 const router = express.Router();
@@ -217,59 +216,39 @@ router.post('/verify-session', async (req, res) => {
             return res.status(400).json({ error: 'sessionId required' });
         }
 
-        // Retrieve the checkout session
-        let session = null;
         try {
-            session = await stripe.checkout.sessions.retrieve(sessionId);
+            const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+            if (session.status !== 'complete' && session.payment_status !== 'paid') {
+                return res.status(400).json({ error: 'Payment not completed' });
+            }
+
+            // Resolve user: prefer metadata.userId, fallback to customer email
+            let user = null;
+            const userId = session.metadata?.userId;
+            const customerEmail = session.customer_details?.email;
+
+            if (userId) {
+                user = await User.findById(userId);
+            }
+            if (!user && customerEmail) {
+                user = await User.findOne({ email: customerEmail });
+            }
+            if (!user) {
+                return res.status(404).json({ error: 'User not found for session' });
+            }
+
+            // Mark user premium
+            user.isPremium = true;
+            user.stripeSessionId = session.id;
+            user.subscriptionDate = new Date();
+            await user.save();
+
+            return res.json({ success: true, isPremium: true });
         } catch (stripeErr) {
             console.error('Stripe retrieve session failed:', stripeErr?.message || stripeErr);
+            return res.status(502).json({ error: 'Unable to verify checkout session with Stripe' });
         }
-        // If Stripe failed, optionally trust authenticated token fallback
-        if (!session) {
-            const headerToken = req.header('Authorization')?.replace('Bearer ', '');
-            if (headerToken) {
-                try {
-                    const decoded = jwt.verify(headerToken, process.env.JWT_SECRET);
-                    const user = await User.findById(decoded.userId);
-                    if (user) {
-                        user.isPremium = true;
-                        user.subscriptionDate = new Date();
-                        await user.save();
-                        return res.json({ success: true, isPremium: true, fallback: true });
-                    }
-                } catch (jwtErr) {
-                    console.error('JWT fallback failed:', jwtErr?.message || jwtErr);
-                }
-            }
-            return res.status(404).json({ error: 'Session not found' });
-        }
-
-        if (session.status !== 'complete' && session.payment_status !== 'paid') {
-            return res.status(400).json({ error: 'Payment not completed' });
-        }
-
-        // Resolve user: prefer metadata.userId, fallback to customer email
-        let user = null;
-        const userId = session.metadata?.userId;
-        const customerEmail = session.customer_details?.email;
-
-        if (userId) {
-            user = await User.findById(userId);
-        }
-        if (!user && customerEmail) {
-            user = await User.findOne({ email: customerEmail });
-        }
-        if (!user) {
-            return res.status(404).json({ error: 'User not found for session' });
-        }
-
-        // Mark user premium
-        user.isPremium = true;
-        user.stripeSessionId = session.id;
-        user.subscriptionDate = new Date();
-        await user.save();
-
-        res.json({ success: true, isPremium: true });
     } catch (error) {
         console.error('Verify session error:', error);
         res.status(500).json({ error: 'Failed to verify session' });
@@ -288,6 +267,9 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
         
         // If webhook secret is not configured, parse the raw event (for testing)
         if (!process.env.STRIPE_WEBHOOK_SECRET) {
+            if (process.env.NODE_ENV === 'production') {
+                return res.status(500).json({ error: 'Stripe webhook secret is required in production' });
+            }
             console.log('⚠️ WARNING: STRIPE_WEBHOOK_SECRET not configured - processing without verification');
             event = JSON.parse(req.body.toString());
         } else {
@@ -458,6 +440,9 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
 // Debug endpoint to check user's payment status
 router.get('/debug-status/:email', async (req, res) => {
     try {
+        if (process.env.NODE_ENV === 'production' && req.query.adminToken !== process.env.ADMIN_TOKEN) {
+            return res.status(403).json({ error: 'Not authorized' });
+        }
         const { email } = req.params;
         const user = await User.findOne({ email: email.toLowerCase() });
         
@@ -486,6 +471,9 @@ router.get('/debug-status/:email', async (req, res) => {
 // Manual premium activation (for development/testing)
 router.post('/manual-activate', async (req, res) => {
     try {
+        if (process.env.NODE_ENV === 'production' && req.body.adminToken !== process.env.ADMIN_TOKEN) {
+            return res.status(403).json({ error: 'Not authorized' });
+        }
         const { email } = req.body;
         
         if (!email) {

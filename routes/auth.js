@@ -55,6 +55,7 @@ router.post('/request-magic-link', async (req, res) => {
         const magicLink = `${baseUrl}/auth/verify-magic-link?token=${token}`;
         
         // Send email via Brevo
+        let emailSent = false;
         if (process.env.SMTP_USER && process.env.SMTP_PASS) {
             try {
                 console.log('Attempting to send magic link email via Brevo to:', email);
@@ -170,6 +171,7 @@ www.safe-maternity.com
                 };
                 
                 const info = await transporter.sendMail(mailOptions);
+                emailSent = true;
                 console.log('✅ Magic link email sent successfully via Brevo!');
                 console.log('Email info:', {
                     messageId: info.messageId,
@@ -187,17 +189,30 @@ www.safe-maternity.com
                     user: process.env.SMTP_USER ? 'Set' : 'Not set',
                     pass: process.env.SMTP_PASS ? 'Set' : 'Not set'
                 });
-                // Still return success but log the error for debugging
+                return res.status(502).json({
+                    success: false,
+                    error: 'Failed to send magic link email'
+                });
             }
         } else {
-            // No SMTP credentials configured
+            if (process.env.NODE_ENV === 'production') {
+                return res.status(503).json({
+                    success: false,
+                    error: 'Email service is not configured'
+                });
+            }
+
+            // In non-production, allow local development flow.
+            emailSent = true;
             console.log('⚠️ SMTP credentials not configured. Magic link:', magicLink);
             console.log('To enable email sending, configure SMTP_USER and SMTP_PASS environment variables');
         }
         
         return res.json({
-            success: true,
-            message: 'Magic link sent to your email. Check your inbox!',
+            success: emailSent,
+            message: process.env.NODE_ENV === 'production'
+                ? 'Magic link sent to your email. Check your inbox!'
+                : 'Magic link generated for development.',
             // In development, return the link
             ...(process.env.NODE_ENV === 'development' && { magicLink })
         });

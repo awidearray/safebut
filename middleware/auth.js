@@ -33,6 +33,7 @@ const verifyToken = async (req, res, next) => {
         await user.updateSessionActivity(token);
 
         req.user = user;
+        req.userId = user._id.toString();
         req.token = token;
         next();
     } catch (error) {

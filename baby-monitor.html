@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baby Monitor - At-Risk Newborn Care</title>
+    <meta name="theme-color" content="#e3f2fd">
+    
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icon-72.png">
+    
+    <link rel="stylesheet" href="globals.css">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .monitor-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .monitor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            color: white;
+        }
+        
+        .baby-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .baby-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+        }
+        
+        .alert-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ff4444;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .monitor-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        
+        .monitor-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 12px rgba(0,0,0,0.15);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .card-icon {
+            font-size: 24px;
+        }
+        
+        .vital-sign {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+        
+        .vital-value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .vital-normal { color: #4caf50; }
+        .vital-warning { color: #ff9800; }
+        .vital-critical { color: #f44336; }
+        
+        .quick-action-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .quick-action-btn {
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .quick-action-btn:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        
+        .quick-action-icon {
+            font-size: 32px;
+            margin-bottom: 5px;
+        }
+        
+        .tabs-container {
+            margin-top: 30px;
+        }
+        
+        .tab-navigation {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
+        
+        .tab-btn {
+            padding: 12px 24px;
+            border: none;
+            background: #f5f5f5;
+            border-radius: 10px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s;
+        }
+        
+        .tab-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        .input-group input,
+        .input-group select,
+        .input-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        
+        .input-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 10px;
+        }
+        
+        .btn-primary {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: opacity 0.3s;
+        }
+        
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 20px 0;
+        }
+        
+        .alert-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .alert-item {
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .alert-critical {
+            border-color: #f44336;
+            background: #ffebee;
+        }
+        
+        .alert-high {
+            border-color: #ff9800;
+            background: #fff3e0;
+        }
+        
+        .alert-medium {
+            border-color: #ffc107;
+            background: #fffde7;
+        }
+        
+        .alert-low {
+            border-color: #4caf50;
+            background: #e8f5e9;
+        }
+        
+        .feeding-timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        
+        .feeding-item {
+            position: relative;
+            padding: 10px;
+            margin: 10px 0;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+        
+        .feeding-item::before {
+            content: '';
+            position: absolute;
+            left: -20px;
+            top: 20px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #667eea;
+        }
+        
+        .feeding-item::after {
+            content: '';
+            position: absolute;
+            left: -16px;
+            top: 30px;
+            width: 2px;
+            height: calc(100% + 10px);
+            background: #e0e0e0;
+        }
+        
+        .feeding-item:last-child::after {
+            display: none;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .close-btn {
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="monitor-container">
+        <!-- Header -->
+        <div class="monitor-header">
+            <div class="baby-info">
+                <div class="baby-avatar" style="position: relative;">
+                    👶
+                    <span class="alert-badge" id="alertCount" style="display: none;">0</span>
+                </div>
+                <div>
+                    <h1 id="babyName">Baby Monitor</h1>
+                    <p id="babyAge">Loading...</p>
+                    <p id="riskLevel">Risk Level: Assessing...</p>
+                </div>
+            </div>
+            <div>
+                <button class="btn-primary" onclick="exportData()">📊 Export Report</button>
+                <button class="btn-primary" onclick="window.location.href='/baibai.html'">🏠 Back to Baibai</button>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="quick-action-grid">
+            <button class="quick-action-btn" onclick="showModal('vitalsModal')">
+                <div class="quick-action-icon">❤️</div>
+                <div>Log Vitals</div>
+            </button>
+            <button class="quick-action-btn" onclick="showModal('feedingModal')">
+                <div class="quick-action-icon">🍼</div>
+                <div>Log Feeding</div>
+            </button>
+            <button class="quick-action-btn" onclick="showModal('diaperModal')">
+                <div class="quick-action-icon">👶</div>
+                <div>Log Diaper</div>
+            </button>
+            <button class="quick-action-btn" onclick="showModal('growthModal')">
+                <div class="quick-action-icon">📏</div>
+                <div>Log Growth</div>
+            </button>
+            <button class="quick-action-btn" onclick="showModal('medicationModal')">
+                <div class="quick-action-icon">💊</div>
+                <div>Medication</div>
+            </button>
+            <button class="quick-action-btn" onclick="callEmergency()">
+                <div class="quick-action-icon">🚨</div>
+                <div>Emergency</div>
+            </button>
+        </div>
+        
+        <!-- Dashboard Cards -->
+        <div class="dashboard-grid">
+            <!-- Current Vitals Card -->
+            <div class="monitor-card">
+                <div class="card-header">
+                    <span class="card-title">Current Vitals</span>
+                    <span class="card-icon">❤️</span>
+                </div>
+                <div id="currentVitals">
+                    <div class="vital-sign">
+                        <span>Heart Rate</span>
+                        <span class="vital-value vital-normal" id="heartRate">-- bpm</span>
+                    </div>
+                    <div class="vital-sign">
+                        <span>O₂ Saturation</span>
+                        <span class="vital-value vital-normal" id="oxygenSat">-- %</span>
+                    </div>
+                    <div class="vital-sign">
+                        <span>Temperature</span>
+                        <span class="vital-value vital-normal" id="temperature">-- °F</span>
+                    </div>
+                    <div class="vital-sign">
+                        <span>Respiratory Rate</span>
+                        <span class="vital-value vital-normal" id="respRate">-- /min</span>
+                    </div>
+                </div>
+                <small id="lastVitalTime" style="color: #999;">Never recorded</small>
+            </div>
+            
+            <!-- Growth Stats Card -->
+            <div class="monitor-card">
+                <div class="card-header">
+                    <span class="card-title">Growth Stats</span>
+                    <span class="card-icon">📊</span>
+                </div>
+                <div id="growthStats">
+                    <div class="vital-sign">
+                        <span>Weight</span>
+                        <span class="vital-value" id="currentWeight">-- kg</span>
+                    </div>
+                    <div class="vital-sign">
+                        <span>Weight Gain</span>
+                        <span class="vital-value" id="weightGain">-- g/day</span>
+                    </div>
+                    <div class="vital-sign">
+                        <span>Length</span>
+                        <span class="vital-value" id="currentLength">-- cm</span>
+                    </div>
+                    <div class="vital-sign">
+                        <span>Head Circ.</span>
+                        <span class="vital-value" id="headCirc">-- cm</span>
+                    </div>
+                </div>
+                <small id="lastGrowthTime" style="color: #999;">Never recorded</small>
+            </div>
+            
+            <!-- Today's Summary Card -->
+            <div class="monitor-card">
+                <div class="card-header">
+                    <span class="card-title">Today's Summary</span>
+                    <span class="card-icon">📅</span>
+                </div>
+                <div id="todaySummary">
+                    <div class="vital-sign">
+                        <span>Feedings</span>
+                        <span class="vital-value" id="todayFeedings">0</span>
+                    </div>
+                    <div class="vital-sign">
+                        <span>Total Intake</span>
+                        <span class="vital-value" id="todayIntake">0 ml</span>
+                    </div>
+                    <div class="vital-sign">
+                        <span>Wet Diapers</span>
+                        <span class="vital-value" id="todayWet">0</span>
+                    </div>
+                    <div class="vital-sign">
+                        <span>Dirty Diapers</span>
+                        <span class="vital-value" id="todayDirty">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tabs -->
+        <div class="tabs-container">
+            <div class="tab-navigation">
+                <button class="tab-btn active" data-tab="alerts">🚨 Alerts</button>
+                <button class="tab-btn" data-tab="vitals">❤️ Vitals History</button>
+                <button class="tab-btn" data-tab="growth">📊 Growth Chart</button>
+                <button class="tab-btn" data-tab="feeding">🍼 Feeding Log</button>
+                <button class="tab-btn" data-tab="medications">💊 Medications</button>
+                <button class="tab-btn" data-tab="milestones">🎯 Milestones</button>
+                <button class="tab-btn" data-tab="notes">📝 Notes</button>
+            </div>
+            
+            <!-- Alerts Tab -->
+            <div id="alertsTab" class="tab-content active">
+                <div class="alert-list" id="alertsList">
+                    <!-- Alerts will be populated here -->
+                </div>
+            </div>
+            
+            <!-- Vitals History Tab -->
+            <div id="vitalsTab" class="tab-content">
+                <canvas id="vitalsChart"></canvas>
+                <div id="vitalsHistory"></div>
+            </div>
+            
+            <!-- Growth Chart Tab -->
+            <div id="growthTab" class="tab-content">
+                <canvas id="growthChart"></canvas>
+                <div id="growthHistory"></div>
+            </div>
+            
+            <!-- Feeding Log Tab -->
+            <div id="feedingTab" class="tab-content">
+                <div class="feeding-timeline" id="feedingTimeline">
+                    <!-- Feeding records will be populated here -->
+                </div>
+            </div>
+            
+            <!-- Medications Tab -->
+            <div id="medicationsTab" class="tab-content">
+                <button class="btn-primary" onclick="showModal('medicationModal')">Add Medication</button>
+                <div id="medicationsList" style="margin-top: 20px;">
+                    <!-- Medications will be populated here -->
+                </div>
+            </div>
+            
+            <!-- Milestones Tab -->
+            <div id="milestonesTab" class="tab-content">
+                <div id="milestonesList">
+                    <!-- Milestones will be populated here -->
+                </div>
+            </div>
+            
+            <!-- Notes Tab -->
+            <div id="notesTab" class="tab-content">
+                <textarea placeholder="Add daily notes..." style="width: 100%; height: 200px; margin-bottom: 10px;" id="dailyNotes"></textarea>
+                <button class="btn-primary" onclick="saveNotes()">Save Notes</button>
+                <div id="notesList" style="margin-top: 20px;">
+                    <!-- Previous notes will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modals -->
+    <!-- Vitals Modal -->
+    <div id="vitalsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Log Vital Signs</h2>
+                <span class="close-btn" onclick="closeModal('vitalsModal')">×</span>
+            </div>
+            <form id="vitalsForm">
+                <div class="input-group">
+                    <label>Heart Rate (bpm)</label>
+                    <input type="number" id="vitalHeartRate" placeholder="100-160">
+                </div>
+                <div class="input-group">
+                    <label>Oxygen Saturation (%)</label>
+                    <input type="number" id="vitalO2" placeholder="95-100">
+                </div>
+                <div class="input-group">
+                    <label>Temperature (°F)</label>
+                    <input type="number" step="0.1" id="vitalTemp" placeholder="97.0-100.4">
+                </div>
+                <div class="input-group">
+                    <label>Respiratory Rate (breaths/min)</label>
+                    <input type="number" id="vitalResp" placeholder="30-60">
+                </div>
+                <div class="input-group">
+                    <label>Notes</label>
+                    <textarea id="vitalNotes" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn-primary">Save Vitals</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Feeding Modal -->
+    <div id="feedingModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Log Feeding</h2>
+                <span class="close-btn" onclick="closeModal('feedingModal')">×</span>
+            </div>
+            <form id="feedingForm">
+                <div class="input-group">
+                    <label>Type</label>
+                    <select id="feedingType" onchange="updateFeedingFields()">
+                        <option value="breast">Breastfeeding</option>
+                        <option value="bottle">Bottle</option>
+                        <option value="tube">Tube</option>
+                        <option value="mixed">Mixed</option>
+                        <option value="solids">Solids</option>
+                    </select>
+                </div>
+                <div class="input-group" id="durationGroup">
+                    <label>Duration (minutes)</label>
+                    <input type="number" id="feedingDuration">
+                </div>
+                <div class="input-row" id="amountGroup" style="display: none;">
+                    <div class="input-group">
+                        <label>Amount</label>
+                        <input type="number" id="feedingAmount">
+                    </div>
+                    <div class="input-group">
+                        <label>Unit</label>
+                        <select id="feedingUnit">
+                            <option value="ml">ml</option>
+                            <option value="oz">oz</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="input-group" id="sideGroup">
+                    <label>Side</label>
+                    <select id="feedingSide">
+                        <option value="">Select...</option>
+                        <option value="left">Left</option>
+                        <option value="right">Right</option>
+                        <option value="both">Both</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Issues (if any)</label>
+                    <input type="text" id="feedingIssues" placeholder="e.g., reflux, poor latch">
+                </div>
+                <div class="input-group">
+                    <label>Notes</label>
+                    <textarea id="feedingNotes" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn-primary">Save Feeding</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Diaper Modal -->
+    <div id="diaperModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Log Diaper Change</h2>
+                <span class="close-btn" onclick="closeModal('diaperModal')">×</span>
+            </div>
+            <form id="diaperForm">
+                <div class="input-group">
+                    <label>Type</label>
+                    <select id="diaperType">
+                        <option value="wet">Wet</option>
+                        <option value="dirty">Dirty</option>
+                        <option value="both">Both</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Amount</label>
+                    <select id="diaperAmount">
+                        <option value="small">Small</option>
+                        <option value="medium">Medium</option>
+                        <option value="large">Large</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Color (for dirty diapers)</label>
+                    <input type="text" id="diaperColor" placeholder="e.g., yellow, green, brown">
+                </div>
+                <div class="input-group">
+                    <label>Any blood?</label>
+                    <select id="diaperBlood">
+                        <option value="false">No</option>
+                        <option value="true">Yes</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Notes</label>
+                    <textarea id="diaperNotes" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn-primary">Save Diaper</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Growth Modal -->
+    <div id="growthModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Log Growth Measurement</h2>
+                <span class="close-btn" onclick="closeModal('growthModal')">×</span>
+            </div>
+            <form id="growthForm">
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Weight</label>
+                        <input type="number" step="0.01" id="growthWeight">
+                    </div>
+                    <div class="input-group">
+                        <label>Unit</label>
+                        <select id="weightUnit">
+                            <option value="kg">kg</option>
+                            <option value="lbs">lbs</option>
+                            <option value="g">g</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Length</label>
+                        <input type="number" step="0.1" id="growthLength">
+                    </div>
+                    <div class="input-group">
+                        <label>Unit</label>
+                        <select id="lengthUnit">
+                            <option value="cm">cm</option>
+                            <option value="inches">inches</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Head Circumference</label>
+                        <input type="number" step="0.1" id="growthHead">
+                    </div>
+                    <div class="input-group">
+                        <label>Unit</label>
+                        <select id="headUnit">
+                            <option value="cm">cm</option>
+                            <option value="inches">inches</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Measured by</label>
+                    <input type="text" id="measuredBy" placeholder="e.g., Dr. Smith, Parent">
+                </div>
+                <div class="input-group">
+                    <label>Notes</label>
+                    <textarea id="growthNotes" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn-primary">Save Measurement</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Medication Modal -->
+    <div id="medicationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add/Log Medication</h2>
+                <span class="close-btn" onclick="closeModal('medicationModal')">×</span>
+            </div>
+            <form id="medicationForm">
+                <div class="input-group">
+                    <label>Medication Name</label>
+                    <input type="text" id="medName" required>
+                </div>
+                <div class="input-group">
+                    <label>Dosage</label>
+                    <input type="text" id="medDosage" placeholder="e.g., 5ml, 100mg">
+                </div>
+                <div class="input-group">
+                    <label>Frequency</label>
+                    <input type="text" id="medFrequency" placeholder="e.g., Every 8 hours">
+                </div>
+                <div class="input-group">
+                    <label>Route</label>
+                    <select id="medRoute">
+                        <option value="oral">Oral</option>
+                        <option value="IV">IV</option>
+                        <option value="IM">IM</option>
+                        <option value="topical">Topical</option>
+                        <option value="inhaled">Inhaled</option>
+                        <option value="rectal">Rectal</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Purpose</label>
+                    <input type="text" id="medPurpose">
+                </div>
+                <div class="input-group">
+                    <label>Prescribed by</label>
+                    <input type="text" id="medPrescriber">
+                </div>
+                <button type="submit" class="btn-primary">Save Medication</button>
+            </form>
+        </div>
+    </div>
+    
+    <script src="baby-monitor.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</body>
+</html>
