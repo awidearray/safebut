@@ -1,0 +1,55 @@
+name: Post-Merge Hygiene
+
+on:
+  pull_request:
+    branches: [main]
+    types: [closed]
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  hygiene:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete merged feature branch
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const headRef = context.payload.pull_request.head.ref;
+            const protectedRefs = new Set(['main', 'master', 'develop']);
+            if (protectedRefs.has(headRef)) {
+              core.info(`Skipping deletion of protected branch: ${headRef}`);
+              return;
+            }
+            try {
+              await github.rest.git.deleteRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: `heads/${headRef}`
+              });
+              core.info(`Deleted merged branch: ${headRef}`);
+            } catch (error) {
+              core.warning(`Could not delete ${headRef}: ${error.message}`);
+            }
+
+      - name: Create post-merge tag
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const sha = context.payload.pull_request.merge_commit_sha || context.payload.pull_request.base.sha;
+            const stamp = new Date().toISOString().slice(0, 10).replace(/-/g, '.');
+            const tag = `v${stamp}.${context.runNumber}`;
+            try {
+              await github.rest.git.createRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: `refs/tags/${tag}`,
+                sha
+              });
+              core.info(`Created release tag ${tag} at ${sha}`);
+            } catch (error) {
+              core.setFailed(`Failed to create tag ${tag}: ${error.message}`);
+            }
