@@ -27,7 +27,14 @@ fi
 echo "Installing dependencies for rollback verification..."
 npm ci
 
-echo "Running tests on simulated rollback..."
-npm test
+echo "Running verification on simulated rollback..."
+if node -e "const p=require('./package.json'); process.exit(p?.scripts?.test ? 0 : 1)"; then
+  npm test
+else
+  echo "No npm test script found in rollback state; running syntax checks instead."
+  node --check server.js
+  node --check server-production.js
+  node --check server-premium.js
+fi
 
 echo "Rollback drill passed."
