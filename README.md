@@ -26,6 +26,12 @@ A web application that helps pregnant women check if foods or medications are sa
 npm install
 ```
 
+### 2.1 Run Tests
+
+```bash
+npm test
+```
+
 ### 3. Run the Application
 
 ```bash
@@ -101,6 +107,12 @@ python -m SimpleHTTPServer 3000
 - **API Key Issues**: Make sure your Shroud API key is valid and has sufficient credits
 - **No Results**: Check browser console for errors, ensure API key is saved
 - **CORS Errors**: Use the Node.js server method instead of opening the file directly
+
+## GitHub Workflow
+
+- Branch/PR process: `docs/GITHUB_WORKFLOW.md`
+- Rollback runbook: `docs/ROLLBACK.md`
+- Automated policy checks live in `.github/workflows`
 
 ## License
 
