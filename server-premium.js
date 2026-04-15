@@ -13,6 +13,7 @@ const { verifyToken, requirePremium } = require('./middleware/auth');
 // Import routes
 const authRoutes = require('./routes/auth');
 const paymentRoutes = require('./routes/payment');
+const monitoringRoutes = require('./routes/monitoring');
 const User = require('./models/User');
 
 const app = express();
@@ -80,6 +81,9 @@ app.use('/auth', authRoutes);
 
 // Payment routes
 app.use('/payment', paymentRoutes);
+
+// Monitoring routes (for baby monitoring)
+app.use('/monitoring', monitoringRoutes);
 
 // Main pages
 app.get('/', (req, res) => {
@@ -483,9 +487,16 @@ TIPS: [2-3 short practical tips for breastfeeding mothers]`
             }
         }
         
-        // If all models failed, provide a graceful fallback
-        console.log('All vision models failed for image analysis (premium), returning graceful fallback');
-        const helpfulResponse = `PREGNANCY:
+        const references = [
+            { title: 'Mayo Clinic - Pregnancy Week by Week', url: 'https://www.mayoclinic.org/healthy-lifestyle/pregnancy-week-by-week/basics/pregnancy-week-by-week/hlv-20049471' },
+            { title: 'American Pregnancy Association', url: 'https://americanpregnancy.org/healthy-pregnancy/' },
+            { title: 'CDC - Pregnancy Safety', url: 'https://www.cdc.gov/pregnancy/index.html' }
+        ];
+
+        if (!aiResponse) {
+            // If all models failed, provide a graceful fallback
+            console.log('All vision models failed for image analysis (premium), returning graceful fallback');
+            const helpfulResponse = `PREGNANCY:
 RISK_SCORE: 5
 SAFETY: Caution
 WHY: We couldn't analyze this image right now. Please try another photo or type what you want to check.
@@ -499,47 +510,34 @@ SAFETY: Caution
 WHY: Unable to analyze this image now. Type the product for guidance.
 TIPS:
 - Include brand/type for more precise advice`;
-        
-        return res.json({ 
-            result: helpfulResponse,
-            pregnancyRiskScore: 5,
-            breastfeedingRiskScore: 5,
-            riskScore: 5,
-            references: [
-                { title: 'Mayo Clinic - Pregnancy Week by Week', url: 'https://www.mayoclinic.org/healthy-lifestyle/pregnancy-week-by-week/basics/pregnancy-week-by-week/hlv-20049471' },
-                { title: 'American Pregnancy Association', url: 'https://americanpregnancy.org/healthy-pregnancy/' },
-                { title: 'CDC - Pregnancy Safety', url: 'https://www.cdc.gov/pregnancy/index.html' }
-            ]
-        });
-        
+
+            return res.json({
+                result: helpfulResponse,
+                pregnancyRiskScore: 5,
+                breastfeedingRiskScore: 5,
+                riskScore: 5,
+                references
+            });
+        }
+
         // Parse pregnancy risk score (default section)
         const pregnancyRiskMatch = aiResponse.match(/PREGNANCY:[\s\S]*?RISK_SCORE:\s*(\d+)/);
-        const pregnancyRiskScore = pregnancyRiskMatch ? parseInt(pregnancyRiskMatch[1]) : 5;
-        
+        const pregnancyRiskScore = pregnancyRiskMatch ? parseInt(pregnancyRiskMatch[1], 10) : 5;
+
         // Parse breastfeeding risk score (premium users get both)
         const breastfeedingRiskMatch = aiResponse.match(/BREASTFEEDING:[\s\S]*?RISK_SCORE:\s*(\d+)/);
-        const breastfeedingRiskScore = breastfeedingRiskMatch ? parseInt(breastfeedingRiskMatch[1]) : 5;
-        
+        const breastfeedingRiskScore = breastfeedingRiskMatch ? parseInt(breastfeedingRiskMatch[1], 10) : 5;
+
         // Use pregnancy risk score as primary for backward compatibility
         const riskScore = pregnancyRiskScore;
-        
-        // Increment search count and save to history
-        await req.user.incrementSearchCount();
-        await req.user.addToHistory('Image Analysis', riskScore, true);
-        
-        const references = [
-            { title: 'Mayo Clinic - Pregnancy Week by Week', url: 'https://www.mayoclinic.org/healthy-lifestyle/pregnancy-week-by-week/basics/pregnancy-week-by-week/hlv-20049471' },
-            { title: 'American Pregnancy Association', url: 'https://americanpregnancy.org/healthy-pregnancy/' },
-            { title: 'CDC - Pregnancy Safety', url: 'https://www.cdc.gov/pregnancy/index.html' }
-        ];
-        
-        res.json({ 
+
+        res.json({
             result: aiResponse,
-            riskScore: riskScore,
-            pregnancyRiskScore: pregnancyRiskScore,
-            breastfeedingRiskScore: breastfeedingRiskScore,
-            hasBothSections: true, // Image analysis always provides both for premium users
-            references: references
+            riskScore,
+            pregnancyRiskScore,
+            breastfeedingRiskScore,
+            hasBothSections: true,
+            references
         });
     } catch (error) {
         console.error('Image analysis error:', error.response?.data || error.message);
